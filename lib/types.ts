@@ -1,7 +1,7 @@
 export interface Holding {
   id: string;
   name: string;
-  ticker: string;
+  ticker?: string;
   quantity: number;
   avgPrice: number;
   currentPrice: number;

@@ -18,29 +18,35 @@ export default function HoldingsPreview({ holdings }: { holdings: Holding[] }) {
         </Link>
       </div>
 
-      <ul className="mt-4 divide-y divide-gray-50">
-        {holdings.map((holding) => {
-          const { valuation, profitRate } = getHoldingMetrics(holding);
-          const isProfit = profitRate >= 0;
+      {holdings.length === 0 ? (
+        <p className="py-8 text-center text-sm text-gray-400">보유 종목이 없습니다.</p>
+      ) : (
+        <ul className="mt-4 divide-y divide-gray-50">
+          {holdings.map((holding) => {
+            const { valuation, profitRate } = getHoldingMetrics(holding);
+            const isProfit = profitRate >= 0;
 
-          return (
-            <li key={holding.id} className="flex items-center justify-between py-3">
-              <div>
-                <p className="text-sm font-medium text-gray-900">{holding.name}</p>
-                <p className="text-xs text-gray-400">{holding.ticker}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">
-                  {formatKRW(valuation)}
-                </p>
-                <p className={`text-xs font-medium ${isProfit ? "text-rise" : "text-fall"}`}>
-                  {formatPercent(profitRate)}
-                </p>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+            return (
+              <li key={holding.id} className="flex items-center justify-between py-3">
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{holding.name}</p>
+                  {holding.ticker && (
+                    <p className="text-xs text-gray-400">{holding.ticker}</p>
+                  )}
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium text-gray-900">
+                    {formatKRW(valuation)}
+                  </p>
+                  <p className={`text-xs font-medium ${isProfit ? "text-rise" : "text-fall"}`}>
+                    {formatPercent(profitRate)}
+                  </p>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </section>
   );
 }

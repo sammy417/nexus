@@ -3,14 +3,17 @@
 import { FormEvent, useState } from "react";
 import { X } from "lucide-react";
 import { useTradeModal } from "@/lib/trade-modal-context";
+import { usePortfolio } from "@/lib/portfolio-context";
 import { TradeType } from "@/lib/types";
 
 export default function AddTradeModal() {
   const { isOpen, closeModal, showToast } = useTradeModal();
+  const { addTrade } = usePortfolio();
   const [stockName, setStockName] = useState("");
   const [type, setType] = useState<TradeType>("BUY");
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -19,6 +22,7 @@ export default function AddTradeModal() {
     setType("BUY");
     setPrice("");
     setQuantity("");
+    setError(null);
   };
 
   const handleClose = () => {
@@ -28,10 +32,31 @@ export default function AddTradeModal() {
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
-    if (!stockName || !price || !quantity) return;
+    setError(null);
+
+    const trimmedName = stockName.trim();
+    const parsedPrice = Number(price);
+    const parsedQuantity = Number(quantity);
+
+    if (!trimmedName || parsedPrice <= 0 || parsedQuantity <= 0) {
+      setError("종목명, 단가, 수량을 올바르게 입력해 주세요.");
+      return;
+    }
+
+    const result = addTrade({
+      stockName: trimmedName,
+      type,
+      price: parsedPrice,
+      quantity: parsedQuantity,
+    });
+
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
 
     const label = type === "BUY" ? "매수" : "매도";
-    showToast(`${stockName} ${label} 내역이 추가되었습니다.`);
+    showToast(`${trimmedName} ${label} 내역이 추가되었습니다.`);
     resetForm();
     closeModal();
   };
@@ -125,6 +150,8 @@ export default function AddTradeModal() {
               className="rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-300 focus:ring-2 focus:ring-gray-900/10"
             />
           </label>
+
+          {error && <p className="text-xs font-medium text-fall">{error}</p>}
 
           <button
             type="submit"

@@ -12,7 +12,9 @@ export default function HoldingCard({ holding }: { holding: Holding }) {
       <div className="flex items-start justify-between">
         <div>
           <p className="text-base font-semibold text-gray-900">{holding.name}</p>
-          <p className="mt-0.5 text-xs text-gray-400">{holding.ticker}</p>
+          {holding.ticker && (
+            <p className="mt-0.5 text-xs text-gray-400">{holding.ticker}</p>
+          )}
         </div>
         <div className="text-right">
           <p className="text-base font-semibold text-gray-900">

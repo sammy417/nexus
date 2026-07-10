@@ -1,10 +1,11 @@
+"use client";
+
 import AssetSummary from "@/components/dashboard/AssetSummary";
 import HoldingsPreview from "@/components/dashboard/HoldingsPreview";
-import { holdings } from "@/lib/dummy-data";
-import { getPortfolioSummary } from "@/lib/portfolio";
+import { usePortfolio } from "@/lib/portfolio-context";
 
 export default function DashboardPage() {
-  const summary = getPortfolioSummary(holdings);
+  const { holdings, summary } = usePortfolio();
 
   return (
     <div className="flex flex-col">
