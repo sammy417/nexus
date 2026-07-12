@@ -1,20 +1,36 @@
 "use client";
 
-import HoldingCard from "@/components/portfolio/HoldingCard";
+import AssetCard from "@/components/portfolio/AssetCard";
 import { usePortfolio } from "@/lib/portfolio-context";
+import { ASSET_TYPE_LABEL, ASSET_TYPES } from "@/lib/types";
 
 export default function PortfolioPage() {
-  const { holdings } = usePortfolio();
+  const { assets } = usePortfolio();
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-6">
       <p className="px-1 text-sm font-medium text-gray-400">
-        보유 종목 {holdings.length}개
+        보유 자산 {assets.length}개
       </p>
-      {holdings.length === 0 ? (
-        <p className="py-24 text-center text-sm text-gray-400">보유 종목이 없습니다.</p>
+
+      {assets.length === 0 ? (
+        <p className="py-24 text-center text-sm text-gray-400">보유 자산이 없습니다.</p>
       ) : (
-        holdings.map((holding) => <HoldingCard key={holding.id} holding={holding} />)
+        ASSET_TYPES.map((type) => {
+          const groupAssets = assets.filter((asset) => asset.type === type);
+          if (groupAssets.length === 0) return null;
+
+          return (
+            <div key={type} className="flex flex-col gap-3">
+              <p className="px-1 text-xs font-semibold text-gray-400">
+                {ASSET_TYPE_LABEL[type]} {groupAssets.length}
+              </p>
+              {groupAssets.map((asset) => (
+                <AssetCard key={asset.id} asset={asset} />
+              ))}
+            </div>
+          );
+        })
       )}
     </div>
   );

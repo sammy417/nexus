@@ -1,9 +1,9 @@
 "use client";
 
-import { useTradeModal } from "@/lib/trade-modal-context";
+import { useAssetModal } from "@/lib/asset-modal-context";
 
 export default function Toast() {
-  const { toastMessage } = useTradeModal();
+  const { toastMessage } = useAssetModal();
 
   if (!toastMessage) return null;
 

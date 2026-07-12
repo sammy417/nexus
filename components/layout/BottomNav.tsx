@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutGrid, Plus, WalletCards } from "lucide-react";
-import { useTradeModal } from "@/lib/trade-modal-context";
+import { useAssetModal } from "@/lib/asset-modal-context";
 
 const navItems = [
   { href: "/", label: "대시보드", icon: LayoutGrid },
@@ -12,7 +12,7 @@ const navItems = [
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const { openModal } = useTradeModal();
+  const { openAddModal } = useAssetModal();
 
   return (
     <nav className="sticky bottom-0 z-10 border-t border-gray-100 bg-white/90 backdrop-blur-md">
@@ -42,12 +42,12 @@ export default function BottomNav() {
         })}
         <button
           type="button"
-          aria-label="거래 추가"
-          onClick={openModal}
+          aria-label="자산 추가"
+          onClick={openAddModal}
           className="flex flex-1 flex-col items-center gap-1 py-1.5 text-gray-400 transition-colors hover:text-gray-600"
         >
           <Plus size={22} strokeWidth={2} />
-          <span className="text-[11px] font-medium">거래 추가</span>
+          <span className="text-[11px] font-medium">자산 추가</span>
         </button>
       </div>
     </nav>

@@ -2,15 +2,15 @@
 
 import { Bell, RotateCcw } from "lucide-react";
 import { usePortfolio } from "@/lib/portfolio-context";
-import { useTradeModal } from "@/lib/trade-modal-context";
+import { useAssetModal } from "@/lib/asset-modal-context";
 
 export default function Header() {
   const { resetPortfolio } = usePortfolio();
-  const { showToast } = useTradeModal();
+  const { showToast } = useAssetModal();
 
   const handleReset = () => {
     const confirmed = window.confirm(
-      "테스트를 위해 보유 종목을 초기 더미 데이터로 되돌릴까요?"
+      "테스트를 위해 자산 현황을 초기 더미 데이터로 되돌릴까요?"
     );
     if (!confirmed) return;
     resetPortfolio();

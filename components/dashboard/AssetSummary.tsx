@@ -1,6 +1,6 @@
 import { TrendingDown, TrendingUp } from "lucide-react";
 import { formatKRW, formatPercent, formatSigned } from "@/lib/format";
-import { PortfolioSummary } from "@/lib/portfolio";
+import { PortfolioSummary } from "@/lib/asset";
 
 export default function AssetSummary({ summary }: { summary: PortfolioSummary }) {
   const { totalValuation, totalPrincipal, totalProfit, totalProfitRate } = summary;
@@ -14,19 +14,19 @@ export default function AssetSummary({ summary }: { summary: PortfolioSummary })
         {formatKRW(totalValuation)}
       </p>
 
-      <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-5">
-        <div>
-          <p className="text-xs font-medium text-gray-400">총 투자 원금</p>
-          <p className="mt-1 text-base font-semibold text-gray-700">
+      <div className="mt-6 flex flex-col gap-3 border-t border-gray-100 pt-5">
+        <div className="flex items-center justify-between gap-3">
+          <p className="shrink-0 text-xs font-medium text-gray-400">총 투자 원금</p>
+          <p className="truncate text-sm font-semibold text-gray-700">
             {formatKRW(totalPrincipal)}
           </p>
         </div>
-        <div className="text-right">
-          <p className="text-xs font-medium text-gray-400">평가 손익</p>
-          <div className={`mt-1 flex items-center justify-end gap-1 text-base font-semibold ${toneClass}`}>
-            {isProfit ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-            <span>{formatSigned(totalProfit)}</span>
-            <span className="text-sm">({formatPercent(totalProfitRate)})</span>
+        <div className="flex items-center justify-between gap-3">
+          <p className="shrink-0 text-xs font-medium text-gray-400">평가 손익</p>
+          <div className={`flex min-w-0 items-center gap-1 text-sm font-semibold ${toneClass}`}>
+            {isProfit ? <TrendingUp size={14} className="shrink-0" /> : <TrendingDown size={14} className="shrink-0" />}
+            <span className="truncate">{formatSigned(totalProfit)}</span>
+            <span className="shrink-0">({formatPercent(totalProfitRate)})</span>
           </div>
         </div>
       </div>
