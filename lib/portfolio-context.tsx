@@ -1,9 +1,11 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { holdings as seedHoldings } from "./dummy-data";
 import { getPortfolioSummary, PortfolioSummary } from "./portfolio";
 import { Holding, TradeType } from "./types";
+
+const STORAGE_KEY = "nexus:holdings";
 
 export interface AddTradeInput {
   stockName: string;
@@ -18,12 +20,39 @@ interface PortfolioContextValue {
   holdings: Holding[];
   summary: PortfolioSummary;
   addTrade: (input: AddTradeInput) => AddTradeResult;
+  resetPortfolio: () => void;
 }
 
 const PortfolioContext = createContext<PortfolioContextValue | null>(null);
 
+function loadStoredHoldings(): Holding[] | null {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
 export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const [holdings, setHoldings] = useState<Holding[]>(seedHoldings);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    // Seed state is used for the SSR/hydration render to avoid a mismatch;
+    // localStorage is only readable client-side, so it's applied post-mount.
+    const stored = loadStoredHoldings();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (stored) setHoldings(stored);
+    setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(holdings));
+  }, [holdings, isHydrated]);
 
   function addTrade({ stockName, type, price, quantity }: AddTradeInput): AddTradeResult {
     const index = holdings.findIndex((h) => h.name === stockName);
@@ -64,10 +93,14 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     return { ok: true };
   }
 
+  function resetPortfolio() {
+    setHoldings(seedHoldings);
+  }
+
   const summary = getPortfolioSummary(holdings);
 
   return (
-    <PortfolioContext.Provider value={{ holdings, summary, addTrade }}>
+    <PortfolioContext.Provider value={{ holdings, summary, addTrade, resetPortfolio }}>
       {children}
     </PortfolioContext.Provider>
   );
