@@ -6,7 +6,7 @@ import { useAssetModal } from "@/lib/asset-modal-context";
 import { usePortfolio } from "@/lib/portfolio-context";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { formatMoney, formatPercent, formatSignedMoney } from "@/lib/format";
-import { ASSET_TYPE_LABEL } from "@/lib/models/asset-types";
+import { getAssetCategoryLabel } from "@/lib/models/portfolio-category";
 import { Asset } from "@/lib/models/asset";
 
 const headerCellClass =
@@ -43,9 +43,14 @@ export default function AssetTable({ assets }: { assets: Asset[] }) {
     }
   }
 
+  const groupTotal = assets.reduce(
+    (sum, asset) => sum + getAssetMetrics(asset, usdKrw).valuation,
+    0
+  );
+
   return (
     <div className="overflow-x-auto rounded-2xl bg-white shadow-sm dark:bg-card-dark">
-      <table className="w-full min-w-[680px] text-sm">
+      <table className="w-full min-w-[740px] text-sm">
         <thead>
           <tr className="border-b border-border text-left dark:border-border-dark">
             <th className={headerCellClass}>자산</th>
@@ -53,6 +58,7 @@ export default function AssetTable({ assets }: { assets: Asset[] }) {
             <th className={`${headerCellClass} text-right`}>보유 수량</th>
             <th className={`${headerCellClass} text-right`}>투자 원금</th>
             <th className={`${headerCellClass} text-right`}>평가 금액</th>
+            <th className={`${headerCellClass} text-right`}>비중</th>
             <th className={`${headerCellClass} text-right`}>평가 손익</th>
             <th className={headerCellClass}>
               <span className="sr-only">수정/삭제</span>
@@ -64,6 +70,7 @@ export default function AssetTable({ assets }: { assets: Asset[] }) {
             const { principal, valuation, profit, profitRate } = getAssetMetrics(asset, usdKrw);
             const isProfit = profit >= 0;
             const sub = subLine(asset);
+            const weight = groupTotal === 0 ? 0 : (valuation / groupTotal) * 100;
 
             return (
               <tr
@@ -85,9 +92,7 @@ export default function AssetTable({ assets }: { assets: Asset[] }) {
                   )}
                 </td>
                 <td className="px-4 py-3.5 text-gray-500 dark:text-gray-400">
-                  {asset.type === "CUSTOM" && asset.category
-                    ? asset.category
-                    : ASSET_TYPE_LABEL[asset.type]}
+                  {getAssetCategoryLabel(asset)}
                 </td>
                 <td className="px-4 py-3.5 text-right text-gray-700 dark:text-gray-300">
                   {asset.type === "STOCK" ? `${asset.quantity.toLocaleString("ko-KR")}주` : "-"}
@@ -97,6 +102,9 @@ export default function AssetTable({ assets }: { assets: Asset[] }) {
                 </td>
                 <td className="px-4 py-3.5 text-right font-medium text-gray-900 dark:text-gray-100">
                   {formatMoney(valuation, displayCurrency, usdKrw)}
+                </td>
+                <td className="px-4 py-3.5 text-right text-gray-700 [font-variant-numeric:tabular-nums] dark:text-gray-300">
+                  {weight.toFixed(1)}%
                 </td>
                 <td className="px-4 py-3.5 text-right">
                   {asset.type === "CASH" ? (

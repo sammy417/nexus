@@ -1,20 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { AllocationEntry } from "@/lib/services/portfolio-service";
+import { CategoryAllocationEntry } from "@/lib/services/portfolio-service";
 import { formatMoney } from "@/lib/format";
-import { ASSET_TYPE_LABEL } from "@/lib/models/asset-types";
-import { AssetType } from "@/lib/models/asset";
+import {
+  PORTFOLIO_CATEGORY_COLOR,
+  PORTFOLIO_CATEGORY_LABEL,
+  PortfolioCategory,
+} from "@/lib/models/portfolio-category";
 import { useDisplayCurrency } from "@/lib/currency-context";
-
-// Categorical palette validated for light/dark surfaces and CVD separation
-// in STOCK→BOND→CASH→CUSTOM display order (see dataviz validator).
-const CATEGORY_COLOR: Record<AssetType, string> = {
-  STOCK: "#2a78d6",
-  BOND: "#c98500",
-  CASH: "#1baf7a",
-  CUSTOM: "#8a63d2",
-};
 
 const SIZE = 180;
 const CENTER = SIZE / 2;
@@ -35,14 +29,18 @@ function arcPath(startAngle: number, endAngle: number): string {
   return `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${RADIUS} ${RADIUS} 0 ${largeArc} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
 }
 
-export default function AllocationBreakdown({ allocation }: { allocation: AllocationEntry[] }) {
+export default function AllocationBreakdown({
+  allocation,
+}: {
+  allocation: CategoryAllocationEntry[];
+}) {
   const { displayCurrency, usdKrw } = useDisplayCurrency();
-  const [hoveredType, setHoveredType] = useState<AssetType | null>(null);
+  const [hoveredCategory, setHoveredCategory] = useState<PortfolioCategory | null>(null);
 
   if (allocation.length === 0) return null;
 
   const total = allocation.reduce((sum, entry) => sum + entry.valuation, 0);
-  const hovered = allocation.find((entry) => entry.type === hoveredType) ?? null;
+  const hovered = allocation.find((entry) => entry.category === hoveredCategory) ?? null;
 
   // Segment sweep angles from ratio prefix sums, starting at 12 o'clock.
   const segments = allocation.map((entry, index) => {
@@ -61,40 +59,40 @@ export default function AllocationBreakdown({ allocation }: { allocation: Alloca
           width={SIZE}
           height={SIZE}
           role="img"
-          aria-label="자산 종류별 구성 비중 도넛 차트"
+          aria-label="자산 카테고리별 구성 비중 도넛 차트"
         >
           {segments.map(({ entry, start, end }) =>
             allocation.length === 1 ? (
               <circle
-                key={entry.type}
+                key={entry.category}
                 cx={CENTER}
                 cy={CENTER}
                 r={RADIUS}
                 fill="none"
-                stroke={CATEGORY_COLOR[entry.type]}
-                strokeWidth={hoveredType === entry.type ? HOVER_STROKE : STROKE}
+                stroke={PORTFOLIO_CATEGORY_COLOR[entry.category]}
+                strokeWidth={hoveredCategory === entry.category ? HOVER_STROKE : STROKE}
               />
             ) : (
               <path
-                key={entry.type}
+                key={entry.category}
                 d={arcPath(start, end)}
                 fill="none"
-                stroke={CATEGORY_COLOR[entry.type]}
-                strokeWidth={hoveredType === entry.type ? HOVER_STROKE : STROKE}
+                stroke={PORTFOLIO_CATEGORY_COLOR[entry.category]}
+                strokeWidth={hoveredCategory === entry.category ? HOVER_STROKE : STROKE}
                 tabIndex={0}
-                aria-label={`${ASSET_TYPE_LABEL[entry.type]} ${entry.ratio.toFixed(1)}%`}
+                aria-label={`${PORTFOLIO_CATEGORY_LABEL[entry.category]} ${entry.ratio.toFixed(1)}%`}
                 className="cursor-pointer outline-none transition-[stroke-width] duration-150"
-                onMouseEnter={() => setHoveredType(entry.type)}
-                onMouseLeave={() => setHoveredType(null)}
-                onFocus={() => setHoveredType(entry.type)}
-                onBlur={() => setHoveredType(null)}
+                onMouseEnter={() => setHoveredCategory(entry.category)}
+                onMouseLeave={() => setHoveredCategory(null)}
+                onFocus={() => setHoveredCategory(entry.category)}
+                onBlur={() => setHoveredCategory(null)}
               />
             )
           )}
         </svg>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
           <p className="text-[11px] text-gray-400 dark:text-gray-500">
-            {hovered ? ASSET_TYPE_LABEL[hovered.type] : "평가 금액 합계"}
+            {hovered ? PORTFOLIO_CATEGORY_LABEL[hovered.category] : "평가 금액 합계"}
           </p>
           <p className="mt-0.5 max-w-[7.5rem] truncate text-sm font-bold text-gray-900 dark:text-gray-100">
             {formatMoney(hovered ? hovered.valuation : total, displayCurrency, usdKrw)}
@@ -110,18 +108,18 @@ export default function AllocationBreakdown({ allocation }: { allocation: Alloca
       <ul className="mt-4 flex flex-col gap-2.5">
         {allocation.map((entry) => (
           <li
-            key={entry.type}
+            key={entry.category}
             className="flex items-center justify-between text-sm"
-            onMouseEnter={() => setHoveredType(entry.type)}
-            onMouseLeave={() => setHoveredType(null)}
+            onMouseEnter={() => setHoveredCategory(entry.category)}
+            onMouseLeave={() => setHoveredCategory(null)}
           >
             <div className="flex items-center gap-2">
               <span
                 className="h-2 w-2 shrink-0 rounded-full"
-                style={{ backgroundColor: CATEGORY_COLOR[entry.type] }}
+                style={{ backgroundColor: PORTFOLIO_CATEGORY_COLOR[entry.category] }}
               />
               <span className="font-medium text-gray-700 dark:text-gray-300">
-                {ASSET_TYPE_LABEL[entry.type]}
+                {PORTFOLIO_CATEGORY_LABEL[entry.category]}
               </span>
             </div>
             <div className="flex items-center gap-2 text-right">

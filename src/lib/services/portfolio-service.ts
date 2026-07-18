@@ -1,5 +1,10 @@
 import { Asset, AssetType, Currency } from "@/lib/models/asset";
 import { ASSET_TYPES } from "@/lib/models/asset-types";
+import {
+  getPortfolioCategory,
+  PORTFOLIO_CATEGORIES,
+  PortfolioCategory,
+} from "@/lib/models/portfolio-category";
 
 /**
  * All metrics are computed in KRW. Assets denominated in USD are
@@ -82,6 +87,31 @@ export interface AllocationEntry {
   type: AssetType;
   valuation: number;
   ratio: number;
+}
+
+export interface CategoryAllocationEntry {
+  category: PortfolioCategory;
+  valuation: number;
+  ratio: number;
+}
+
+/** Allocation by display category (Korean/foreign stocks split). */
+export function getAllocationByCategory(
+  assets: Asset[],
+  usdKrw: number
+): CategoryAllocationEntry[] {
+  const totalValuation = assets.reduce(
+    (sum, asset) => sum + getAssetMetrics(asset, usdKrw).valuation,
+    0
+  );
+
+  return PORTFOLIO_CATEGORIES.map((category) => {
+    const valuation = assets
+      .filter((asset) => getPortfolioCategory(asset) === category)
+      .reduce((sum, asset) => sum + getAssetMetrics(asset, usdKrw).valuation, 0);
+    const ratio = totalValuation === 0 ? 0 : (valuation / totalValuation) * 100;
+    return { category, valuation, ratio };
+  }).filter((entry) => entry.valuation > 0);
 }
 
 export function getAllocationByType(assets: Asset[], usdKrw: number): AllocationEntry[] {

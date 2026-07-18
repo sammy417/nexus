@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { getAssetMetrics } from "@/lib/services/portfolio-service";
 import { formatMoney, formatPercent } from "@/lib/format";
-import { ASSET_TYPE_LABEL } from "@/lib/models/asset-types";
+import { getAssetCategoryLabel } from "@/lib/models/portfolio-category";
 import { Asset } from "@/lib/models/asset";
 import { useDisplayCurrency } from "@/lib/currency-context";
 
@@ -42,9 +42,7 @@ export default function AssetsPreview({ assets }: { assets: Asset[] }) {
                 <div>
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{asset.name}</p>
                   <p className="text-xs text-gray-400 dark:text-gray-500">
-                    {asset.type === "CUSTOM" && asset.category
-                      ? asset.category
-                      : ASSET_TYPE_LABEL[asset.type]}
+                    {getAssetCategoryLabel(asset)}
                   </p>
                 </div>
                 <div className="text-right">

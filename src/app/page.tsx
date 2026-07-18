@@ -7,12 +7,12 @@ import TrendChart from "@/components/dashboard/TrendChart";
 import CurrencyToggle from "@/components/common/CurrencyToggle";
 import { usePortfolio } from "@/lib/portfolio-context";
 import { useDisplayCurrency } from "@/lib/currency-context";
-import { getAllocationByType } from "@/lib/services/portfolio-service";
+import { getAllocationByCategory } from "@/lib/services/portfolio-service";
 
 export default function DashboardPage() {
   const { assets, snapshots, summary, isLoading } = usePortfolio();
   const { usdKrw } = useDisplayCurrency();
-  const allocation = getAllocationByType(assets, usdKrw);
+  const allocation = getAllocationByCategory(assets, usdKrw);
 
   if (isLoading) {
     return <p className="py-24 text-center text-sm text-gray-400 dark:text-gray-500">불러오는 중...</p>;
