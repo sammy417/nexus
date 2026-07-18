@@ -6,11 +6,13 @@ import { useAssetModal } from "@/lib/asset-modal-context";
 import { AssetInput, usePortfolio } from "@/lib/portfolio-context";
 import { ASSET_TYPE_LABEL, ASSET_TYPES } from "@/lib/models/asset-types";
 import { Asset, AssetType } from "@/lib/models/asset";
+import { formatKRW } from "@/lib/format";
 
 const inputClass =
   "rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-300 focus:ring-2 focus:ring-gray-900/10 dark:bg-white/5 dark:text-gray-100 dark:placeholder:text-gray-600 dark:focus:ring-white/10";
 const labelClass = "flex flex-col gap-1.5";
 const labelTextClass = "text-xs font-medium text-gray-500 dark:text-gray-400";
+const hintTextClass = "text-[11px] leading-relaxed text-gray-400 dark:text-gray-500";
 
 export default function AssetFormModal() {
   const { isOpen, editingAsset, closeModal } = useAssetModal();
@@ -28,6 +30,29 @@ export default function AssetFormModal() {
       <AssetFormSheet key={editingAsset?.id ?? "new"} editingAsset={editingAsset} />
     </div>
   );
+}
+
+/** Positive number from a text field; undefined when empty, null when invalid. */
+function parseOptionalPositive(raw: string): number | undefined | null {
+  const trimmed = raw.trim();
+  if (trimmed === "") return undefined;
+  const value = Number(trimmed);
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
+async function fetchQuotePrice(ticker: string, market: string): Promise<number> {
+  const params = new URLSearchParams({ ticker });
+  if (market) params.set("market", market);
+  const response = await fetch(`/api/quote?${params.toString()}`);
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.error ?? `Quote request failed: ${response.status}`);
+  }
+  const data = await response.json();
+  if (typeof data.price !== "number" || data.price <= 0) {
+    throw new Error("Quote returned no usable price");
+  }
+  return data.price;
 }
 
 function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
@@ -49,9 +74,6 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
   const [avgPrice, setAvgPrice] = useState(
     editingAsset?.type === "STOCK" ? String(editingAsset.avgPrice) : ""
   );
-  const [currentPrice, setCurrentPrice] = useState(
-    editingAsset?.type === "STOCK" ? String(editingAsset.currentPrice) : ""
-  );
   const [balance, setBalance] = useState(
     editingAsset?.type === "CASH" ? String(editingAsset.balance) : ""
   );
@@ -72,65 +94,96 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function buildInput(): AssetInput | null {
+  /**
+   * Resolve the final input, fetching the live price for stocks.
+   * 현재가 is never typed in: ticker lookup → 평단가 → (editing) stored
+   * price, in that order. Returns an error string when unresolvable.
+   */
+  async function resolveInput(): Promise<AssetInput | string> {
     const trimmedName = name.trim();
-    if (!trimmedName) return null;
+    if (!trimmedName) return "이름을 입력해 주세요.";
 
     if (type === "STOCK") {
-      const q = Number(quantity);
-      const avg = Number(avgPrice);
-      const cur = Number(currentPrice);
-      if (q <= 0 || avg <= 0 || cur <= 0) return null;
+      const q = parseOptionalPositive(quantity);
+      if (q === undefined || q === null) return "보유 수량을 올바르게 입력해 주세요.";
+      const avg = parseOptionalPositive(avgPrice);
+      if (avg === null) return "평단가를 올바르게 입력해 주세요.";
+
+      const trimmedTicker = ticker.trim();
+      let quoted: number | undefined;
+      let quoteFailed = false;
+      if (trimmedTicker) {
+        try {
+          quoted = await fetchQuotePrice(trimmedTicker, market.trim());
+        } catch {
+          quoteFailed = true;
+        }
+      }
+
+      const storedPrice =
+        isEditing && editingAsset?.type === "STOCK" ? editingAsset.currentPrice : undefined;
+      const current = quoted ?? avg ?? storedPrice;
+      if (current === undefined) {
+        return trimmedTicker
+          ? "현재가 조회에 실패했습니다. 티커를 확인하거나 평단가를 입력해 주세요."
+          : "티커(현재가 자동 조회) 또는 평단가 중 하나는 입력해 주세요.";
+      }
+      if (quoteFailed && (avg !== undefined || storedPrice !== undefined)) {
+        showToast("현재가 조회에 실패해 입력된 값으로 대신 계산했습니다.");
+      }
+
       return {
         type: "STOCK",
         name: trimmedName,
         market: market.trim() || undefined,
-        ticker: ticker.trim() || undefined,
+        ticker: trimmedTicker || undefined,
         quantity: q,
-        avgPrice: avg,
-        currentPrice: cur,
+        avgPrice: avg ?? current,
+        currentPrice: current,
       };
     }
 
     if (type === "BOND") {
-      const pp = Number(purchasePrice);
-      const cv = Number(currentValue);
-      if (pp <= 0 || cv <= 0) return null;
+      const pp = parseOptionalPositive(purchasePrice);
+      if (pp === undefined || pp === null) return "매입 금액을 올바르게 입력해 주세요.";
+      const cv = parseOptionalPositive(currentValue);
+      if (cv === null) return "현재 평가 금액을 올바르게 입력해 주세요.";
       const rate = couponRate.trim() === "" ? undefined : Number(couponRate);
-      if (rate !== undefined && (Number.isNaN(rate) || rate < 0)) return null;
+      if (rate !== undefined && (Number.isNaN(rate) || rate < 0))
+        return "표면금리를 올바르게 입력해 주세요.";
       return {
         type: "BOND",
         name: trimmedName,
         purchasePrice: pp,
-        currentValue: cv,
+        currentValue: cv ?? pp,
         couponRate: rate,
         maturityDate: maturityDate || undefined,
       };
     }
 
-    const amt = Number(balance);
-    if (amt <= 0) return null;
+    const amt = parseOptionalPositive(balance);
+    if (amt === undefined || amt === null) return "금액을 올바르게 입력해 주세요.";
     return { type: "CASH", name: trimmedName, balance: amt };
   }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
-
-    const input = buildInput();
-    if (!input) {
-      setError("모든 항목을 올바르게 입력해 주세요.");
-      return;
-    }
-
     setIsSubmitting(true);
+
     try {
+      const resolved = await resolveInput();
+      if (typeof resolved === "string") {
+        setError(resolved);
+        return;
+      }
+
       if (isEditing && editingAsset) {
-        await updateAsset(editingAsset.id, input);
-        showToast(`${input.name} 정보가 수정되었습니다.`);
+        await updateAsset(editingAsset.id, resolved);
+        showToast(`${resolved.name} 정보가 수정되었습니다.`);
       } else {
-        await addAsset(input);
-        showToast(`${input.name} 자산이 추가되었습니다.`);
+        await addAsset(resolved);
+        showToast(`${resolved.name} 자산이 추가되었습니다.`);
       }
       closeModal();
     } catch (err) {
@@ -207,28 +260,6 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
           <>
             <div className="grid grid-cols-2 gap-3">
               <label className={labelClass}>
-                <span className={labelTextClass}>시장 (선택)</span>
-                <input
-                  type="text"
-                  value={market}
-                  onChange={(event) => setMarket(event.target.value)}
-                  placeholder="예: KRX"
-                  className={inputClass}
-                />
-              </label>
-              <label className={labelClass}>
-                <span className={labelTextClass}>티커 (선택)</span>
-                <input
-                  type="text"
-                  value={ticker}
-                  onChange={(event) => setTicker(event.target.value)}
-                  placeholder="예: 005930"
-                  className={inputClass}
-                />
-              </label>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <label className={labelClass}>
                 <span className={labelTextClass}>보유 수량</span>
                 <input
                   type="number"
@@ -242,7 +273,29 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
                 />
               </label>
               <label className={labelClass}>
-                <span className={labelTextClass}>평단가</span>
+                <span className={labelTextClass}>티커 (선택)</span>
+                <input
+                  type="text"
+                  value={ticker}
+                  onChange={(event) => setTicker(event.target.value)}
+                  placeholder="예: 005930, AAPL"
+                  className={inputClass}
+                />
+              </label>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <label className={labelClass}>
+                <span className={labelTextClass}>시장 (선택)</span>
+                <input
+                  type="text"
+                  value={market}
+                  onChange={(event) => setMarket(event.target.value)}
+                  placeholder="예: KOSPI, KOSDAQ, NASDAQ"
+                  className={inputClass}
+                />
+              </label>
+              <label className={labelClass}>
+                <span className={labelTextClass}>평단가 (선택)</span>
                 <input
                   type="number"
                   inputMode="decimal"
@@ -250,24 +303,18 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
                   value={avgPrice}
                   onChange={(event) => setAvgPrice(event.target.value)}
                   placeholder="0"
-                  required
                   className={inputClass}
                 />
               </label>
             </div>
-            <label className={labelClass}>
-              <span className={labelTextClass}>현재가</span>
-              <input
-                type="number"
-                inputMode="decimal"
-                min="0"
-                value={currentPrice}
-                onChange={(event) => setCurrentPrice(event.target.value)}
-                placeholder="0"
-                required
-                className={inputClass}
-              />
-            </label>
+            <p className={hintTextClass}>
+              현재가는 입력하지 않습니다 — 저장 시 티커로 자동 조회됩니다 (국내 6자리 코드·미국
+              티커 지원, 미국 주식은 원화 환산). 티커가 없거나 조회에 실패하면 평단가
+              {isEditing ? "·기존 현재가" : ""}로 대신 계산합니다.
+              {isEditing && editingAsset?.type === "STOCK" && (
+                <> 현재 저장된 현재가: {formatKRW(editingAsset.currentPrice)}</>
+              )}
+            </p>
           </>
         )}
 
@@ -288,15 +335,14 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
                 />
               </label>
               <label className={labelClass}>
-                <span className={labelTextClass}>현재 평가 금액</span>
+                <span className={labelTextClass}>현재 평가 금액 (선택)</span>
                 <input
                   type="number"
                   inputMode="numeric"
                   min="0"
                   value={currentValue}
                   onChange={(event) => setCurrentValue(event.target.value)}
-                  placeholder="0"
-                  required
+                  placeholder="미입력 시 매입 금액과 동일"
                   className={inputClass}
                 />
               </label>
@@ -362,7 +408,13 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
             disabled={isSubmitting}
             className="flex-1 rounded-xl bg-gray-900 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800 disabled:opacity-60 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
           >
-            {isEditing ? "수정하기" : "추가하기"}
+            {isSubmitting
+              ? type === "STOCK"
+                ? "현재가 조회 중..."
+                : "저장 중..."
+              : isEditing
+                ? "수정하기"
+                : "추가하기"}
           </button>
         </div>
       </form>
