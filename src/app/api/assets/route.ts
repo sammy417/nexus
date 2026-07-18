@@ -1,0 +1,17 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getAssetRepository } from "@/lib/repositories";
+import { isValidAssetInput } from "@/lib/models/validate-asset-input";
+
+export async function GET() {
+  const assets = await getAssetRepository().list();
+  return NextResponse.json(assets);
+}
+
+export async function POST(request: NextRequest) {
+  const body = await request.json().catch(() => null);
+  if (!isValidAssetInput(body)) {
+    return NextResponse.json({ error: "Invalid asset payload" }, { status: 400 });
+  }
+  const asset = await getAssetRepository().create(body);
+  return NextResponse.json(asset, { status: 201 });
+}
