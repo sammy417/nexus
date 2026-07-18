@@ -6,6 +6,13 @@ export function isValidAssetInput(value: unknown): value is AssetInput {
   const input = value as Record<string, unknown>;
 
   if (typeof input.name !== "string" || input.name.trim().length === 0) return false;
+  if (
+    input.currency !== undefined &&
+    input.currency !== "KRW" &&
+    input.currency !== "USD"
+  ) {
+    return false;
+  }
 
   if (input.type === "CASH") {
     return typeof input.balance === "number" && Number.isFinite(input.balance);
@@ -25,6 +32,16 @@ export function isValidAssetInput(value: unknown): value is AssetInput {
   if (input.type === "BOND") {
     if (input.couponRate !== undefined && typeof input.couponRate !== "number") return false;
     if (input.maturityDate !== undefined && typeof input.maturityDate !== "string") return false;
+    return (
+      typeof input.purchasePrice === "number" &&
+      typeof input.currentValue === "number" &&
+      Number.isFinite(input.purchasePrice) &&
+      Number.isFinite(input.currentValue)
+    );
+  }
+
+  if (input.type === "CUSTOM") {
+    if (input.category !== undefined && typeof input.category !== "string") return false;
     return (
       typeof input.purchasePrice === "number" &&
       typeof input.currentValue === "number" &&

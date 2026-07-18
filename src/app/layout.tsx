@@ -4,6 +4,7 @@ import Sidebar from "@/components/layout/Sidebar";
 import AssetFormModal from "@/components/asset/AssetFormModal";
 import Toast from "@/components/common/Toast";
 import { AssetModalProvider } from "@/lib/asset-modal-context";
+import { CurrencyProvider } from "@/lib/currency-context";
 import { PortfolioProvider } from "@/lib/portfolio-context";
 import { THEME_INIT_SCRIPT, ThemeProvider } from "@/lib/theme-provider";
 
@@ -24,7 +25,8 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased">
         <ThemeProvider>
-          <PortfolioProvider>
+          <CurrencyProvider>
+            <PortfolioProvider>
             <AssetModalProvider>
               <div className="flex min-h-dvh bg-surface text-gray-900 dark:bg-surface-dark dark:text-gray-100">
                 <Sidebar />
@@ -35,7 +37,8 @@ export default function RootLayout({
               <AssetFormModal />
               <Toast />
             </AssetModalProvider>
-          </PortfolioProvider>
+            </PortfolioProvider>
+          </CurrencyProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -5,7 +5,7 @@ import { Trash2, X } from "lucide-react";
 import { useAssetModal } from "@/lib/asset-modal-context";
 import { AssetInput, usePortfolio } from "@/lib/portfolio-context";
 import { ASSET_TYPE_LABEL, ASSET_TYPES } from "@/lib/models/asset-types";
-import { Asset, AssetType } from "@/lib/models/asset";
+import { Asset, AssetType, Currency } from "@/lib/models/asset";
 import { formatKRW } from "@/lib/format";
 
 const inputClass =
@@ -40,7 +40,12 @@ function parseOptionalPositive(raw: string): number | undefined | null {
   return Number.isFinite(value) && value > 0 ? value : null;
 }
 
-async function fetchQuotePrice(ticker: string, market: string): Promise<number> {
+/** Quote in the currency the asset is denominated in. */
+async function fetchQuotePrice(
+  ticker: string,
+  market: string,
+  currency: Currency
+): Promise<number> {
   const params = new URLSearchParams({ ticker });
   if (market) params.set("market", market);
   const response = await fetch(`/api/quote?${params.toString()}`);
@@ -49,10 +54,16 @@ async function fetchQuotePrice(ticker: string, market: string): Promise<number> 
     throw new Error(body?.error ?? `Quote request failed: ${response.status}`);
   }
   const data = await response.json();
-  if (typeof data.price !== "number" || data.price <= 0) {
+  if (
+    typeof data.price !== "number" ||
+    data.price <= 0 ||
+    typeof data.priceKrw !== "number" ||
+    typeof data.usdKrw !== "number"
+  ) {
     throw new Error("Quote returned no usable price");
   }
-  return data.price;
+  if (currency === "KRW") return data.priceKrw;
+  return data.currency === "USD" ? data.price : data.priceKrw / data.usdKrw;
 }
 
 function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
@@ -61,7 +72,11 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
   const isEditing = editingAsset !== null;
 
   const [type, setType] = useState<AssetType>(editingAsset?.type ?? "STOCK");
+  const [currency, setCurrency] = useState<Currency>(editingAsset?.currency ?? "KRW");
   const [name, setName] = useState(editingAsset?.name ?? "");
+  const [category, setCategory] = useState(
+    editingAsset?.type === "CUSTOM" ? editingAsset.category ?? "" : ""
+  );
   const [market, setMarket] = useState(
     editingAsset?.type === "STOCK" ? editingAsset.market ?? "" : ""
   );
@@ -78,10 +93,14 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
     editingAsset?.type === "CASH" ? String(editingAsset.balance) : ""
   );
   const [purchasePrice, setPurchasePrice] = useState(
-    editingAsset?.type === "BOND" ? String(editingAsset.purchasePrice) : ""
+    editingAsset?.type === "BOND" || editingAsset?.type === "CUSTOM"
+      ? String(editingAsset.purchasePrice)
+      : ""
   );
   const [currentValue, setCurrentValue] = useState(
-    editingAsset?.type === "BOND" ? String(editingAsset.currentValue) : ""
+    editingAsset?.type === "BOND" || editingAsset?.type === "CUSTOM"
+      ? String(editingAsset.currentValue)
+      : ""
   );
   const [couponRate, setCouponRate] = useState(
     editingAsset?.type === "BOND" && editingAsset.couponRate !== undefined
@@ -114,14 +133,16 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
       let quoteFailed = false;
       if (trimmedTicker) {
         try {
-          quoted = await fetchQuotePrice(trimmedTicker, market.trim());
+          quoted = await fetchQuotePrice(trimmedTicker, market.trim(), currency);
         } catch {
           quoteFailed = true;
         }
       }
 
       const storedPrice =
-        isEditing && editingAsset?.type === "STOCK" ? editingAsset.currentPrice : undefined;
+        isEditing && editingAsset?.type === "STOCK" && (editingAsset.currency ?? "KRW") === currency
+          ? editingAsset.currentPrice
+          : undefined;
       const current = quoted ?? avg ?? storedPrice;
       if (current === undefined) {
         return trimmedTicker
@@ -135,6 +156,7 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
       return {
         type: "STOCK",
         name: trimmedName,
+        currency,
         market: market.trim() || undefined,
         ticker: trimmedTicker || undefined,
         quantity: q,
@@ -154,6 +176,7 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
       return {
         type: "BOND",
         name: trimmedName,
+        currency,
         purchasePrice: pp,
         currentValue: cv ?? pp,
         couponRate: rate,
@@ -161,9 +184,24 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
       };
     }
 
+    if (type === "CUSTOM") {
+      const pp = parseOptionalPositive(purchasePrice);
+      if (pp === undefined || pp === null) return "매입 금액을 올바르게 입력해 주세요.";
+      const cv = parseOptionalPositive(currentValue);
+      if (cv === null) return "현재 평가 금액을 올바르게 입력해 주세요.";
+      return {
+        type: "CUSTOM",
+        name: trimmedName,
+        currency,
+        category: category.trim() || undefined,
+        purchasePrice: pp,
+        currentValue: cv ?? pp,
+      };
+    }
+
     const amt = parseOptionalPositive(balance);
     if (amt === undefined || amt === null) return "금액을 올바르게 입력해 주세요.";
-    return { type: "CASH", name: trimmedName, balance: amt };
+    return { type: "CASH", name: trimmedName, currency, balance: amt };
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -220,7 +258,7 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
       </div>
 
       <form onSubmit={handleSubmit} className="mt-5 flex max-h-[70vh] flex-col gap-4 overflow-y-auto">
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-4 gap-2">
           {ASSET_TYPES.map((t) => (
             <button
               key={t}
@@ -238,6 +276,26 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
           ))}
         </div>
 
+        <div className="flex items-center justify-between">
+          <span className={labelTextClass}>표시 금액 통화</span>
+          <div className="flex gap-1 rounded-lg bg-gray-50 p-0.5 dark:bg-white/5">
+            {(["KRW", "USD"] as Currency[]).map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setCurrency(c)}
+                className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
+                  currency === c
+                    ? "bg-white text-gray-900 shadow-sm dark:bg-white/15 dark:text-gray-100"
+                    : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                }`}
+              >
+                {c === "KRW" ? "₩ 원화" : "$ 달러"}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <label className={labelClass}>
           <span className={labelTextClass}>{type === "STOCK" ? "종목명" : "자산명"}</span>
           <input
@@ -249,12 +307,27 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
                 ? "예: 삼성전자"
                 : type === "BOND"
                   ? "예: 국고채 3년"
-                  : "예: 입출금 통장"
+                  : type === "CUSTOM"
+                    ? "예: 자가 아파트, 금 현물"
+                    : "예: 입출금 통장"
             }
             required
             className={inputClass}
           />
         </label>
+
+        {type === "CUSTOM" && (
+          <label className={labelClass}>
+            <span className={labelTextClass}>카테고리 (선택)</span>
+            <input
+              type="text"
+              value={category}
+              onChange={(event) => setCategory(event.target.value)}
+              placeholder="예: 부동산, 금, 암호화폐"
+              className={inputClass}
+            />
+          </label>
+        )}
 
         {type === "STOCK" && (
           <>
@@ -308,45 +381,53 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
               </label>
             </div>
             <p className={hintTextClass}>
-              현재가는 입력하지 않습니다 — 저장 시 티커로 자동 조회됩니다 (국내 6자리 코드·미국
-              티커 지원, 미국 주식은 원화 환산). 티커가 없거나 조회에 실패하면 평단가
+              현재가는 입력하지 않습니다 — 저장 시 티커로 자동 조회해 선택한 통화로 저장합니다
+              (국내 6자리 코드·미국 티커 지원). 티커가 없거나 조회에 실패하면 평단가
               {isEditing ? "·기존 현재가" : ""}로 대신 계산합니다.
               {isEditing && editingAsset?.type === "STOCK" && (
-                <> 현재 저장된 현재가: {formatKRW(editingAsset.currentPrice)}</>
+                <>
+                  {" "}현재 저장된 현재가:{" "}
+                  {(editingAsset.currency ?? "KRW") === "USD"
+                    ? `$${editingAsset.currentPrice.toLocaleString("en-US")}`
+                    : formatKRW(editingAsset.currentPrice)}
+                </>
               )}
             </p>
           </>
         )}
 
+        {(type === "BOND" || type === "CUSTOM") && (
+          <div className="grid grid-cols-2 gap-3">
+            <label className={labelClass}>
+              <span className={labelTextClass}>매입 금액</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min="0"
+                value={purchasePrice}
+                onChange={(event) => setPurchasePrice(event.target.value)}
+                placeholder="0"
+                required
+                className={inputClass}
+              />
+            </label>
+            <label className={labelClass}>
+              <span className={labelTextClass}>현재 평가 금액 (선택)</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min="0"
+                value={currentValue}
+                onChange={(event) => setCurrentValue(event.target.value)}
+                placeholder="미입력 시 매입 금액과 동일"
+                className={inputClass}
+              />
+            </label>
+          </div>
+        )}
+
         {type === "BOND" && (
           <>
-            <div className="grid grid-cols-2 gap-3">
-              <label className={labelClass}>
-                <span className={labelTextClass}>매입 금액</span>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min="0"
-                  value={purchasePrice}
-                  onChange={(event) => setPurchasePrice(event.target.value)}
-                  placeholder="0"
-                  required
-                  className={inputClass}
-                />
-              </label>
-              <label className={labelClass}>
-                <span className={labelTextClass}>현재 평가 금액 (선택)</span>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min="0"
-                  value={currentValue}
-                  onChange={(event) => setCurrentValue(event.target.value)}
-                  placeholder="미입력 시 매입 금액과 동일"
-                  className={inputClass}
-                />
-              </label>
-            </div>
             <div className="grid grid-cols-2 gap-3">
               <label className={labelClass}>
                 <span className={labelTextClass}>표면금리 % (선택)</span>

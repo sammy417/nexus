@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PortfolioSnapshot } from "@/lib/models/snapshot";
-import { formatCompactKRW, formatKRW, formatPercent, formatSigned } from "@/lib/format";
+import { formatCompactMoney, formatMoney, formatPercent, formatSignedMoney } from "@/lib/format";
+import { useDisplayCurrency } from "@/lib/currency-context";
 
 const LINE_COLOR = "#3182F6";
 const MARGIN = { top: 12, right: 12, bottom: 28, left: 56 };
@@ -43,6 +44,7 @@ function formatFullDate(date: string): string {
 }
 
 export default function TrendChart({ snapshots }: { snapshots: PortfolioSnapshot[] }) {
+  const { displayCurrency, usdKrw } = useDisplayCurrency();
   const [range, setRange] = useState<RangeKey>("1M");
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -153,7 +155,7 @@ export default function TrendChart({ snapshots }: { snapshots: PortfolioSnapshot
                 rangeSummary.diff >= 0 ? "text-rise" : "text-fall"
               }`}
             >
-              {formatSigned(rangeSummary.diff)} ({formatPercent(rangeSummary.rate)})
+              {formatSignedMoney(rangeSummary.diff, displayCurrency, usdKrw)} ({formatPercent(rangeSummary.rate)})
               <span className="ml-1 text-gray-400 dark:text-gray-500">
                 · {RANGES.find((r) => r.key === range)!.label}
               </span>
@@ -216,7 +218,7 @@ export default function TrendChart({ snapshots }: { snapshots: PortfolioSnapshot
                     dominantBaseline="middle"
                     className="fill-gray-400 text-[11px] [font-variant-numeric:tabular-nums] dark:fill-gray-500"
                   >
-                    {formatCompactKRW(tick)}
+                    {formatCompactMoney(tick, displayCurrency, usdKrw)}
                   </text>
                 </g>
               ))}
@@ -283,7 +285,7 @@ export default function TrendChart({ snapshots }: { snapshots: PortfolioSnapshot
                     className="inline-block h-0.5 w-3 rounded-full"
                     style={{ backgroundColor: LINE_COLOR }}
                   />
-                  {formatKRW(hovered.totalValuation)}
+                  {formatMoney(hovered.totalValuation, displayCurrency, usdKrw)}
                 </p>
                 {hoveredDelta !== null && (
                   <p
@@ -291,7 +293,7 @@ export default function TrendChart({ snapshots }: { snapshots: PortfolioSnapshot
                       hoveredDelta >= 0 ? "text-rise" : "text-fall"
                     }`}
                   >
-                    전일 대비 {formatSigned(hoveredDelta)}
+                    전일 대비 {formatSignedMoney(hoveredDelta, displayCurrency, usdKrw)}
                   </p>
                 )}
               </div>
@@ -319,10 +321,10 @@ export default function TrendChart({ snapshots }: { snapshots: PortfolioSnapshot
                   <tr key={snapshot.date}>
                     <td className="px-3 py-1.5 text-gray-500 dark:text-gray-400">{snapshot.date}</td>
                     <td className="px-3 py-1.5 text-right text-gray-700 dark:text-gray-300">
-                      {formatKRW(snapshot.totalValuation)}
+                      {formatMoney(snapshot.totalValuation, displayCurrency, usdKrw)}
                     </td>
                     <td className="px-3 py-1.5 text-right text-gray-700 dark:text-gray-300">
-                      {formatKRW(snapshot.totalPrincipal)}
+                      {formatMoney(snapshot.totalPrincipal, displayCurrency, usdKrw)}
                     </td>
                   </tr>
                 ))}

@@ -4,16 +4,33 @@ import { Pencil, Trash2 } from "lucide-react";
 import { getAssetMetrics } from "@/lib/services/portfolio-service";
 import { useAssetModal } from "@/lib/asset-modal-context";
 import { usePortfolio } from "@/lib/portfolio-context";
-import { formatKRW, formatPercent, formatSigned } from "@/lib/format";
+import { useDisplayCurrency } from "@/lib/currency-context";
+import { formatMoney, formatPercent, formatSignedMoney } from "@/lib/format";
 import { ASSET_TYPE_LABEL } from "@/lib/models/asset-types";
 import { Asset } from "@/lib/models/asset";
 
 const headerCellClass =
   "px-4 py-3 text-xs font-medium text-gray-400 dark:text-gray-500";
 
+function subLine(asset: Asset): string | null {
+  if (asset.type === "STOCK") {
+    const parts = [asset.market, asset.ticker].filter(Boolean);
+    return parts.length > 0 ? parts.join(" · ") : null;
+  }
+  if (asset.type === "BOND") {
+    const parts = [
+      asset.couponRate !== undefined ? `표면 ${asset.couponRate}%` : null,
+      asset.maturityDate ? `만기 ${asset.maturityDate}` : null,
+    ].filter(Boolean);
+    return parts.length > 0 ? parts.join(" · ") : null;
+  }
+  return null;
+}
+
 export default function AssetTable({ assets }: { assets: Asset[] }) {
   const { openEditModal, showToast } = useAssetModal();
   const { deleteAsset } = usePortfolio();
+  const { displayCurrency, usdKrw } = useDisplayCurrency();
 
   async function handleDelete(asset: Asset) {
     const confirmed = window.confirm(`${asset.name} 자산을 삭제할까요?`);
@@ -44,8 +61,9 @@ export default function AssetTable({ assets }: { assets: Asset[] }) {
         </thead>
         <tbody className="divide-y divide-gray-50 dark:divide-white/5">
           {assets.map((asset) => {
-            const { principal, valuation, profit, profitRate } = getAssetMetrics(asset);
+            const { principal, valuation, profit, profitRate } = getAssetMetrics(asset, usdKrw);
             const isProfit = profit >= 0;
+            const sub = subLine(asset);
 
             return (
               <tr
@@ -54,41 +72,38 @@ export default function AssetTable({ assets }: { assets: Asset[] }) {
                 className="group cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-white/5"
               >
                 <td className="px-4 py-3.5">
-                  <p className="font-medium text-gray-900 dark:text-gray-100">{asset.name}</p>
-                  {asset.type === "STOCK" && (asset.market || asset.ticker) && (
-                    <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
-                      {[asset.market, asset.ticker].filter(Boolean).join(" · ")}
-                    </p>
-                  )}
-                  {asset.type === "BOND" && (asset.couponRate !== undefined || asset.maturityDate) && (
-                    <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
-                      {[
-                        asset.couponRate !== undefined ? `표면 ${asset.couponRate}%` : null,
-                        asset.maturityDate ? `만기 ${asset.maturityDate}` : null,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">
+                    {asset.name}
+                    {asset.currency === "USD" && (
+                      <span className="ml-1.5 rounded bg-gray-100 px-1 py-0.5 text-[10px] font-semibold text-gray-500 dark:bg-white/10 dark:text-gray-400">
+                        USD
+                      </span>
+                    )}
+                  </p>
+                  {sub && (
+                    <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">{sub}</p>
                   )}
                 </td>
                 <td className="px-4 py-3.5 text-gray-500 dark:text-gray-400">
-                  {ASSET_TYPE_LABEL[asset.type]}
+                  {asset.type === "CUSTOM" && asset.category
+                    ? asset.category
+                    : ASSET_TYPE_LABEL[asset.type]}
                 </td>
                 <td className="px-4 py-3.5 text-right text-gray-700 dark:text-gray-300">
                   {asset.type === "STOCK" ? `${asset.quantity.toLocaleString("ko-KR")}주` : "-"}
                 </td>
                 <td className="px-4 py-3.5 text-right text-gray-700 dark:text-gray-300">
-                  {formatKRW(principal)}
+                  {formatMoney(principal, displayCurrency, usdKrw)}
                 </td>
                 <td className="px-4 py-3.5 text-right font-medium text-gray-900 dark:text-gray-100">
-                  {formatKRW(valuation)}
+                  {formatMoney(valuation, displayCurrency, usdKrw)}
                 </td>
                 <td className="px-4 py-3.5 text-right">
                   {asset.type === "CASH" ? (
                     <span className="text-gray-400 dark:text-gray-500">-</span>
                   ) : (
                     <span className={`font-medium ${isProfit ? "text-rise" : "text-fall"}`}>
-                      {formatSigned(profit)} ({formatPercent(profitRate)})
+                      {formatSignedMoney(profit, displayCurrency, usdKrw)} ({formatPercent(profitRate)})
                     </span>
                   )}
                 </td>

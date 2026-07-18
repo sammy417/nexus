@@ -1,13 +1,17 @@
+"use client";
+
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { getAssetMetrics } from "@/lib/services/portfolio-service";
-import { formatKRW, formatPercent } from "@/lib/format";
+import { formatMoney, formatPercent } from "@/lib/format";
 import { ASSET_TYPE_LABEL } from "@/lib/models/asset-types";
 import { Asset } from "@/lib/models/asset";
+import { useDisplayCurrency } from "@/lib/currency-context";
 
 export default function AssetsPreview({ assets }: { assets: Asset[] }) {
+  const { displayCurrency, usdKrw } = useDisplayCurrency();
   const topAssets = [...assets]
-    .sort((a, b) => getAssetMetrics(b).valuation - getAssetMetrics(a).valuation)
+    .sort((a, b) => getAssetMetrics(b, usdKrw).valuation - getAssetMetrics(a, usdKrw).valuation)
     .slice(0, 5);
 
   return (
@@ -30,7 +34,7 @@ export default function AssetsPreview({ assets }: { assets: Asset[] }) {
       ) : (
         <ul className="mt-4 divide-y divide-gray-50 dark:divide-white/5">
           {topAssets.map((asset) => {
-            const { valuation, profitRate } = getAssetMetrics(asset);
+            const { valuation, profitRate } = getAssetMetrics(asset, usdKrw);
             const isProfit = profitRate >= 0;
 
             return (
@@ -38,12 +42,14 @@ export default function AssetsPreview({ assets }: { assets: Asset[] }) {
                 <div>
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{asset.name}</p>
                   <p className="text-xs text-gray-400 dark:text-gray-500">
-                    {ASSET_TYPE_LABEL[asset.type]}
+                    {asset.type === "CUSTOM" && asset.category
+                      ? asset.category
+                      : ASSET_TYPE_LABEL[asset.type]}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {formatKRW(valuation)}
+                    {formatMoney(valuation, displayCurrency, usdKrw)}
                   </p>
                   {asset.type !== "CASH" && (
                     <p className={`text-xs font-medium ${isProfit ? "text-rise" : "text-fall"}`}>

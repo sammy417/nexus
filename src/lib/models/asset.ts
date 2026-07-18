@@ -22,17 +22,21 @@
  * keyed by `type`, so no schema migration is needed either.
  */
 
-export type AssetType = "CASH" | "STOCK" | "BOND";
+export type AssetType = "CASH" | "STOCK" | "BOND" | "CUSTOM";
+
+export type Currency = "KRW" | "USD";
 
 /**
- * All amounts are in KRW for MVP (no multi-currency/FX conversion yet).
- * Multi-currency support is a natural later extension — it would add a
- * `currency` field here plus an FX-aware step in the portfolio service,
- * not a rearchitecture.
+ * Monetary fields on an asset are denominated in its `currency`
+ * (undefined = KRW, so pre-currency data needs no migration). Conversion
+ * to the KRW base happens at read time in the portfolio service using the
+ * live USDKRW rate — stored amounts are never rewritten by FX moves.
  */
 interface BaseAsset {
   id: string;
   name: string;
+  /** Denomination of this asset's monetary fields. undefined = KRW. */
+  currency?: Currency;
   memo?: string;
   createdAt: string;
   updatedAt: string;
@@ -66,10 +70,20 @@ export interface BondAsset extends BaseAsset {
   maturityDate?: string;
 }
 
-export type Asset = CashAsset | StockAsset | BondAsset;
+/** User-defined category (부동산, 금, 암호화폐, ...) — valued like a bond position. */
+export interface CustomAsset extends BaseAsset {
+  type: "CUSTOM";
+  /** Free-text category label shown in lists; falls back to "기타". */
+  category?: string;
+  purchasePrice: number;
+  currentValue: number;
+}
+
+export type Asset = CashAsset | StockAsset | BondAsset | CustomAsset;
 
 export type CashAssetInput = Omit<CashAsset, "id" | "createdAt" | "updatedAt">;
 export type StockAssetInput = Omit<StockAsset, "id" | "createdAt" | "updatedAt">;
 export type BondAssetInput = Omit<BondAsset, "id" | "createdAt" | "updatedAt">;
+export type CustomAssetInput = Omit<CustomAsset, "id" | "createdAt" | "updatedAt">;
 
-export type AssetInput = CashAssetInput | StockAssetInput | BondAssetInput;
+export type AssetInput = CashAssetInput | StockAssetInput | BondAssetInput | CustomAssetInput;

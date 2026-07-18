@@ -6,11 +6,11 @@ export function toDateKey(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
-/** Compute today's (or any date's) snapshot from the current asset list. */
-export function buildSnapshot(assets: Asset[], date: string): PortfolioSnapshot {
-  const summary = getPortfolioSummary(assets);
+/** Compute today's (or any date's) snapshot from the current asset list (KRW base). */
+export function buildSnapshot(assets: Asset[], date: string, usdKrw: number): PortfolioSnapshot {
+  const summary = getPortfolioSummary(assets, usdKrw);
   const byType: PortfolioSnapshot["byType"] = {};
-  for (const entry of getAllocationByType(assets)) {
+  for (const entry of getAllocationByType(assets, usdKrw)) {
     byType[entry.type] = entry.valuation;
   }
   return {
@@ -39,8 +39,12 @@ function mulberry32(seed: number): () => number {
  * Used to seed a fresh database so the trend chart has something to show;
  * real snapshots overwrite/append from then on.
  */
-export function generateSeedHistory(assets: Asset[], days: number): PortfolioSnapshot[] {
-  const today = buildSnapshot(assets, toDateKey(new Date()));
+export function generateSeedHistory(
+  assets: Asset[],
+  days: number,
+  usdKrw: number
+): PortfolioSnapshot[] {
+  const today = buildSnapshot(assets, toDateKey(new Date()), usdKrw);
   const rand = mulberry32(20260718);
 
   const snapshots: PortfolioSnapshot[] = [today];

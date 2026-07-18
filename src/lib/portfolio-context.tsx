@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useMemo } from "react";
 import { useAssets } from "@/lib/hooks/use-assets";
 import { useSnapshots } from "@/lib/hooks/use-snapshots";
+import { useDisplayCurrency } from "@/lib/currency-context";
 import { getPortfolioSummary, PortfolioSummary } from "@/lib/services/portfolio-service";
 import { Asset, AssetInput } from "@/lib/models/asset";
 import { PortfolioSnapshot } from "@/lib/models/snapshot";
@@ -26,7 +27,8 @@ const PortfolioContext = createContext<PortfolioContextValue | null>(null);
 export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const { assets, isLoading, error, addAsset, updateAsset, deleteAsset, resetAssets } = useAssets();
   const { snapshots, refresh: refreshSnapshots } = useSnapshots();
-  const summary = useMemo(() => getPortfolioSummary(assets), [assets]);
+  const { usdKrw } = useDisplayCurrency();
+  const summary = useMemo(() => getPortfolioSummary(assets, usdKrw), [assets, usdKrw]);
 
   // Every mutation moves today's snapshot server-side, so refresh the
   // history alongside the asset list to keep the chart's last point live.

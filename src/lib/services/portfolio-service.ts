@@ -1,5 +1,19 @@
-import { Asset, AssetType } from "@/lib/models/asset";
+import { Asset, AssetType, Currency } from "@/lib/models/asset";
 import { ASSET_TYPES } from "@/lib/models/asset-types";
+
+/**
+ * All metrics are computed in KRW. Assets denominated in USD are
+ * converted at read time with the given USDKRW rate, so valuations track
+ * both the market price and the exchange rate without rewriting stored
+ * amounts. Callers obtain the live rate from /api/fx (client) or
+ * fetchUsdKrwRate (server) — `DEFAULT_USD_KRW` is only the offline
+ * fallback.
+ */
+export const DEFAULT_USD_KRW = 1400;
+
+function toKrw(value: number, currency: Currency | undefined, usdKrw: number): number {
+  return currency === "USD" ? value * usdKrw : value;
+}
 
 export interface AssetMetrics {
   principal: number;
@@ -18,14 +32,17 @@ function assertNever(value: never): never {
   throw new Error(`Unhandled asset type: ${JSON.stringify(value)}`);
 }
 
-export function getAssetMetrics(asset: Asset): AssetMetrics {
+export function getAssetMetrics(asset: Asset, usdKrw: number): AssetMetrics {
+  const convert = (value: number) => toKrw(value, asset.currency, usdKrw);
   switch (asset.type) {
     case "STOCK":
-      return toMetrics(asset.avgPrice * asset.quantity, asset.currentPrice * asset.quantity);
+      return toMetrics(convert(asset.avgPrice * asset.quantity), convert(asset.currentPrice * asset.quantity));
     case "CASH":
-      return toMetrics(asset.balance, asset.balance);
+      return toMetrics(convert(asset.balance), convert(asset.balance));
     case "BOND":
-      return toMetrics(asset.purchasePrice, asset.currentValue);
+      return toMetrics(convert(asset.purchasePrice), convert(asset.currentValue));
+    case "CUSTOM":
+      return toMetrics(convert(asset.purchasePrice), convert(asset.currentValue));
     default:
       return assertNever(asset);
   }
@@ -38,10 +55,10 @@ export interface PortfolioSummary {
   totalProfitRate: number;
 }
 
-export function getPortfolioSummary(assets: Asset[]): PortfolioSummary {
+export function getPortfolioSummary(assets: Asset[], usdKrw: number): PortfolioSummary {
   const totals = assets.reduce(
     (acc, asset) => {
-      const { principal, valuation } = getAssetMetrics(asset);
+      const { principal, valuation } = getAssetMetrics(asset, usdKrw);
       acc.totalPrincipal += principal;
       acc.totalValuation += valuation;
       return acc;
@@ -67,13 +84,16 @@ export interface AllocationEntry {
   ratio: number;
 }
 
-export function getAllocationByType(assets: Asset[]): AllocationEntry[] {
-  const totalValuation = assets.reduce((sum, asset) => sum + getAssetMetrics(asset).valuation, 0);
+export function getAllocationByType(assets: Asset[], usdKrw: number): AllocationEntry[] {
+  const totalValuation = assets.reduce(
+    (sum, asset) => sum + getAssetMetrics(asset, usdKrw).valuation,
+    0
+  );
 
   return ASSET_TYPES.map((type) => {
     const valuation = assets
       .filter((asset) => asset.type === type)
-      .reduce((sum, asset) => sum + getAssetMetrics(asset).valuation, 0);
+      .reduce((sum, asset) => sum + getAssetMetrics(asset, usdKrw).valuation, 0);
     const ratio = totalValuation === 0 ? 0 : (valuation / totalValuation) * 100;
     return { type, valuation, ratio };
   }).filter((entry) => entry.valuation > 0);

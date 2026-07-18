@@ -75,25 +75,41 @@ async function fetchUpstreamQuote(symbol: string): Promise<UpstreamQuote> {
   return entry;
 }
 
+/** Current USDKRW rate (cached like any other quote). */
+export async function fetchUsdKrwRate(): Promise<number> {
+  const fx = await fetchUpstreamQuote("USDKRW=X");
+  return fx.price;
+}
+
 export interface QuoteResult {
-  /** Price converted to KRW (rounded to whole won). */
+  /** Price in the security's own trading currency. */
   price: number;
-  /** The upstream symbol that was queried, e.g. "005930.KS". */
-  symbol: string;
   /** Currency the security itself trades in, e.g. "USD". */
   currency: string;
+  /** Price converted to KRW (rounded to whole won). */
+  priceKrw: number;
+  /** USDKRW rate used for the conversion (also returned for KRW quotes). */
+  usdKrw: number;
+  /** The upstream symbol that was queried, e.g. "005930.KS". */
+  symbol: string;
 }
 
 export async function fetchQuoteKrw(ticker: string, market?: string): Promise<QuoteResult> {
   const symbol = toQuoteSymbol(ticker, market);
   const quote = await fetchUpstreamQuote(symbol);
+  const usdKrw = await fetchUsdKrwRate();
 
   if (quote.currency === "KRW") {
-    return { price: Math.round(quote.price), symbol, currency: quote.currency };
+    return { price: quote.price, currency: quote.currency, priceKrw: Math.round(quote.price), usdKrw, symbol };
   }
   if (quote.currency === "USD") {
-    const fx = await fetchUpstreamQuote("USDKRW=X");
-    return { price: Math.round(quote.price * fx.price), symbol, currency: quote.currency };
+    return {
+      price: quote.price,
+      currency: quote.currency,
+      priceKrw: Math.round(quote.price * usdKrw),
+      usdKrw,
+      symbol,
+    };
   }
   throw new Error(`Unsupported quote currency ${quote.currency} for ${symbol}`);
 }
