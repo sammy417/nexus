@@ -1,6 +1,6 @@
 # NEXUS
 
-개인 자산 포트폴리오 관리 웹 앱 MVP (Next.js App Router + TypeScript + Tailwind CSS). 현재는 주식·현금 자산의 보유 현황을 관리하며 (매수/매도 거래 기록이 아닌, 현재 상태를 직접 입력·수정하는 방식), 채권·연금(DC/IRP)·배당금 추적으로 확장 가능한 구조로 설계되어 있습니다. PC(데스크톱) 브라우저에 최적화된 사이드바 레이아웃과 토스(Toss) 스타일의 미니멀한 다크/라이트 모드를 지원합니다.
+개인 자산 포트폴리오 관리 웹 앱 MVP (Next.js App Router + TypeScript + Tailwind CSS). 현재는 주식·채권·현금 자산의 보유 현황을 관리하며 (매수/매도 거래 기록이 아닌, 현재 상태를 직접 입력·수정하는 방식), 연금(DC/IRP)·배당금 추적으로 확장 가능한 구조로 설계되어 있습니다. PC(데스크톱) 브라우저에 최적화된 사이드바 레이아웃과 토스(Toss) 스타일의 미니멀한 다크/라이트 모드를 지원합니다.
 
 ## 로컬 실행
 
@@ -59,15 +59,23 @@ src/
 
 ## 데이터 모델 — 자산 타입 확장하기
 
-모든 자산은 `src/lib/models/asset.ts`의 discriminated union `Asset = CashAsset | StockAsset`로 정의됩니다. 향후 채권(BOND)·연금(PENSION)·배당금(DIVIDEND) 등을 추가할 때 아래 순서만 따르면 됩니다:
+모든 자산은 `src/lib/models/asset.ts`의 discriminated union `Asset = CashAsset | StockAsset | BondAsset`로 정의됩니다. 채권(BOND)은 실제로 이 절차대로 추가해 설계를 검증했으며, 향후 연금(PENSION) 등을 추가할 때의 절차는 다음과 같습니다:
 
-1. `AssetType`에 새 타입 문자열 추가 (예: `"BOND"`)
-2. `BaseAsset`을 확장한 인터페이스 추가 (예: `BondAsset`)
-3. `Asset`·`AssetInput` 유니온에 추가
-4. `asset-types.ts`에 라벨 추가
-5. `portfolio-service.ts`의 `getAssetMetrics`에 case 추가 — TypeScript의 exhaustiveness 체크(`assertNever`)가 놓친 곳을 알려줍니다
+**컴파일러가 강제하는 단계** (빠뜨리면 `tsc`가 알려줌):
 
-**리포지토리·API·UI 코드는 자산 타입이 늘어나도 구조를 바꿀 필요가 없습니다.** SQLite/목업 리포지토리 둘 다 타입별 필드를 `payload` JSON으로 저장하므로 새 컬럼이나 마이그레이션이 필요 없습니다.
+1. `AssetType`에 새 타입 문자열 추가 (예: `"PENSION"`)
+2. `BaseAsset`을 확장한 인터페이스 추가 후 `Asset`·`AssetInput` 유니온에 포함
+3. `asset-types.ts`에 라벨·표시 순서 추가
+4. `portfolio-service.ts`의 `getAssetMetrics`에 case 추가 (`assertNever` exhaustiveness)
+5. `AllocationBreakdown.tsx`의 `CATEGORY_COLOR`에 색 추가 — 새 색은 dataviz 검증(라이트/다크 서페이스, 색각 이상 구분)을 통과시킬 것
+
+**컴파일러가 못 잡는 단계** (안전하게 실패하지만 조용히 빠짐 — 직접 챙길 것):
+
+6. `validate-asset-input.ts`에 런타임 검증 branch 추가 — 없으면 새 타입 생성 요청이 400으로 거부됨
+7. `AssetFormModal.tsx`에 입력 폼 필드 추가 — 없으면 UI에서 새 타입을 선택할 수 없음
+8. (선택) `seed-data.ts`에 데모 데이터 추가
+
+**리포지토리·API 코드는 자산 타입이 늘어나도 구조를 바꿀 필요가 없습니다.** SQLite/목업 리포지토리 둘 다 타입별 필드를 `payload` JSON으로 저장하므로 새 컬럼이나 마이그레이션이 필요 없습니다 (BOND 추가 시에도 마이그레이션 0건이었음). 히스토리 스냅샷의 타입별 구성(`byType`)도 자동으로 새 타입을 포함합니다.
 
 ## 데이터 계층 — SQLite / Mock 교체
 

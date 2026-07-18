@@ -3,8 +3,11 @@ import { formatKRW } from "@/lib/format";
 import { ASSET_TYPE_LABEL } from "@/lib/models/asset-types";
 import { AssetType } from "@/lib/models/asset";
 
+// Categorical palette validated for light/dark surfaces and CVD separation
+// in STOCK→BOND→CASH display order (see dataviz validator).
 const CATEGORY_COLOR: Record<AssetType, string> = {
   STOCK: "#2a78d6",
+  BOND: "#c98500",
   CASH: "#1baf7a",
 };
 

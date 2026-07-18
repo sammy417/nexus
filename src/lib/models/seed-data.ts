@@ -51,6 +51,22 @@ export const SEED_ASSETS: AssetInput[] = [
     currentPrice: 47300,
   },
   {
+    type: "BOND",
+    name: "국고채 3년 (KTB)",
+    purchasePrice: 9800000,
+    currentValue: 9930000,
+    couponRate: 3.25,
+    maturityDate: "2029-03-10",
+  },
+  {
+    type: "BOND",
+    name: "회사채 AA- (한전)",
+    purchasePrice: 5000000,
+    currentValue: 4915000,
+    couponRate: 4.1,
+    maturityDate: "2027-11-24",
+  },
+  {
     type: "CASH",
     name: "입출금 통장",
     balance: 8500000,

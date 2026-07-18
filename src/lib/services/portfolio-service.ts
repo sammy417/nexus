@@ -24,6 +24,8 @@ export function getAssetMetrics(asset: Asset): AssetMetrics {
       return toMetrics(asset.avgPrice * asset.quantity, asset.currentPrice * asset.quantity);
     case "CASH":
       return toMetrics(asset.balance, asset.balance);
+    case "BOND":
+      return toMetrics(asset.purchasePrice, asset.currentValue);
     default:
       return assertNever(asset);
   }

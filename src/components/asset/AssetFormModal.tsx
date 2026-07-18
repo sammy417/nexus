@@ -55,6 +55,20 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
   const [balance, setBalance] = useState(
     editingAsset?.type === "CASH" ? String(editingAsset.balance) : ""
   );
+  const [purchasePrice, setPurchasePrice] = useState(
+    editingAsset?.type === "BOND" ? String(editingAsset.purchasePrice) : ""
+  );
+  const [currentValue, setCurrentValue] = useState(
+    editingAsset?.type === "BOND" ? String(editingAsset.currentValue) : ""
+  );
+  const [couponRate, setCouponRate] = useState(
+    editingAsset?.type === "BOND" && editingAsset.couponRate !== undefined
+      ? String(editingAsset.couponRate)
+      : ""
+  );
+  const [maturityDate, setMaturityDate] = useState(
+    editingAsset?.type === "BOND" ? editingAsset.maturityDate ?? "" : ""
+  );
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -75,6 +89,22 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
         quantity: q,
         avgPrice: avg,
         currentPrice: cur,
+      };
+    }
+
+    if (type === "BOND") {
+      const pp = Number(purchasePrice);
+      const cv = Number(currentValue);
+      if (pp <= 0 || cv <= 0) return null;
+      const rate = couponRate.trim() === "" ? undefined : Number(couponRate);
+      if (rate !== undefined && (Number.isNaN(rate) || rate < 0)) return null;
+      return {
+        type: "BOND",
+        name: trimmedName,
+        purchasePrice: pp,
+        currentValue: cv,
+        couponRate: rate,
+        maturityDate: maturityDate || undefined,
       };
     }
 
@@ -136,7 +166,7 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
       </div>
 
       <form onSubmit={handleSubmit} className="mt-5 flex max-h-[70vh] flex-col gap-4 overflow-y-auto">
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {ASSET_TYPES.map((t) => (
             <button
               key={t}
@@ -160,7 +190,13 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
             type="text"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder={type === "STOCK" ? "예: 삼성전자" : "예: 입출금 통장"}
+            placeholder={
+              type === "STOCK"
+                ? "예: 삼성전자"
+                : type === "BOND"
+                  ? "예: 국고채 3년"
+                  : "예: 입출금 통장"
+            }
             required
             className={inputClass}
           />
@@ -231,6 +267,63 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
                 className={inputClass}
               />
             </label>
+          </>
+        )}
+
+        {type === "BOND" && (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <label className={labelClass}>
+                <span className={labelTextClass}>매입 금액</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  value={purchasePrice}
+                  onChange={(event) => setPurchasePrice(event.target.value)}
+                  placeholder="0"
+                  required
+                  className={inputClass}
+                />
+              </label>
+              <label className={labelClass}>
+                <span className={labelTextClass}>현재 평가 금액</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  value={currentValue}
+                  onChange={(event) => setCurrentValue(event.target.value)}
+                  placeholder="0"
+                  required
+                  className={inputClass}
+                />
+              </label>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <label className={labelClass}>
+                <span className={labelTextClass}>표면금리 % (선택)</span>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
+                  value={couponRate}
+                  onChange={(event) => setCouponRate(event.target.value)}
+                  placeholder="예: 3.25"
+                  className={inputClass}
+                />
+              </label>
+              <label className={labelClass}>
+                <span className={labelTextClass}>만기일 (선택)</span>
+                <input
+                  type="date"
+                  value={maturityDate}
+                  onChange={(event) => setMaturityDate(event.target.value)}
+                  className={`${inputClass} [color-scheme:light] dark:[color-scheme:dark]`}
+                />
+              </label>
+            </div>
           </>
         )}
 

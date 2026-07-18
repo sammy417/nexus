@@ -9,29 +9,29 @@ import { getAssetRepository, getSnapshotRepository } from "./index";
 
 const SEED_HISTORY_DAYS = 90;
 
-/** Record (or overwrite) today's snapshot from the current asset state. */
-export async function captureTodaySnapshot(): Promise<void> {
-  const assets = await getAssetRepository().list();
-  await getSnapshotRepository().upsert(buildSnapshot(assets, toDateKey(new Date())));
-}
-
 /**
- * Return the full history, seeding demo history first if the store is
- * empty, and always refreshing today's point so the chart ends at the
- * live portfolio value.
+ * Record (or overwrite) today's snapshot from the current asset state.
+ * On a completely empty history store this seeds the full demo history
+ * instead (which also ends at today's live value) — the check lives here,
+ * not in the list path, so it holds no matter whether the first-ever
+ * request is a read or an asset mutation.
  */
-export async function listSnapshotsWithToday(): Promise<PortfolioSnapshot[]> {
+export async function captureTodaySnapshot(): Promise<void> {
   const snapshotRepo = getSnapshotRepository();
   const assets = await getAssetRepository().list();
 
   const existing = await snapshotRepo.list();
   if (existing.length === 0) {
     await snapshotRepo.replaceAll(generateSeedHistory(assets, SEED_HISTORY_DAYS));
-  } else {
-    await snapshotRepo.upsert(buildSnapshot(assets, toDateKey(new Date())));
+    return;
   }
+  await snapshotRepo.upsert(buildSnapshot(assets, toDateKey(new Date())));
+}
 
-  return snapshotRepo.list();
+/** Full history, refreshing (or first-seeding) today's point first. */
+export async function listSnapshotsWithToday(): Promise<PortfolioSnapshot[]> {
+  await captureTodaySnapshot();
+  return getSnapshotRepository().list();
 }
 
 /** Dev convenience: wipe history and reseed demo data (used by /api/assets/reset). */

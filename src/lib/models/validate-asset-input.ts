@@ -22,5 +22,16 @@ export function isValidAssetInput(value: unknown): value is AssetInput {
     );
   }
 
+  if (input.type === "BOND") {
+    if (input.couponRate !== undefined && typeof input.couponRate !== "number") return false;
+    if (input.maturityDate !== undefined && typeof input.maturityDate !== "string") return false;
+    return (
+      typeof input.purchasePrice === "number" &&
+      typeof input.currentValue === "number" &&
+      Number.isFinite(input.purchasePrice) &&
+      Number.isFinite(input.currentValue)
+    );
+  }
+
   return false;
 }

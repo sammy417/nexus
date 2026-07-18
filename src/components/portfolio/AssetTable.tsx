@@ -43,6 +43,16 @@ export default function AssetTable({ assets }: { assets: Asset[] }) {
                       {[asset.market, asset.ticker].filter(Boolean).join(" · ")}
                     </p>
                   )}
+                  {asset.type === "BOND" && (asset.couponRate !== undefined || asset.maturityDate) && (
+                    <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+                      {[
+                        asset.couponRate !== undefined ? `표면 ${asset.couponRate}%` : null,
+                        asset.maturityDate ? `만기 ${asset.maturityDate}` : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  )}
                 </td>
                 <td className="px-4 py-3.5 text-gray-500 dark:text-gray-400">
                   {ASSET_TYPE_LABEL[asset.type]}
