@@ -46,6 +46,8 @@ export function getAssetMetrics(asset: Asset, usdKrw: number): AssetMetrics {
       return toMetrics(convert(asset.balance), convert(asset.balance));
     case "BOND":
       return toMetrics(convert(asset.purchasePrice), convert(asset.currentValue));
+    case "PENSION":
+      return toMetrics(convert(asset.principalPaid), convert(asset.currentValue));
     case "CUSTOM":
       return toMetrics(convert(asset.purchasePrice), convert(asset.currentValue));
     default:

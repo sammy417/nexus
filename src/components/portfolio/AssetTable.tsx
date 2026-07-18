@@ -71,6 +71,9 @@ function subLine(asset: Asset): string | null {
     ].filter(Boolean);
     return parts.length > 0 ? parts.join(" · ") : null;
   }
+  if (asset.type === "PENSION") {
+    return asset.accountType ?? null;
+  }
   return null;
 }
 

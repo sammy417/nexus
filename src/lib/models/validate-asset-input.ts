@@ -40,6 +40,16 @@ export function isValidAssetInput(value: unknown): value is AssetInput {
     );
   }
 
+  if (input.type === "PENSION") {
+    if (input.accountType !== undefined && typeof input.accountType !== "string") return false;
+    return (
+      typeof input.principalPaid === "number" &&
+      typeof input.currentValue === "number" &&
+      Number.isFinite(input.principalPaid) &&
+      Number.isFinite(input.currentValue)
+    );
+  }
+
   if (input.type === "CUSTOM") {
     if (input.category !== undefined && typeof input.category !== "string") return false;
     return (

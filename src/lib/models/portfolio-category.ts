@@ -7,13 +7,20 @@ import { ASSET_TYPE_LABEL } from "./asset-types";
  * out of the stored model — it's derived from market/ticker/currency, so
  * reclassification never needs a migration.
  */
-export type PortfolioCategory = "STOCK_KR" | "STOCK_FOREIGN" | "BOND" | "CASH" | "CUSTOM";
+export type PortfolioCategory =
+  | "STOCK_KR"
+  | "STOCK_FOREIGN"
+  | "BOND"
+  | "CASH"
+  | "PENSION"
+  | "CUSTOM";
 
 export const PORTFOLIO_CATEGORIES: PortfolioCategory[] = [
   "STOCK_KR",
   "STOCK_FOREIGN",
   "BOND",
   "CASH",
+  "PENSION",
   "CUSTOM",
 ];
 
@@ -22,6 +29,7 @@ export const PORTFOLIO_CATEGORY_LABEL: Record<PortfolioCategory, string> = {
   STOCK_FOREIGN: "해외주식",
   BOND: "채권",
   CASH: "현금",
+  PENSION: "연금",
   CUSTOM: "기타",
 };
 
@@ -35,6 +43,7 @@ export const PORTFOLIO_CATEGORY_COLOR: Record<PortfolioCategory, string> = {
   STOCK_FOREIGN: "#c9548a",
   BOND: "#c98500",
   CASH: "#1baf7a",
+  PENSION: "#b9722e",
   CUSTOM: "#8a63d2",
 };
 
@@ -55,6 +64,8 @@ export function getPortfolioCategory(asset: Asset): PortfolioCategory {
       return "BOND";
     case "CASH":
       return "CASH";
+    case "PENSION":
+      return "PENSION";
     case "CUSTOM":
       return "CUSTOM";
   }

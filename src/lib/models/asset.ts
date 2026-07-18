@@ -1,7 +1,7 @@
 /**
- * Core asset domain model. Currently: CASH, STOCK, BOND.
+ * Core asset domain model. Currently: CASH, STOCK, BOND, PENSION, CUSTOM.
  *
- * To add a new asset type (e.g. "PENSION"):
+ * To add a new asset type:
  *   1. Add the type string to `AssetType` below.
  *   2. Add a matching interface extending `BaseAsset`.
  *   3. Add it to the `Asset` union and `AssetInput` union.
@@ -22,7 +22,7 @@
  * keyed by `type`, so no schema migration is needed either.
  */
 
-export type AssetType = "CASH" | "STOCK" | "BOND" | "CUSTOM";
+export type AssetType = "CASH" | "STOCK" | "BOND" | "PENSION" | "CUSTOM";
 
 export type Currency = "KRW" | "USD";
 
@@ -70,6 +70,17 @@ export interface BondAsset extends BaseAsset {
   maturityDate?: string;
 }
 
+/** Retirement account (DC, IRP, 연금저축, ...). */
+export interface PensionAsset extends BaseAsset {
+  type: "PENSION";
+  /** Account kind, free text for MVP: "DC", "IRP", "연금저축". */
+  accountType?: string;
+  /** Total contributions paid in so far. */
+  principalPaid: number;
+  /** Current account valuation. */
+  currentValue: number;
+}
+
 /** User-defined category (부동산, 금, 암호화폐, ...) — valued like a bond position. */
 export interface CustomAsset extends BaseAsset {
   type: "CUSTOM";
@@ -79,11 +90,17 @@ export interface CustomAsset extends BaseAsset {
   currentValue: number;
 }
 
-export type Asset = CashAsset | StockAsset | BondAsset | CustomAsset;
+export type Asset = CashAsset | StockAsset | BondAsset | PensionAsset | CustomAsset;
 
 export type CashAssetInput = Omit<CashAsset, "id" | "createdAt" | "updatedAt">;
 export type StockAssetInput = Omit<StockAsset, "id" | "createdAt" | "updatedAt">;
 export type BondAssetInput = Omit<BondAsset, "id" | "createdAt" | "updatedAt">;
+export type PensionAssetInput = Omit<PensionAsset, "id" | "createdAt" | "updatedAt">;
 export type CustomAssetInput = Omit<CustomAsset, "id" | "createdAt" | "updatedAt">;
 
-export type AssetInput = CashAssetInput | StockAssetInput | BondAssetInput | CustomAssetInput;
+export type AssetInput =
+  | CashAssetInput
+  | StockAssetInput
+  | BondAssetInput
+  | PensionAssetInput
+  | CustomAssetInput;

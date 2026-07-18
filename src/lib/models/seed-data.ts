@@ -79,6 +79,13 @@ export const SEED_ASSETS: AssetInput[] = [
     balance: 20000000,
   },
   {
+    type: "PENSION",
+    name: "IRP 계좌 (미래에셋)",
+    accountType: "IRP",
+    principalPaid: 12000000,
+    currentValue: 13260000,
+  },
+  {
     type: "CUSTOM",
     name: "금 현물 (KRX 금시장)",
     category: "금",

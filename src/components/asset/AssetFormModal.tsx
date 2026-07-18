@@ -77,6 +77,9 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
   const [category, setCategory] = useState(
     editingAsset?.type === "CUSTOM" ? editingAsset.category ?? "" : ""
   );
+  const [accountType, setAccountType] = useState(
+    editingAsset?.type === "PENSION" ? editingAsset.accountType ?? "" : ""
+  );
   const [market, setMarket] = useState(
     editingAsset?.type === "STOCK" ? editingAsset.market ?? "" : ""
   );
@@ -95,10 +98,14 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
   const [purchasePrice, setPurchasePrice] = useState(
     editingAsset?.type === "BOND" || editingAsset?.type === "CUSTOM"
       ? String(editingAsset.purchasePrice)
-      : ""
+      : editingAsset?.type === "PENSION"
+        ? String(editingAsset.principalPaid)
+        : ""
   );
   const [currentValue, setCurrentValue] = useState(
-    editingAsset?.type === "BOND" || editingAsset?.type === "CUSTOM"
+    editingAsset?.type === "BOND" ||
+      editingAsset?.type === "CUSTOM" ||
+      editingAsset?.type === "PENSION"
       ? String(editingAsset.currentValue)
       : ""
   );
@@ -184,6 +191,21 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
       };
     }
 
+    if (type === "PENSION") {
+      const pp = parseOptionalPositive(purchasePrice);
+      if (pp === undefined || pp === null) return "납입 원금을 올바르게 입력해 주세요.";
+      const cv = parseOptionalPositive(currentValue);
+      if (cv === null) return "현재 평가 금액을 올바르게 입력해 주세요.";
+      return {
+        type: "PENSION",
+        name: trimmedName,
+        currency,
+        accountType: accountType.trim() || undefined,
+        principalPaid: pp,
+        currentValue: cv ?? pp,
+      };
+    }
+
     if (type === "CUSTOM") {
       const pp = parseOptionalPositive(purchasePrice);
       if (pp === undefined || pp === null) return "매입 금액을 올바르게 입력해 주세요.";
@@ -258,7 +280,7 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
       </div>
 
       <form onSubmit={handleSubmit} className="mt-5 flex max-h-[70vh] flex-col gap-4 overflow-y-auto">
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-5 gap-2">
           {ASSET_TYPES.map((t) => (
             <button
               key={t}
@@ -307,9 +329,11 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
                 ? "예: 삼성전자"
                 : type === "BOND"
                   ? "예: 국고채 3년"
-                  : type === "CUSTOM"
-                    ? "예: 자가 아파트, 금 현물"
-                    : "예: 입출금 통장"
+                  : type === "PENSION"
+                    ? "예: IRP 계좌 (미래에셋)"
+                    : type === "CUSTOM"
+                      ? "예: 자가 아파트, 금 현물"
+                      : "예: 입출금 통장"
             }
             required
             className={inputClass}
@@ -327,6 +351,48 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
               className={inputClass}
             />
           </label>
+        )}
+
+        {type === "PENSION" && (
+          <>
+            <label className={labelClass}>
+              <span className={labelTextClass}>계좌 유형 (선택)</span>
+              <input
+                type="text"
+                value={accountType}
+                onChange={(event) => setAccountType(event.target.value)}
+                placeholder="예: DC, IRP, 연금저축"
+                className={inputClass}
+              />
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className={labelClass}>
+                <span className={labelTextClass}>납입 원금</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  value={purchasePrice}
+                  onChange={(event) => setPurchasePrice(event.target.value)}
+                  placeholder="0"
+                  required
+                  className={inputClass}
+                />
+              </label>
+              <label className={labelClass}>
+                <span className={labelTextClass}>현재 평가 금액 (선택)</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  value={currentValue}
+                  onChange={(event) => setCurrentValue(event.target.value)}
+                  placeholder="미입력 시 납입 원금과 동일"
+                  className={inputClass}
+                />
+              </label>
+            </div>
+          </>
         )}
 
         {type === "STOCK" && (
