@@ -133,8 +133,9 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
         showToast(`${input.name} 자산이 추가되었습니다.`);
       }
       closeModal();
-    } catch {
-      setError("저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+    } catch (err) {
+      const detail = err instanceof Error && err.message ? ` (${err.message})` : "";
+      setError(`저장에 실패했습니다. 잠시 후 다시 시도해 주세요.${detail}`);
     } finally {
       setIsSubmitting(false);
     }

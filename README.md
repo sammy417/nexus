@@ -4,12 +4,16 @@
 
 ## 로컬 실행
 
+**요구사항: Node.js 22.13 이상** (SQLite 데이터 계층이 Node 내장 `node:sqlite` 모듈을 사용합니다. `node -v`로 확인하세요.)
+
 ```bash
 npm install
 npm run dev
 ```
 
 브라우저에서 http://localhost:3000 접속. 최초 실행 시 `data/nexus.db` (SQLite, git에 커밋되지 않음)가 자동 생성되고 데모 데이터로 시딩됩니다.
+
+> Node 22.13 미만에서 실행하면 SQLite 대신 인메모리 데이터 계층으로 자동 폴백됩니다 — 앱은 동작하지만 **서버 재시작 시 데이터가 사라집니다** (서버 콘솔에 경고 출력). 영속 저장이 필요하면 Node를 업그레이드하세요.
 
 ## 폴더 구조
 

@@ -1,4 +1,5 @@
 import "server-only";
+import { isSqliteSupported } from "@/lib/db/client";
 import type { AssetRepository } from "./asset-repository";
 import { SqliteAssetRepository } from "./sqlite-asset-repository";
 import { MockAssetRepository } from "./mock-asset-repository";
@@ -9,10 +10,23 @@ import { MockSnapshotRepository } from "./mock-snapshot-repository";
 declare global {
   var __nexusAssetRepository: AssetRepository | undefined;
   var __nexusSnapshotRepository: SnapshotRepository | undefined;
+  var __nexusSqliteFallbackWarned: boolean | undefined;
 }
 
 function isMockDataLayer(): boolean {
-  return process.env.DATA_LAYER === "mock";
+  if (process.env.DATA_LAYER === "mock") return true;
+  if (!isSqliteSupported()) {
+    if (!globalThis.__nexusSqliteFallbackWarned) {
+      globalThis.__nexusSqliteFallbackWarned = true;
+      console.warn(
+        `[nexus] node:sqlite is unavailable on this Node.js runtime (${process.version}). ` +
+          "Falling back to the in-memory data layer — data will NOT persist across restarts. " +
+          "Upgrade to Node >= 22.13 to enable the SQLite file database."
+      );
+    }
+    return true;
+  }
+  return false;
 }
 
 /**
