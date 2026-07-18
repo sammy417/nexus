@@ -1,6 +1,6 @@
 "use client";
 
-import AssetCard from "@/components/portfolio/AssetCard";
+import AssetTable from "@/components/portfolio/AssetTable";
 import { usePortfolio } from "@/lib/portfolio-context";
 import { ASSET_TYPE_LABEL, ASSET_TYPES } from "@/lib/models/asset-types";
 
@@ -12,27 +12,30 @@ export default function PortfolioPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <p className="px-1 text-sm font-medium text-gray-400 dark:text-gray-500">
-        보유 자산 {assets.length}개
-      </p>
+    <div className="flex flex-col gap-8">
+      <div className="flex items-baseline gap-3">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">포트폴리오</h1>
+        <p className="text-sm font-medium text-gray-400 dark:text-gray-500">
+          보유 자산 {assets.length}개
+        </p>
+      </div>
 
       {assets.length === 0 ? (
-        <p className="py-24 text-center text-sm text-gray-400 dark:text-gray-500">보유 자산이 없습니다.</p>
+        <p className="py-24 text-center text-sm text-gray-400 dark:text-gray-500">
+          보유 자산이 없습니다.
+        </p>
       ) : (
         ASSET_TYPES.map((type) => {
           const groupAssets = assets.filter((asset) => asset.type === type);
           if (groupAssets.length === 0) return null;
 
           return (
-            <div key={type} className="flex flex-col gap-3">
-              <p className="px-1 text-xs font-semibold text-gray-400 dark:text-gray-500">
+            <section key={type} className="flex flex-col gap-3">
+              <h2 className="px-1 text-sm font-semibold text-gray-500 dark:text-gray-400">
                 {ASSET_TYPE_LABEL[type]} {groupAssets.length}
-              </p>
-              {groupAssets.map((asset) => (
-                <AssetCard key={asset.id} asset={asset} />
-              ))}
-            </div>
+              </h2>
+              <AssetTable assets={groupAssets} />
+            </section>
           );
         })
       )}

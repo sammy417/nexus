@@ -11,7 +11,7 @@ export default function AssetsPreview({ assets }: { assets: Asset[] }) {
     .slice(0, 5);
 
   return (
-    <section className="mt-6 rounded-2xl bg-white p-6 shadow-sm dark:bg-card-dark">
+    <section className="rounded-2xl bg-white p-6 shadow-sm dark:bg-card-dark">
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">보유 자산</p>
         <Link

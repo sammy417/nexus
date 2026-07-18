@@ -15,10 +15,17 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col">
-      <AssetSummary summary={summary} />
-      <AllocationBreakdown allocation={allocation} />
-      <AssetsPreview assets={assets} />
+    <div className="flex flex-col gap-6">
+      <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">대시보드</h1>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <AssetSummary summary={summary} />
+        </div>
+        <AllocationBreakdown allocation={allocation} />
+        <div className="lg:col-span-3">
+          <AssetsPreview assets={assets} />
+        </div>
+      </div>
     </div>
   );
 }

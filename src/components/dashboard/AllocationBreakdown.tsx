@@ -12,7 +12,7 @@ export default function AllocationBreakdown({ allocation }: { allocation: Alloca
   if (allocation.length === 0) return null;
 
   return (
-    <section className="mt-6 rounded-2xl bg-white p-6 shadow-sm dark:bg-card-dark">
+    <section className="h-full rounded-2xl bg-white p-6 shadow-sm dark:bg-card-dark">
       <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">자산 구성</p>
 
       <div className="mt-4 flex h-2.5 w-full gap-0.5 overflow-hidden rounded-full bg-gray-100 dark:bg-white/5">

@@ -18,7 +18,7 @@ export default function AssetFormModal() {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
       <button
         type="button"
         aria-label="닫기"
@@ -120,9 +120,7 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
   }
 
   return (
-    <div className="relative w-full max-w-md rounded-t-2xl bg-white px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4 shadow-xl dark:bg-card-dark">
-      <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-gray-200 dark:bg-white/10" />
-
+    <div className="relative w-full max-w-lg rounded-2xl bg-white px-6 pb-6 pt-5 shadow-xl dark:bg-card-dark">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
           {isEditing ? "자산 수정" : "자산 추가"}
