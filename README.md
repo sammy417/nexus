@@ -22,6 +22,7 @@ src/
       route.ts                 # GET(목록)/POST(생성)
       [id]/route.ts             # PATCH(수정)/DELETE(삭제)
       reset/route.ts            # POST(데모 데이터로 초기화, 개발용)
+    api/snapshots/route.ts     # GET(일별 자산 히스토리; 오늘 포인트 자동 기록)
   components/
     layout/                   # Sidebar (내비게이션 + 자산 추가 + 테마/초기화)
     dashboard/                # 대시보드 위젯 (요약/자산배분/미리보기)
@@ -32,19 +33,24 @@ src/
     models/                   # 도메인 모델 (자산 타입 정의) — 확장의 시작점
       asset.ts                  # AssetType, CashAsset, StockAsset, Asset(discriminated union)
       asset-types.ts             # 타입별 라벨/표시 순서
+      snapshot.ts                # PortfolioSnapshot (일별 자산 히스토리 포인트)
       seed-data.ts               # 데모 데이터
       validate-asset-input.ts    # API 요청 바디 검증
     services/
       portfolio-service.ts      # 손익/평가금액/자산배분 계산 (순수 함수, DB 무관)
+      snapshot-service.ts       # 스냅샷 계산 + 데모 히스토리 생성 (순수 함수)
     repositories/               # 데이터 접근 계층 (교체 가능)
       asset-repository.ts        # AssetRepository 인터페이스
       sqlite-asset-repository.ts # SQLite 구현체 (기본값)
       mock-asset-repository.ts   # 인메모리 목업 구현체
-      index.ts                   # getAssetRepository() 팩토리
+      snapshot-repository.ts     # SnapshotRepository 인터페이스 (+ sqlite/mock 구현체)
+      snapshot-sync.ts           # 서버 오케스트레이션: 오늘 스냅샷 기록/히스토리 시딩
+      index.ts                   # getAssetRepository()/getSnapshotRepository() 팩토리
     db/
       client.ts                  # SQLite(DatabaseSync) 커넥션 + 스키마 초기화
     hooks/
       use-assets.ts              # 클라이언트: /api/assets CRUD 훅
+      use-snapshots.ts           # 클라이언트: /api/snapshots 히스토리 훅
     portfolio-context.tsx       # 전역 상태(Context): assets, summary, CRUD 함수
     asset-modal-context.tsx     # 자산 추가/수정 모달 열림 상태, 토스트
     theme-provider.tsx          # 다크/라이트 모드 전환
@@ -80,8 +86,16 @@ DATA_LAYER=mock npm run dev
 ## 화면 구성 (데스크톱)
 
 - **좌측 사이드바**: 대시보드/포트폴리오 내비게이션, "자산 추가" 버튼, 하단에 테마 전환·초기화 버튼
-- **대시보드**: 총 자산 요약 카드 + 자산 구성 비중 카드(2:1 그리드), 아래에 보유 자산 미리보기
+- **대시보드**: 총 자산 요약 카드 + 자산 구성 비중 카드(2:1 그리드), 총 자산 추이 차트, 보유 자산 미리보기
 - **포트폴리오**: 자산 종류별 섹션으로 그룹핑된 테이블 (수량/원금/평가금액/손익 컬럼, 행 클릭 시 수정 다이얼로그)
+
+## 자산 히스토리 & 추이 차트
+
+일별 스냅샷(`snapshots` 테이블, 날짜당 1행)으로 총 자산 추이를 기록합니다:
+
+- **기록 시점**: 자산을 추가/수정/삭제할 때마다, 그리고 대시보드 접속 시(하루 1회 갱신) 오늘 날짜의 스냅샷이 현재 자산 상태로 덮어써집니다.
+- **데모 히스토리**: DB가 비어 있으면 최초 접속 시 현재 자산 가치를 기준으로 90일치 히스토리를 생성해 시딩합니다(고정 시드 난수 워크 — 데모용). 이후 실제 기록이 쌓이면서 대체됩니다.
+- **차트**: 대시보드의 "총 자산 추이" 카드. 1개월/3개월/전체 기간 탭, 구간 손익 요약, 호버 시 크로스헤어 + 날짜별 평가금액/전일 대비 툴팁, "표로 보기"로 원본 수치 테이블 확인 가능. 외부 차트 라이브러리 없이 SVG로 구현되어 있습니다.
 
 ### 반복 테스트를 위한 초기화
 

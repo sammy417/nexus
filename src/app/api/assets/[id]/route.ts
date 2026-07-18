@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAssetRepository } from "@/lib/repositories";
+import { captureTodaySnapshot } from "@/lib/repositories/snapshot-sync";
 import { isValidAssetInput } from "@/lib/models/validate-asset-input";
 
 interface RouteParams {
@@ -17,6 +18,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   if (!asset) {
     return NextResponse.json({ error: "Asset not found" }, { status: 404 });
   }
+  await captureTodaySnapshot();
   return NextResponse.json(asset);
 }
 
@@ -26,5 +28,6 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   if (!removed) {
     return NextResponse.json({ error: "Asset not found" }, { status: 404 });
   }
+  await captureTodaySnapshot();
   return NextResponse.json({ ok: true });
 }

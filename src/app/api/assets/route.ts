@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAssetRepository } from "@/lib/repositories";
+import { captureTodaySnapshot } from "@/lib/repositories/snapshot-sync";
 import { isValidAssetInput } from "@/lib/models/validate-asset-input";
 
 export async function GET() {
@@ -13,5 +14,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid asset payload" }, { status: 400 });
   }
   const asset = await getAssetRepository().create(body);
+  await captureTodaySnapshot();
   return NextResponse.json(asset, { status: 201 });
 }

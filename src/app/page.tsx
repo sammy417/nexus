@@ -3,11 +3,12 @@
 import AssetSummary from "@/components/dashboard/AssetSummary";
 import AssetsPreview from "@/components/dashboard/AssetsPreview";
 import AllocationBreakdown from "@/components/dashboard/AllocationBreakdown";
+import TrendChart from "@/components/dashboard/TrendChart";
 import { usePortfolio } from "@/lib/portfolio-context";
 import { getAllocationByType } from "@/lib/services/portfolio-service";
 
 export default function DashboardPage() {
-  const { assets, summary, isLoading } = usePortfolio();
+  const { assets, snapshots, summary, isLoading } = usePortfolio();
   const allocation = getAllocationByType(assets);
 
   if (isLoading) {
@@ -22,6 +23,9 @@ export default function DashboardPage() {
           <AssetSummary summary={summary} />
         </div>
         <AllocationBreakdown allocation={allocation} />
+        <div className="lg:col-span-3">
+          <TrendChart snapshots={snapshots} />
+        </div>
         <div className="lg:col-span-3">
           <AssetsPreview assets={assets} />
         </div>

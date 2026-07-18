@@ -27,6 +27,13 @@ function createDb(): DatabaseSync {
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS snapshots (
+      date TEXT PRIMARY KEY,
+      total_principal REAL NOT NULL,
+      total_valuation REAL NOT NULL,
+      by_type TEXT NOT NULL
+    );
   `);
   return db;
 }
