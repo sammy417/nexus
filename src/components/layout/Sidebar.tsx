@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, LayoutGrid, Moon, Plus, RotateCcw, Sun, WalletCards } from "lucide-react";
+import { BarChart3, Coins, LayoutGrid, Moon, Plus, RotateCcw, Sun, WalletCards } from "lucide-react";
 import { useAssetModal } from "@/lib/asset-modal-context";
 import { usePortfolio } from "@/lib/portfolio-context";
 import { useTheme } from "@/lib/theme-provider";
@@ -11,6 +11,7 @@ const navItems = [
   { href: "/", label: "대시보드", icon: LayoutGrid },
   { href: "/portfolio", label: "포트폴리오", icon: WalletCards },
   { href: "/analytics", label: "분석", icon: BarChart3 },
+  { href: "/dividends", label: "배당", icon: Coins },
 ];
 
 export default function Sidebar() {

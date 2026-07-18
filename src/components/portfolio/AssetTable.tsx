@@ -1,6 +1,7 @@
 "use client";
 
-import { Pencil, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowDown, ArrowUp, ChevronsUpDown, Pencil, Trash2 } from "lucide-react";
 import { getAssetMetrics } from "@/lib/services/portfolio-service";
 import { useAssetModal } from "@/lib/asset-modal-context";
 import { usePortfolio } from "@/lib/portfolio-context";
@@ -11,6 +12,52 @@ import { Asset } from "@/lib/models/asset";
 
 const headerCellClass =
   "px-4 py-3 text-xs font-medium text-gray-400 dark:text-gray-500";
+
+type SortKey = "name" | "principal" | "valuation" | "weight" | "profit";
+type SortDirection = "asc" | "desc";
+interface SortState {
+  key: SortKey;
+  direction: SortDirection;
+}
+
+function SortableHeader({
+  label,
+  sortKey,
+  sort,
+  onToggle,
+  align = "right",
+}: {
+  label: string;
+  sortKey: SortKey;
+  sort: SortState | null;
+  onToggle: (key: SortKey) => void;
+  align?: "left" | "right";
+}) {
+  const active = sort?.key === sortKey;
+  return (
+    <th className={`${headerCellClass} ${align === "right" ? "text-right" : ""}`}>
+      <button
+        type="button"
+        onClick={() => onToggle(sortKey)}
+        aria-label={`${label} 기준 정렬`}
+        className={`group/sort inline-flex items-center gap-0.5 transition-colors hover:text-gray-600 dark:hover:text-gray-300 ${
+          active ? "text-gray-700 dark:text-gray-200" : ""
+        }`}
+      >
+        {label}
+        {active ? (
+          sort!.direction === "desc" ? (
+            <ArrowDown size={12} />
+          ) : (
+            <ArrowUp size={12} />
+          )
+        ) : (
+          <ChevronsUpDown size={12} className="opacity-0 group-hover/sort:opacity-60" />
+        )}
+      </button>
+    </th>
+  );
+}
 
 function subLine(asset: Asset): string | null {
   if (asset.type === "STOCK") {
@@ -31,6 +78,7 @@ export default function AssetTable({ assets }: { assets: Asset[] }) {
   const { openEditModal, showToast } = useAssetModal();
   const { deleteAsset } = usePortfolio();
   const { displayCurrency, usdKrw } = useDisplayCurrency();
+  const [sort, setSort] = useState<SortState | null>(null);
 
   async function handleDelete(asset: Asset) {
     const confirmed = window.confirm(`${asset.name} 자산을 삭제할까요?`);
@@ -48,25 +96,56 @@ export default function AssetTable({ assets }: { assets: Asset[] }) {
     0
   );
 
+  const sortedAssets = useMemo(() => {
+    if (!sort) return assets;
+    const sortValue = (asset: Asset): number | string => {
+      if (sort.key === "name") return asset.name;
+      const { principal, valuation, profit } = getAssetMetrics(asset, usdKrw);
+      // 비중 is valuation / group total — same ordering as valuation.
+      if (sort.key === "principal") return principal;
+      if (sort.key === "profit") return profit;
+      return valuation;
+    };
+    return [...assets].sort((a, b) => {
+      const va = sortValue(a);
+      const vb = sortValue(b);
+      const compared =
+        typeof va === "string" && typeof vb === "string"
+          ? va.localeCompare(vb, "ko")
+          : (va as number) - (vb as number);
+      return sort.direction === "asc" ? compared : -compared;
+    });
+  }, [assets, sort, usdKrw]);
+
+  function toggleSort(key: SortKey) {
+    setSort((prev) => {
+      if (!prev || prev.key !== key) {
+        // Numeric columns start with the largest first; names start A→Z.
+        return { key, direction: key === "name" ? "asc" : "desc" };
+      }
+      return { key, direction: prev.direction === "desc" ? "asc" : "desc" };
+    });
+  }
+
   return (
     <div className="overflow-x-auto rounded-2xl bg-white shadow-sm dark:bg-card-dark">
       <table className="w-full min-w-[740px] text-sm">
         <thead>
           <tr className="border-b border-border text-left dark:border-border-dark">
-            <th className={headerCellClass}>자산</th>
+            <SortableHeader label="자산" sortKey="name" align="left" sort={sort} onToggle={toggleSort} />
             <th className={headerCellClass}>종류</th>
             <th className={`${headerCellClass} text-right`}>보유 수량</th>
-            <th className={`${headerCellClass} text-right`}>투자 원금</th>
-            <th className={`${headerCellClass} text-right`}>평가 금액</th>
-            <th className={`${headerCellClass} text-right`}>비중</th>
-            <th className={`${headerCellClass} text-right`}>평가 손익</th>
+            <SortableHeader label="투자 원금" sortKey="principal" sort={sort} onToggle={toggleSort} />
+            <SortableHeader label="평가 금액" sortKey="valuation" sort={sort} onToggle={toggleSort} />
+            <SortableHeader label="비중" sortKey="weight" sort={sort} onToggle={toggleSort} />
+            <SortableHeader label="평가 손익" sortKey="profit" sort={sort} onToggle={toggleSort} />
             <th className={headerCellClass}>
               <span className="sr-only">수정/삭제</span>
             </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-50 dark:divide-white/5">
-          {assets.map((asset) => {
+          {sortedAssets.map((asset) => {
             const { principal, valuation, profit, profitRate } = getAssetMetrics(asset, usdKrw);
             const isProfit = profit >= 0;
             const sub = subLine(asset);

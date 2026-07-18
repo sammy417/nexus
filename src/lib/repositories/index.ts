@@ -6,10 +6,14 @@ import { MockAssetRepository } from "./mock-asset-repository";
 import type { SnapshotRepository } from "./snapshot-repository";
 import { SqliteSnapshotRepository } from "./sqlite-snapshot-repository";
 import { MockSnapshotRepository } from "./mock-snapshot-repository";
+import type { DividendRepository } from "./dividend-repository";
+import { SqliteDividendRepository } from "./sqlite-dividend-repository";
+import { MockDividendRepository } from "./mock-dividend-repository";
 
 declare global {
   var __nexusAssetRepository: AssetRepository | undefined;
   var __nexusSnapshotRepository: SnapshotRepository | undefined;
+  var __nexusDividendRepository: DividendRepository | undefined;
   var __nexusSqliteFallbackWarned: boolean | undefined;
 }
 
@@ -53,5 +57,15 @@ export function getSnapshotRepository(): SnapshotRepository {
   return globalThis.__nexusSnapshotRepository;
 }
 
+export function getDividendRepository(): DividendRepository {
+  if (!globalThis.__nexusDividendRepository) {
+    globalThis.__nexusDividendRepository = isMockDataLayer()
+      ? new MockDividendRepository()
+      : new SqliteDividendRepository();
+  }
+  return globalThis.__nexusDividendRepository;
+}
+
 export type { AssetRepository } from "./asset-repository";
 export type { SnapshotRepository } from "./snapshot-repository";
+export type { DividendRepository } from "./dividend-repository";

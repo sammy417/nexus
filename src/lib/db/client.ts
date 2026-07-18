@@ -60,6 +60,17 @@ function createDb(): DatabaseSync {
       total_valuation REAL NOT NULL,
       by_type TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS dividends (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      amount REAL NOT NULL,
+      currency TEXT,
+      date TEXT NOT NULL,
+      memo TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
   `);
   return db;
 }
