@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { getAssetMetrics } from "@/lib/services/portfolio-service";
 import { useAssetModal } from "@/lib/asset-modal-context";
 import { usePortfolio } from "@/lib/portfolio-context";
@@ -38,7 +38,7 @@ export default function AssetTable({ assets }: { assets: Asset[] }) {
             <th className={`${headerCellClass} text-right`}>평가 금액</th>
             <th className={`${headerCellClass} text-right`}>평가 손익</th>
             <th className={headerCellClass}>
-              <span className="sr-only">삭제</span>
+              <span className="sr-only">수정/삭제</span>
             </th>
           </tr>
         </thead>
@@ -92,18 +92,31 @@ export default function AssetTable({ assets }: { assets: Asset[] }) {
                     </span>
                   )}
                 </td>
-                <td className="w-12 px-2 py-3.5 text-center">
-                  <button
-                    type="button"
-                    aria-label={`${asset.name} 삭제`}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleDelete(asset);
-                    }}
-                    className="rounded-lg p-2 text-gray-300 opacity-70 transition-colors hover:bg-fall/10 hover:text-fall group-hover:opacity-100 dark:text-gray-600 dark:hover:bg-fall/15 dark:hover:text-fall"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                <td className="w-20 px-2 py-3.5">
+                  <div className="flex items-center justify-center gap-0.5">
+                    <button
+                      type="button"
+                      aria-label={`${asset.name} 수정`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        openEditModal(asset);
+                      }}
+                      className="rounded-lg p-2 text-gray-300 opacity-70 transition-colors hover:bg-gray-900/5 hover:text-gray-600 group-hover:opacity-100 dark:text-gray-600 dark:hover:bg-white/10 dark:hover:text-gray-300"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`${asset.name} 삭제`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleDelete(asset);
+                      }}
+                      className="rounded-lg p-2 text-gray-300 opacity-70 transition-colors hover:bg-fall/10 hover:text-fall group-hover:opacity-100 dark:text-gray-600 dark:hover:bg-fall/15 dark:hover:text-fall"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             );
