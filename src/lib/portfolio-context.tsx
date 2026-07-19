@@ -13,7 +13,10 @@ import { PortfolioSnapshot } from "@/lib/models/snapshot";
 export type { AssetInput } from "@/lib/models/asset";
 
 interface PortfolioContextValue {
+  /** Assets scoped by the active owner filter. */
   assets: Asset[];
+  /** Every household asset, regardless of the owner filter. */
+  allAssets: Asset[];
   snapshots: PortfolioSnapshot[];
   isLoading: boolean;
   error: string | null;
@@ -84,6 +87,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(
     () => ({
       assets,
+      allAssets,
       snapshots,
       isLoading,
       error,
@@ -95,6 +99,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     }),
     [
       assets,
+      allAssets,
       snapshots,
       isLoading,
       error,

@@ -1,5 +1,6 @@
-import { Asset, AssetType, Currency } from "@/lib/models/asset";
+import { Asset, AssetOwner, AssetType, Currency } from "@/lib/models/asset";
 import { ASSET_TYPES } from "@/lib/models/asset-types";
+import { ASSET_OWNERS, getAssetOwner } from "@/lib/models/asset-owner";
 import {
   getPortfolioCategory,
   PORTFOLIO_CATEGORIES,
@@ -89,6 +90,28 @@ export interface AllocationEntry {
   type: AssetType;
   valuation: number;
   ratio: number;
+}
+
+export interface OwnerAllocationEntry {
+  owner: AssetOwner;
+  valuation: number;
+  ratio: number;
+}
+
+/** Household split: valuation share per owner tag (KRW base). */
+export function getAllocationByOwner(assets: Asset[], usdKrw: number): OwnerAllocationEntry[] {
+  const totalValuation = assets.reduce(
+    (sum, asset) => sum + getAssetMetrics(asset, usdKrw).valuation,
+    0
+  );
+
+  return ASSET_OWNERS.map((owner) => {
+    const valuation = assets
+      .filter((asset) => getAssetOwner(asset) === owner)
+      .reduce((sum, asset) => sum + getAssetMetrics(asset, usdKrw).valuation, 0);
+    const ratio = totalValuation === 0 ? 0 : (valuation / totalValuation) * 100;
+    return { owner, valuation, ratio };
+  }).filter((entry) => entry.valuation > 0);
 }
 
 export interface CategoryAllocationEntry {

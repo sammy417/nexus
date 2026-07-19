@@ -3,19 +3,23 @@
 import AssetSummary from "@/components/dashboard/AssetSummary";
 import AssetsPreview from "@/components/dashboard/AssetsPreview";
 import AllocationBreakdown from "@/components/dashboard/AllocationBreakdown";
+import OwnerBreakdown from "@/components/dashboard/OwnerBreakdown";
 import TrendChart from "@/components/dashboard/TrendChart";
 import CurrencyToggle from "@/components/common/CurrencyToggle";
 import OwnerFilterToggle from "@/components/common/OwnerFilterToggle";
 import { usePortfolio } from "@/lib/portfolio-context";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useOwnerFilter } from "@/lib/owner-filter-context";
-import { getAllocationByCategory } from "@/lib/services/portfolio-service";
+import { getAllocationByCategory, getAllocationByOwner } from "@/lib/services/portfolio-service";
 
 export default function DashboardPage() {
-  const { assets, snapshots, summary, isLoading } = usePortfolio();
+  const { assets, allAssets, snapshots, summary, isLoading } = usePortfolio();
   const { usdKrw } = useDisplayCurrency();
   const { ownerFilter } = useOwnerFilter();
   const allocation = getAllocationByCategory(assets, usdKrw);
+  // Household split stays ALL-based on purpose — it answers "whose share
+  // of the whole", which a filtered view can't.
+  const ownerAllocation = getAllocationByOwner(allAssets, usdKrw);
 
   if (isLoading) {
     return <p className="py-24 text-center text-sm text-gray-400 dark:text-gray-500">불러오는 중...</p>;
@@ -43,7 +47,8 @@ export default function DashboardPage() {
           )}
           <TrendChart snapshots={snapshots} />
         </div>
-        <div className="lg:col-span-3">
+        <OwnerBreakdown allocation={ownerAllocation} />
+        <div className="lg:col-span-2">
           <AssetsPreview assets={assets} />
         </div>
       </div>

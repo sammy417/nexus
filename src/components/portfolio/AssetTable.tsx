@@ -9,6 +9,7 @@ import { useDisplayCurrency } from "@/lib/currency-context";
 import { formatMoney, formatPercent, formatSignedMoney } from "@/lib/format";
 import { getAssetCategoryLabel } from "@/lib/models/portfolio-category";
 import { ASSET_OWNER_LABEL, getAssetOwner } from "@/lib/models/asset-owner";
+import { DisplayHolding } from "@/lib/services/merge-holdings";
 import { Asset, AssetOwner } from "@/lib/models/asset";
 
 const headerCellClass =
@@ -84,7 +85,7 @@ function subLine(asset: Asset): string | null {
   return null;
 }
 
-export default function AssetTable({ assets }: { assets: Asset[] }) {
+export default function AssetTable({ holdings }: { holdings: DisplayHolding[] }) {
   const { openEditModal, showToast } = useAssetModal();
   const { deleteAsset } = usePortfolio();
   const { displayCurrency, usdKrw } = useDisplayCurrency();
@@ -101,13 +102,13 @@ export default function AssetTable({ assets }: { assets: Asset[] }) {
     }
   }
 
-  const groupTotal = assets.reduce(
-    (sum, asset) => sum + getAssetMetrics(asset, usdKrw).valuation,
+  const groupTotal = holdings.reduce(
+    (sum, holding) => sum + getAssetMetrics(holding.asset, usdKrw).valuation,
     0
   );
 
-  const sortedAssets = useMemo(() => {
-    if (!sort) return assets;
+  const sortedHoldings = useMemo(() => {
+    if (!sort) return holdings;
     const sortValue = (asset: Asset): number | string => {
       if (sort.key === "name") return asset.name;
       const { principal, valuation, profit } = getAssetMetrics(asset, usdKrw);
@@ -116,16 +117,16 @@ export default function AssetTable({ assets }: { assets: Asset[] }) {
       if (sort.key === "profit") return profit;
       return valuation;
     };
-    return [...assets].sort((a, b) => {
-      const va = sortValue(a);
-      const vb = sortValue(b);
+    return [...holdings].sort((a, b) => {
+      const va = sortValue(a.asset);
+      const vb = sortValue(b.asset);
       const compared =
         typeof va === "string" && typeof vb === "string"
           ? va.localeCompare(vb, "ko")
           : (va as number) - (vb as number);
       return sort.direction === "asc" ? compared : -compared;
     });
-  }, [assets, sort, usdKrw]);
+  }, [holdings, sort, usdKrw]);
 
   function toggleSort(key: SortKey) {
     setSort((prev) => {
@@ -155,36 +156,54 @@ export default function AssetTable({ assets }: { assets: Asset[] }) {
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-50 dark:divide-white/5">
-          {sortedAssets.map((asset) => {
+          {sortedHoldings.map(({ asset, merged }) => {
             const { principal, valuation, profit, profitRate } = getAssetMetrics(asset, usdKrw);
             const isProfit = profit >= 0;
             const sub = subLine(asset);
             const weight = groupTotal === 0 ? 0 : (valuation / groupTotal) * 100;
+            const badgeOwners = merged
+              ? [...new Set(merged.parts.map((part) => part.owner))]
+              : [getAssetOwner(asset)];
+            const mergedNote = merged
+              ? `${merged.count}건 합산: ${merged.parts
+                  .map(
+                    (part) =>
+                      `${ASSET_OWNER_LABEL[part.owner]} ${part.quantity.toLocaleString("ko-KR")}주`
+                  )
+                  .join(" · ")}`
+              : null;
 
             return (
               <tr
                 key={asset.id}
-                onClick={() => openEditModal(asset)}
-                className="group cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-white/5"
+                onClick={merged ? undefined : () => openEditModal(asset)}
+                className={`group transition-colors hover:bg-gray-50 dark:hover:bg-white/5 ${
+                  merged ? "" : "cursor-pointer"
+                }`}
               >
                 <td className="px-4 py-3.5">
                   <p className="font-medium text-gray-900 dark:text-gray-100">
                     {asset.name}
-                    <span
-                      className={`ml-1.5 inline-block whitespace-nowrap rounded px-1 py-0.5 text-[10px] font-semibold ${
-                        OWNER_BADGE_CLASS[getAssetOwner(asset)]
-                      }`}
-                    >
-                      {ASSET_OWNER_LABEL[getAssetOwner(asset)]}
-                    </span>
+                    {badgeOwners.map((badgeOwner) => (
+                      <span
+                        key={badgeOwner}
+                        className={`ml-1.5 inline-block whitespace-nowrap rounded px-1 py-0.5 text-[10px] font-semibold ${
+                          OWNER_BADGE_CLASS[badgeOwner]
+                        }`}
+                      >
+                        {ASSET_OWNER_LABEL[badgeOwner]}
+                      </span>
+                    ))}
                     {asset.currency === "USD" && (
                       <span className="ml-1 inline-block whitespace-nowrap rounded bg-gray-100 px-1 py-0.5 text-[10px] font-semibold text-gray-500 dark:bg-white/10 dark:text-gray-400">
                         USD
                       </span>
                     )}
                   </p>
-                  {sub && (
-                    <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">{sub}</p>
+                  {(sub || mergedNote) && (
+                    <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+                      {[sub, mergedNote].filter(Boolean).join(" · ")}
+                    </p>
                   )}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3.5 text-gray-500 dark:text-gray-400">
@@ -212,30 +231,36 @@ export default function AssetTable({ assets }: { assets: Asset[] }) {
                   )}
                 </td>
                 <td className="w-20 px-2 py-3.5">
-                  <div className="flex items-center justify-center gap-0.5">
-                    <button
-                      type="button"
-                      aria-label={`${asset.name} 수정`}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        openEditModal(asset);
-                      }}
-                      className="rounded-lg p-2 text-gray-300 opacity-70 transition-colors hover:bg-gray-900/5 hover:text-gray-600 group-hover:opacity-100 dark:text-gray-600 dark:hover:bg-white/10 dark:hover:text-gray-300"
-                    >
-                      <Pencil size={16} />
-                    </button>
-                    <button
-                      type="button"
-                      aria-label={`${asset.name} 삭제`}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleDelete(asset);
-                      }}
-                      className="rounded-lg p-2 text-gray-300 opacity-70 transition-colors hover:bg-fall/10 hover:text-fall group-hover:opacity-100 dark:text-gray-600 dark:hover:bg-fall/15 dark:hover:text-fall"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+                  {merged ? (
+                    <p className="text-center text-[10px] text-gray-300 dark:text-gray-600">
+                      합산
+                    </p>
+                  ) : (
+                    <div className="flex items-center justify-center gap-0.5">
+                      <button
+                        type="button"
+                        aria-label={`${asset.name} 수정`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openEditModal(asset);
+                        }}
+                        className="rounded-lg p-2 text-gray-300 opacity-70 transition-colors hover:bg-gray-900/5 hover:text-gray-600 group-hover:opacity-100 dark:text-gray-600 dark:hover:bg-white/10 dark:hover:text-gray-300"
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`${asset.name} 삭제`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleDelete(asset);
+                        }}
+                        className="rounded-lg p-2 text-gray-300 opacity-70 transition-colors hover:bg-fall/10 hover:text-fall group-hover:opacity-100 dark:text-gray-600 dark:hover:bg-fall/15 dark:hover:text-fall"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  )}
                 </td>
               </tr>
             );

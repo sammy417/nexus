@@ -16,6 +16,18 @@ export const SEED_ASSETS: AssetInput[] = [
     currentPrice: 74500,
   },
   {
+    // Same listing as above but the spouse's account — demonstrates the
+    // merged-holdings view (different avg price, combined quantity).
+    type: "STOCK",
+    name: "삼성전자",
+    owner: "SPOUSE",
+    market: "KRX",
+    ticker: "005930",
+    quantity: 10,
+    avgPrice: 72000,
+    currentPrice: 74500,
+  },
+  {
     type: "STOCK",
     name: "NAVER",
     owner: "SPOUSE",
