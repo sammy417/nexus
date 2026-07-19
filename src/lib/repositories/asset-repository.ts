@@ -13,4 +13,6 @@ export interface AssetRepository {
   remove(id: string): Promise<boolean>;
   /** Dev convenience: wipe all assets and reseed with demo data. */
   reset(): Promise<Asset[]>;
+  /** Backup restore: wipe and insert the given assets verbatim (ids/timestamps preserved). */
+  replaceAll(assets: Asset[]): Promise<void>;
 }

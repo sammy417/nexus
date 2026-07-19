@@ -8,4 +8,6 @@ export interface DividendRepository {
   remove(id: string): Promise<boolean>;
   /** Dev convenience: wipe and reseed demo data. */
   reset(): Promise<DividendRecord[]>;
+  /** Backup restore: wipe and insert the given records verbatim. */
+  replaceAll(records: DividendRecord[]): Promise<void>;
 }

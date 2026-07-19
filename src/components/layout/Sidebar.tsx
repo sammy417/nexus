@@ -2,7 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Coins, LayoutGrid, Moon, Plus, RotateCcw, Sun, WalletCards } from "lucide-react";
+import {
+  BarChart3,
+  Coins,
+  LayoutGrid,
+  Moon,
+  Plus,
+  RotateCcw,
+  Settings,
+  Sun,
+  WalletCards,
+} from "lucide-react";
 import { useAssetModal } from "@/lib/asset-modal-context";
 import { usePortfolio } from "@/lib/portfolio-context";
 import { useTheme } from "@/lib/theme-provider";
@@ -12,6 +22,7 @@ const navItems = [
   { href: "/portfolio", label: "포트폴리오", icon: WalletCards },
   { href: "/analytics", label: "분석", icon: BarChart3 },
   { href: "/dividends", label: "배당", icon: Coins },
+  { href: "/settings", label: "설정", icon: Settings },
 ];
 
 export default function Sidebar() {

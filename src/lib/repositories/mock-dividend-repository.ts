@@ -32,4 +32,8 @@ export class MockDividendRepository implements DividendRepository {
     this.records = getSeedDividends().map(toRecord);
     return this.list();
   }
+
+  async replaceAll(records: DividendRecord[]): Promise<void> {
+    this.records = records.map((record) => ({ ...record }));
+  }
 }

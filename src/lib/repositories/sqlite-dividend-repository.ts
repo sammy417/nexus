@@ -89,4 +89,16 @@ export class SqliteDividendRepository implements DividendRepository {
     this.ensureSeeded();
     return this.list();
   }
+
+  async replaceAll(records: DividendRecord[]): Promise<void> {
+    const db = getDb();
+    db.exec("DELETE FROM dividends");
+    const stmt = db.prepare(
+      "INSERT INTO dividends (id, name, amount, currency, date, memo, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+    );
+    for (const r of records) {
+      stmt.run(r.id, r.name, r.amount, r.currency ?? null, r.date, r.memo ?? null, r.createdAt, r.updatedAt);
+    }
+    this.seeded = records.length > 0;
+  }
 }

@@ -110,4 +110,18 @@ export class SqliteAssetRepository implements AssetRepository {
     this.ensureSeeded();
     return this.list();
   }
+
+  async replaceAll(assets: Asset[]): Promise<void> {
+    const db = getDb();
+    db.exec("DELETE FROM assets");
+    const stmt = db.prepare(
+      "INSERT INTO assets (id, type, name, payload, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)"
+    );
+    for (const asset of assets) {
+      const { id, type, name, createdAt, updatedAt, ...rest } = asset;
+      stmt.run(id, type, name, JSON.stringify(rest), createdAt, updatedAt);
+    }
+    // Non-empty restore counts as seeded so demo data never re-appends.
+    this.seeded = assets.length > 0;
+  }
 }

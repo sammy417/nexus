@@ -54,4 +54,8 @@ export class MockAssetRepository implements AssetRepository {
     this.assets = SEED_ASSETS.map((input) => toAsset(input, randomUUID(), now, now));
     return this.list();
   }
+
+  async replaceAll(assets: Asset[]): Promise<void> {
+    this.assets = assets.map((asset) => ({ ...asset }));
+  }
 }
