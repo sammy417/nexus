@@ -4,7 +4,10 @@ import { useMemo, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import MonthlyDividendChart from "@/components/dividends/MonthlyDividendChart";
 import DividendFormDialog from "@/components/dividends/DividendFormDialog";
+import DividendForecastCard from "@/components/dividends/DividendForecastCard";
+import UpcomingDividendsCard from "@/components/dividends/UpcomingDividendsCard";
 import CurrencyToggle from "@/components/common/CurrencyToggle";
+import { useDividendForecast } from "@/lib/hooks/use-dividend-forecast";
 import { useDividends } from "@/lib/hooks/use-dividends";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useAssetModal } from "@/lib/asset-modal-context";
@@ -23,6 +26,7 @@ function formatMonthHeading(month: string): string {
 
 export default function DividendsPage() {
   const { dividends, isLoading, addDividend, deleteDividend } = useDividends();
+  const { forecast, isLoading: isForecastLoading } = useDividendForecast();
   const { displayCurrency, usdKrw } = useDisplayCurrency();
   const { showToast } = useAssetModal();
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -89,6 +93,11 @@ export default function DividendsPage() {
             </p>
           </div>
         ))}
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[3fr_2fr]">
+        <DividendForecastCard forecast={forecast} isLoading={isForecastLoading} />
+        <UpcomingDividendsCard forecast={forecast} isLoading={isForecastLoading} />
       </div>
 
       <MonthlyDividendChart months={monthly} />

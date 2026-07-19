@@ -81,6 +81,97 @@ export async function fetchUsdKrwRate(): Promise<number> {
   return fx.price;
 }
 
+// --- Dividend history (chart endpoint with events=div) ---
+
+const DIVIDEND_TTL_MS = 60 * 60 * 1000;
+
+export interface DividendEvent {
+  /** Ex-dividend date, YYYY-MM-DD. */
+  date: string;
+  /** Per-share amount in the security's trading currency. */
+  amountPerShare: number;
+}
+
+export interface DividendHistory {
+  symbol: string;
+  currency: string;
+  /** Current price in the trading currency (same response as the events). */
+  price: number;
+  /** Ex-dates over the requested range, oldest first. */
+  events: DividendEvent[];
+}
+
+interface DividendCacheEntry extends DividendHistory {
+  fetchedAt: number;
+}
+
+const globalForDividends = globalThis as unknown as {
+  __nexusDividendHistoryCache?: Map<string, DividendCacheEntry>;
+};
+
+function getDividendCache(): Map<string, DividendCacheEntry> {
+  if (!globalForDividends.__nexusDividendHistoryCache) {
+    globalForDividends.__nexusDividendHistoryCache = new Map();
+  }
+  return globalForDividends.__nexusDividendHistoryCache;
+}
+
+/** Trailing ~13 months of dividend events for a ticker (1h cache). */
+export async function fetchDividendHistory(
+  ticker: string,
+  market?: string
+): Promise<DividendHistory> {
+  const symbol = toQuoteSymbol(ticker, market);
+  const cached = getDividendCache().get(symbol);
+  if (cached && Date.now() - cached.fetchedAt < DIVIDEND_TTL_MS) {
+    return cached;
+  }
+
+  const base = process.env.QUOTE_API_BASE ?? "https://query1.finance.yahoo.com";
+  const url = `${base}/v8/finance/chart/${encodeURIComponent(symbol)}?range=13mo&interval=1mo&events=div`;
+  const response = await fetch(url, {
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; nexus-portfolio)" },
+    signal: AbortSignal.timeout(8000),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(`Dividend lookup failed for ${symbol} (upstream ${response.status})`);
+  }
+
+  const data = await response.json();
+  const result = data?.chart?.result?.[0];
+  const meta = result?.meta;
+  if (typeof meta?.regularMarketPrice !== "number" || typeof meta?.currency !== "string") {
+    throw new Error(`Dividend lookup returned no usable metadata for ${symbol}`);
+  }
+
+  const rawEvents = result?.events?.dividends ?? {};
+  const events: DividendEvent[] = Object.values(
+    rawEvents as Record<string, { amount?: number; date?: number }>
+  )
+    .filter(
+      (event) =>
+        typeof event.amount === "number" &&
+        Number.isFinite(event.amount) &&
+        typeof event.date === "number"
+    )
+    .map((event) => ({
+      date: new Date(event.date! * 1000).toISOString().slice(0, 10),
+      amountPerShare: event.amount!,
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  const entry: DividendCacheEntry = {
+    symbol,
+    currency: meta.currency,
+    price: meta.regularMarketPrice,
+    events,
+    fetchedAt: Date.now(),
+  };
+  getDividendCache().set(symbol, entry);
+  return entry;
+}
+
 export interface QuoteResult {
   /** Price in the security's own trading currency. */
   price: number;
