@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, ChevronsUpDown, Pencil, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, ChevronsUpDown, Pencil, Trash2 } from "lucide-react";
 import { getAssetMetrics } from "@/lib/services/portfolio-service";
 import { useAssetModal } from "@/lib/asset-modal-context";
 import { usePortfolio } from "@/lib/portfolio-context";
@@ -14,6 +14,9 @@ import { Asset, AssetOwner } from "@/lib/models/asset";
 
 const headerCellClass =
   "px-4 py-3 text-xs font-medium text-gray-400 dark:text-gray-500";
+
+/** Rows shown before the "전체보기" toggle. */
+const DEFAULT_VISIBLE = 5;
 
 const OWNER_BADGE_CLASS: Record<AssetOwner, string> = {
   SELF: "bg-fall/10 text-fall",
@@ -90,6 +93,7 @@ export default function AssetTable({ holdings }: { holdings: DisplayHolding[] })
   const { deleteAsset } = usePortfolio();
   const { displayCurrency, usdKrw } = useDisplayCurrency();
   const [sort, setSort] = useState<SortState | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
   async function handleDelete(asset: Asset) {
     const confirmed = window.confirm(`${asset.name} 자산을 삭제할까요?`);
@@ -108,13 +112,15 @@ export default function AssetTable({ holdings }: { holdings: DisplayHolding[] })
   );
 
   const sortedHoldings = useMemo(() => {
-    if (!sort) return holdings;
+    // Default (no explicit sort) = valuation desc, so the collapsed view
+    // really shows the top holdings.
+    const effective: SortState = sort ?? { key: "valuation", direction: "desc" };
     const sortValue = (asset: Asset): number | string => {
-      if (sort.key === "name") return asset.name;
+      if (effective.key === "name") return asset.name;
       const { principal, valuation, profit } = getAssetMetrics(asset, usdKrw);
       // 비중 is valuation / group total — same ordering as valuation.
-      if (sort.key === "principal") return principal;
-      if (sort.key === "profit") return profit;
+      if (effective.key === "principal") return principal;
+      if (effective.key === "profit") return profit;
       return valuation;
     };
     return [...holdings].sort((a, b) => {
@@ -124,9 +130,14 @@ export default function AssetTable({ holdings }: { holdings: DisplayHolding[] })
         typeof va === "string" && typeof vb === "string"
           ? va.localeCompare(vb, "ko")
           : (va as number) - (vb as number);
-      return sort.direction === "asc" ? compared : -compared;
+      return effective.direction === "asc" ? compared : -compared;
     });
   }, [holdings, sort, usdKrw]);
+
+  const hiddenCount = sortedHoldings.length - DEFAULT_VISIBLE;
+  const isCollapsible = hiddenCount > 0;
+  const visibleHoldings =
+    isCollapsible && !expanded ? sortedHoldings.slice(0, DEFAULT_VISIBLE) : sortedHoldings;
 
   function toggleSort(key: SortKey) {
     setSort((prev) => {
@@ -156,7 +167,7 @@ export default function AssetTable({ holdings }: { holdings: DisplayHolding[] })
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-50 dark:divide-white/5">
-          {sortedHoldings.map(({ asset, merged }) => {
+          {visibleHoldings.map(({ asset, merged }) => {
             const { principal, valuation, profit, profitRate } = getAssetMetrics(asset, usdKrw);
             const isProfit = profit >= 0;
             const sub = subLine(asset);
@@ -266,6 +277,25 @@ export default function AssetTable({ holdings }: { holdings: DisplayHolding[] })
             );
           })}
         </tbody>
+        {isCollapsible && (
+          <tfoot>
+            <tr>
+              <td colSpan={8} className="border-t border-border p-0 dark:border-border-dark">
+                <button
+                  type="button"
+                  onClick={() => setExpanded((prev) => !prev)}
+                  className="flex w-full items-center justify-center gap-1 py-3 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200"
+                >
+                  {expanded ? "접기" : `전체보기 (${hiddenCount}개 더)`}
+                  <ChevronDown
+                    size={14}
+                    className={`transition-transform ${expanded ? "rotate-180" : ""}`}
+                  />
+                </button>
+              </td>
+            </tr>
+          </tfoot>
+        )}
       </table>
     </div>
   );
