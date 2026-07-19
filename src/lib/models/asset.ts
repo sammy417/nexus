@@ -27,6 +27,14 @@ export type AssetType = "CASH" | "STOCK" | "BOND" | "PENSION" | "CUSTOM";
 export type Currency = "KRW" | "USD";
 
 /**
+ * Who an asset belongs to in the household. Not a login concept — one
+ * person enters everything; the tag only separates ownership for
+ * filtering and display. undefined = JOINT (공동), so pre-existing data
+ * needs no migration.
+ */
+export type AssetOwner = "SELF" | "SPOUSE" | "JOINT";
+
+/**
  * Monetary fields on an asset are denominated in its `currency`
  * (undefined = KRW, so pre-currency data needs no migration). Conversion
  * to the KRW base happens at read time in the portfolio service using the
@@ -37,6 +45,8 @@ interface BaseAsset {
   name: string;
   /** Denomination of this asset's monetary fields. undefined = KRW. */
   currency?: Currency;
+  /** Household owner tag. undefined = "JOINT". */
+  owner?: AssetOwner;
   memo?: string;
   createdAt: string;
   updatedAt: string;

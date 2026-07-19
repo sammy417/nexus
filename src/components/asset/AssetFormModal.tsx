@@ -5,7 +5,8 @@ import { Trash2, X } from "lucide-react";
 import { useAssetModal } from "@/lib/asset-modal-context";
 import { AssetInput, usePortfolio } from "@/lib/portfolio-context";
 import { ASSET_TYPE_LABEL, ASSET_TYPES } from "@/lib/models/asset-types";
-import { Asset, AssetType, Currency } from "@/lib/models/asset";
+import { ASSET_OWNER_LABEL, ASSET_OWNERS } from "@/lib/models/asset-owner";
+import { Asset, AssetOwner, AssetType, Currency } from "@/lib/models/asset";
 import { formatKRW } from "@/lib/format";
 
 const inputClass =
@@ -73,6 +74,10 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
 
   const [type, setType] = useState<AssetType>(editingAsset?.type ?? "STOCK");
   const [currency, setCurrency] = useState<Currency>(editingAsset?.currency ?? "KRW");
+  // Editing keeps the stored owner (undefined = 공동); new entries default to 본인.
+  const [owner, setOwner] = useState<AssetOwner>(
+    editingAsset ? (editingAsset.owner ?? "JOINT") : "SELF"
+  );
   const [name, setName] = useState(editingAsset?.name ?? "");
   const [category, setCategory] = useState(
     editingAsset?.type === "CUSTOM" ? editingAsset.category ?? "" : ""
@@ -238,12 +243,13 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
         return;
       }
 
+      const withOwner = { ...resolved, owner };
       if (isEditing && editingAsset) {
-        await updateAsset(editingAsset.id, resolved);
-        showToast(`${resolved.name} 정보가 수정되었습니다.`);
+        await updateAsset(editingAsset.id, withOwner);
+        showToast(`${withOwner.name} 정보가 수정되었습니다.`);
       } else {
-        await addAsset(resolved);
-        showToast(`${resolved.name} 자산이 추가되었습니다.`);
+        await addAsset(withOwner);
+        showToast(`${withOwner.name} 자산이 추가되었습니다.`);
       }
       closeModal();
     } catch (err) {
@@ -313,6 +319,26 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
                 }`}
               >
                 {c === "KRW" ? "₩ 원화" : "$ 달러"}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <span className={labelTextClass}>소유자</span>
+          <div className="flex gap-1 rounded-lg bg-gray-50 p-0.5 dark:bg-white/5">
+            {ASSET_OWNERS.map((o) => (
+              <button
+                key={o}
+                type="button"
+                onClick={() => setOwner(o)}
+                className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
+                  owner === o
+                    ? "bg-white text-gray-900 shadow-sm dark:bg-white/15 dark:text-gray-100"
+                    : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                }`}
+              >
+                {ASSET_OWNER_LABEL[o]}
               </button>
             ))}
           </div>

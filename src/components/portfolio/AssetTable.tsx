@@ -8,10 +8,17 @@ import { usePortfolio } from "@/lib/portfolio-context";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { formatMoney, formatPercent, formatSignedMoney } from "@/lib/format";
 import { getAssetCategoryLabel } from "@/lib/models/portfolio-category";
-import { Asset } from "@/lib/models/asset";
+import { ASSET_OWNER_LABEL, getAssetOwner } from "@/lib/models/asset-owner";
+import { Asset, AssetOwner } from "@/lib/models/asset";
 
 const headerCellClass =
   "px-4 py-3 text-xs font-medium text-gray-400 dark:text-gray-500";
+
+const OWNER_BADGE_CLASS: Record<AssetOwner, string> = {
+  SELF: "bg-fall/10 text-fall",
+  SPOUSE: "bg-[#c9548a]/10 text-[#c9548a]",
+  JOINT: "bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-gray-400",
+};
 
 type SortKey = "name" | "principal" | "valuation" | "weight" | "profit";
 type SortDirection = "asc" | "desc";
@@ -163,8 +170,15 @@ export default function AssetTable({ assets }: { assets: Asset[] }) {
                 <td className="px-4 py-3.5">
                   <p className="font-medium text-gray-900 dark:text-gray-100">
                     {asset.name}
+                    <span
+                      className={`ml-1.5 inline-block whitespace-nowrap rounded px-1 py-0.5 text-[10px] font-semibold ${
+                        OWNER_BADGE_CLASS[getAssetOwner(asset)]
+                      }`}
+                    >
+                      {ASSET_OWNER_LABEL[getAssetOwner(asset)]}
+                    </span>
                     {asset.currency === "USD" && (
-                      <span className="ml-1.5 rounded bg-gray-100 px-1 py-0.5 text-[10px] font-semibold text-gray-500 dark:bg-white/10 dark:text-gray-400">
+                      <span className="ml-1 inline-block whitespace-nowrap rounded bg-gray-100 px-1 py-0.5 text-[10px] font-semibold text-gray-500 dark:bg-white/10 dark:text-gray-400">
                         USD
                       </span>
                     )}
@@ -173,7 +187,7 @@ export default function AssetTable({ assets }: { assets: Asset[] }) {
                     <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">{sub}</p>
                   )}
                 </td>
-                <td className="px-4 py-3.5 text-gray-500 dark:text-gray-400">
+                <td className="whitespace-nowrap px-4 py-3.5 text-gray-500 dark:text-gray-400">
                   {getAssetCategoryLabel(asset)}
                 </td>
                 <td className="px-4 py-3.5 text-right text-gray-700 dark:text-gray-300">

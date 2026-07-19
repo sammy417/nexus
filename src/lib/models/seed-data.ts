@@ -8,6 +8,7 @@ export const SEED_ASSETS: AssetInput[] = [
   {
     type: "STOCK",
     name: "삼성전자",
+    owner: "SELF",
     market: "KRX",
     ticker: "005930",
     quantity: 30,
@@ -17,6 +18,7 @@ export const SEED_ASSETS: AssetInput[] = [
   {
     type: "STOCK",
     name: "NAVER",
+    owner: "SPOUSE",
     market: "KRX",
     ticker: "035420",
     quantity: 8,
@@ -26,6 +28,7 @@ export const SEED_ASSETS: AssetInput[] = [
   {
     type: "STOCK",
     name: "Apple Inc.",
+    owner: "SELF",
     market: "NASDAQ",
     ticker: "AAPL",
     currency: "USD",
@@ -36,6 +39,7 @@ export const SEED_ASSETS: AssetInput[] = [
   {
     type: "STOCK",
     name: "NVIDIA Corp.",
+    owner: "SPOUSE",
     market: "NASDAQ",
     ticker: "NVDA",
     currency: "USD",
@@ -46,6 +50,7 @@ export const SEED_ASSETS: AssetInput[] = [
   {
     type: "STOCK",
     name: "카카오",
+    owner: "SPOUSE",
     market: "KRX",
     ticker: "035720",
     quantity: 20,
@@ -55,6 +60,7 @@ export const SEED_ASSETS: AssetInput[] = [
   {
     type: "BOND",
     name: "국고채 3년 (KTB)",
+    owner: "SELF",
     purchasePrice: 9800000,
     currentValue: 9930000,
     couponRate: 3.25,
@@ -63,6 +69,7 @@ export const SEED_ASSETS: AssetInput[] = [
   {
     type: "BOND",
     name: "회사채 AA- (한전)",
+    owner: "SPOUSE",
     purchasePrice: 5000000,
     currentValue: 4915000,
     couponRate: 4.1,
@@ -71,6 +78,7 @@ export const SEED_ASSETS: AssetInput[] = [
   {
     type: "CASH",
     name: "입출금 통장",
+    owner: "JOINT",
     balance: 8500000,
   },
   {
@@ -81,6 +89,7 @@ export const SEED_ASSETS: AssetInput[] = [
   {
     type: "PENSION",
     name: "IRP 계좌 (미래에셋)",
+    owner: "SELF",
     accountType: "IRP",
     principalPaid: 12000000,
     currentValue: 13260000,
@@ -88,6 +97,7 @@ export const SEED_ASSETS: AssetInput[] = [
   {
     type: "CUSTOM",
     name: "금 현물 (KRX 금시장)",
+    owner: "JOINT",
     category: "금",
     purchasePrice: 3000000,
     currentValue: 3450000,

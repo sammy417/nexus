@@ -3,6 +3,7 @@
 import AssetTable from "@/components/portfolio/AssetTable";
 import TopHoldingsChart from "@/components/portfolio/TopHoldingsChart";
 import CurrencyToggle from "@/components/common/CurrencyToggle";
+import OwnerFilterToggle from "@/components/common/OwnerFilterToggle";
 import { usePortfolio } from "@/lib/portfolio-context";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { formatMoney } from "@/lib/format";
@@ -24,14 +25,17 @@ export default function PortfolioPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-baseline gap-3">
           <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">포트폴리오</h1>
           <p className="text-sm font-medium text-gray-400 dark:text-gray-500">
             보유 자산 {assets.length}개
           </p>
         </div>
-        <CurrencyToggle />
+        <div className="flex items-center gap-3">
+          <OwnerFilterToggle />
+          <CurrencyToggle />
+        </div>
       </div>
 
       {assets.length === 0 ? (

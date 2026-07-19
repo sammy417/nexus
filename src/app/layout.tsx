@@ -5,6 +5,7 @@ import AssetFormModal from "@/components/asset/AssetFormModal";
 import Toast from "@/components/common/Toast";
 import { AssetModalProvider } from "@/lib/asset-modal-context";
 import { CurrencyProvider } from "@/lib/currency-context";
+import { OwnerFilterProvider } from "@/lib/owner-filter-context";
 import { PortfolioProvider } from "@/lib/portfolio-context";
 import { THEME_INIT_SCRIPT, ThemeProvider } from "@/lib/theme-provider";
 
@@ -26,6 +27,7 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <ThemeProvider>
           <CurrencyProvider>
+            <OwnerFilterProvider>
             <PortfolioProvider>
             <AssetModalProvider>
               <div className="flex min-h-dvh bg-surface text-gray-900 dark:bg-surface-dark dark:text-gray-100">
@@ -38,6 +40,7 @@ export default function RootLayout({
               <Toast />
             </AssetModalProvider>
             </PortfolioProvider>
+            </OwnerFilterProvider>
           </CurrencyProvider>
         </ThemeProvider>
       </body>

@@ -4,6 +4,8 @@ import { createContext, useCallback, useContext, useMemo } from "react";
 import { useAssets } from "@/lib/hooks/use-assets";
 import { useSnapshots } from "@/lib/hooks/use-snapshots";
 import { useDisplayCurrency } from "@/lib/currency-context";
+import { useOwnerFilter } from "@/lib/owner-filter-context";
+import { matchesOwnerFilter } from "@/lib/models/asset-owner";
 import { getPortfolioSummary, PortfolioSummary } from "@/lib/services/portfolio-service";
 import { Asset, AssetInput } from "@/lib/models/asset";
 import { PortfolioSnapshot } from "@/lib/models/snapshot";
@@ -25,9 +27,25 @@ interface PortfolioContextValue {
 const PortfolioContext = createContext<PortfolioContextValue | null>(null);
 
 export function PortfolioProvider({ children }: { children: React.ReactNode }) {
-  const { assets, isLoading, error, addAsset, updateAsset, deleteAsset, resetAssets } = useAssets();
+  const {
+    assets: allAssets,
+    isLoading,
+    error,
+    addAsset,
+    updateAsset,
+    deleteAsset,
+    resetAssets,
+  } = useAssets();
   const { snapshots, refresh: refreshSnapshots } = useSnapshots();
   const { usdKrw } = useDisplayCurrency();
+  const { ownerFilter } = useOwnerFilter();
+
+  // The household owner filter scopes every consumer (dashboard totals,
+  // allocation, portfolio, analytics) — "ALL" is the combined view.
+  const assets = useMemo(
+    () => allAssets.filter((asset) => matchesOwnerFilter(asset, ownerFilter)),
+    [allAssets, ownerFilter]
+  );
   const summary = useMemo(() => getPortfolioSummary(assets, usdKrw), [assets, usdKrw]);
 
   // Every mutation moves today's snapshot server-side, so refresh the

@@ -5,13 +5,16 @@ import AssetsPreview from "@/components/dashboard/AssetsPreview";
 import AllocationBreakdown from "@/components/dashboard/AllocationBreakdown";
 import TrendChart from "@/components/dashboard/TrendChart";
 import CurrencyToggle from "@/components/common/CurrencyToggle";
+import OwnerFilterToggle from "@/components/common/OwnerFilterToggle";
 import { usePortfolio } from "@/lib/portfolio-context";
 import { useDisplayCurrency } from "@/lib/currency-context";
+import { useOwnerFilter } from "@/lib/owner-filter-context";
 import { getAllocationByCategory } from "@/lib/services/portfolio-service";
 
 export default function DashboardPage() {
   const { assets, snapshots, summary, isLoading } = usePortfolio();
   const { usdKrw } = useDisplayCurrency();
+  const { ownerFilter } = useOwnerFilter();
   const allocation = getAllocationByCategory(assets, usdKrw);
 
   if (isLoading) {
@@ -20,9 +23,12 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">대시보드</h1>
-        <CurrencyToggle />
+        <div className="flex items-center gap-3">
+          <OwnerFilterToggle />
+          <CurrencyToggle />
+        </div>
       </div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
@@ -30,6 +36,11 @@ export default function DashboardPage() {
         </div>
         <AllocationBreakdown allocation={allocation} />
         <div className="lg:col-span-3">
+          {ownerFilter !== "ALL" && (
+            <p className="mb-2 px-1 text-[11px] text-gray-400 dark:text-gray-500">
+              총 자산 추이는 전체(합산) 기준입니다 — 소유자별 히스토리는 아직 기록되지 않습니다.
+            </p>
+          )}
           <TrendChart snapshots={snapshots} />
         </div>
         <div className="lg:col-span-3">
