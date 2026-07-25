@@ -1,4 +1,6 @@
 import "server-only";
+import { AssetOwner } from "@/lib/models/asset";
+import { getAssetOwner } from "@/lib/models/asset-owner";
 import { getAssetRepository } from "@/lib/repositories";
 import { DEFAULT_USD_KRW } from "./portfolio-service";
 import { DividendEvent, fetchDividendHistory, fetchUsdKrwRate } from "./quote-service";
@@ -15,9 +17,12 @@ export interface HoldingDividendForecast {
   assetId: string;
   name: string;
   ticker: string;
+  owner: AssetOwner;
   quantity: number;
   /** Trading currency of the security (and of the per-share figures). */
   currency: string;
+  /** Current market valuation of the position, in KRW. */
+  valuationKrw: number;
   /** Sum of per-share dividends over the trailing 12 months. */
   perShareTrailing12m: number;
   /** Most recent per-share dividend. */
@@ -35,6 +40,20 @@ export interface HoldingDividendForecast {
   nextAmountKrw: number | null;
 }
 
+/** A past ex-dividend the user may not have recorded yet (one-click add). */
+export interface DividendSuggestion {
+  assetId: string;
+  name: string;
+  ticker: string;
+  owner: AssetOwner;
+  /** Ex-date, YYYY-MM-DD. */
+  date: string;
+  /** Amount in the security's currency (per-share × current quantity). */
+  amount: number;
+  currency: string;
+  amountKrw: number;
+}
+
 export interface DividendForecast {
   holdings: HoldingDividendForecast[];
   totalAnnualKrw: number;
@@ -42,6 +61,8 @@ export interface DividendForecast {
   quotedValuationKrw: number;
   portfolioYieldPct: number | null;
   usdKrw: number;
+  /** Recent past ex-dividends across holdings (client filters already-recorded). */
+  suggestions: DividendSuggestion[];
   /** Tickers whose external lookup failed (still shown to the user). */
   failedTickers: string[];
 }
@@ -91,26 +112,31 @@ export async function buildDividendForecast(): Promise<DividendForecast> {
   );
 
   const holdings: HoldingDividendForecast[] = [];
+  const suggestions: DividendSuggestion[] = [];
   const failedTickers: string[] = [];
   let quotedValuationKrw = 0;
 
   for (const asset of stocks) {
     if (asset.type !== "STOCK") continue;
     const ticker = asset.ticker!.trim();
+    const owner = getAssetOwner(asset);
     try {
       const history = await fetchDividendHistory(ticker, asset.market);
       const trailing = trailingEvents(history.events, 365);
       const perShareTrailing12m = trailing.reduce((sum, e) => sum + e.amountPerShare, 0);
       const last = trailing[trailing.length - 1] ?? null;
+      const valuationKrw = toKrw(history.price * asset.quantity, history.currency);
 
-      quotedValuationKrw += toKrw(history.price * asset.quantity, history.currency);
+      quotedValuationKrw += valuationKrw;
 
       holdings.push({
         assetId: asset.id,
         name: asset.name,
         ticker,
+        owner,
         quantity: asset.quantity,
         currency: history.currency,
+        valuationKrw,
         perShareTrailing12m,
         perShareLast: last?.amountPerShare ?? 0,
         yieldPct:
@@ -123,12 +149,27 @@ export async function buildDividendForecast(): Promise<DividendForecast> {
         nextExDateEstimate: estimateNextExDate(trailing),
         nextAmountKrw: last ? toKrw(last.amountPerShare * asset.quantity, history.currency) : null,
       });
+
+      // Recent past payouts (last ~6 months) offered as one-click records.
+      for (const event of trailingEvents(history.events, 185)) {
+        suggestions.push({
+          assetId: asset.id,
+          name: asset.name,
+          ticker,
+          owner,
+          date: event.date,
+          amount: event.amountPerShare * asset.quantity,
+          currency: history.currency,
+          amountKrw: toKrw(event.amountPerShare * asset.quantity, history.currency),
+        });
+      }
     } catch {
       failedTickers.push(`${asset.name} (${ticker})`);
     }
   }
 
   holdings.sort((a, b) => b.annualEstimateKrw - a.annualEstimateKrw);
+  suggestions.sort((a, b) => b.date.localeCompare(a.date));
   const totalAnnualKrw = holdings.reduce((sum, h) => sum + h.annualEstimateKrw, 0);
 
   return {
@@ -140,6 +181,7 @@ export async function buildDividendForecast(): Promise<DividendForecast> {
         ? (totalAnnualKrw / quotedValuationKrw) * 100
         : null,
     usdKrw,
+    suggestions,
     failedTickers,
   };
 }

@@ -1,6 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { getDb } from "@/lib/db/client";
+import { AssetOwner } from "@/lib/models/asset";
 import { DividendInput, DividendRecord } from "@/lib/models/dividend";
 import { getSeedDividends } from "@/lib/models/seed-dividends";
 import type { DividendRepository } from "./dividend-repository";
@@ -10,10 +11,15 @@ interface DividendRow {
   name: string;
   amount: number;
   currency: string | null;
+  owner: string | null;
   date: string;
   memo: string | null;
   created_at: string;
   updated_at: string;
+}
+
+function toOwner(value: string | null): AssetOwner | undefined {
+  return value === "SELF" || value === "SPOUSE" || value === "JOINT" ? value : undefined;
 }
 
 function rowToRecord(row: DividendRow): DividendRecord {
@@ -22,6 +28,7 @@ function rowToRecord(row: DividendRow): DividendRecord {
     name: row.name,
     amount: row.amount,
     currency: row.currency === "USD" ? "USD" : undefined,
+    owner: toOwner(row.owner),
     date: row.date,
     memo: row.memo ?? undefined,
     createdAt: row.created_at,
@@ -49,13 +56,14 @@ export class SqliteDividendRepository implements DividendRepository {
     const now = new Date().toISOString();
     getDb()
       .prepare(
-        "INSERT INTO dividends (id, name, amount, currency, date, memo, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+        "INSERT INTO dividends (id, name, amount, currency, owner, date, memo, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
       )
       .run(
         id,
         input.name,
         input.amount,
         input.currency ?? null,
+        input.owner ?? null,
         input.date,
         input.memo ?? null,
         now,
@@ -94,10 +102,20 @@ export class SqliteDividendRepository implements DividendRepository {
     const db = getDb();
     db.exec("DELETE FROM dividends");
     const stmt = db.prepare(
-      "INSERT INTO dividends (id, name, amount, currency, date, memo, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+      "INSERT INTO dividends (id, name, amount, currency, owner, date, memo, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
     for (const r of records) {
-      stmt.run(r.id, r.name, r.amount, r.currency ?? null, r.date, r.memo ?? null, r.createdAt, r.updatedAt);
+      stmt.run(
+        r.id,
+        r.name,
+        r.amount,
+        r.currency ?? null,
+        r.owner ?? null,
+        r.date,
+        r.memo ?? null,
+        r.createdAt,
+        r.updatedAt
+      );
     }
     this.seeded = records.length > 0;
   }

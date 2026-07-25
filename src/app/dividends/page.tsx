@@ -5,11 +5,14 @@ import { Plus, Trash2 } from "lucide-react";
 import MonthlyDividendChart from "@/components/dividends/MonthlyDividendChart";
 import DividendFormDialog from "@/components/dividends/DividendFormDialog";
 import DividendForecastCard from "@/components/dividends/DividendForecastCard";
+import DividendSuggestions from "@/components/dividends/DividendSuggestions";
 import UpcomingDividendsCard from "@/components/dividends/UpcomingDividendsCard";
 import CurrencyToggle from "@/components/common/CurrencyToggle";
+import OwnerFilterToggle from "@/components/common/OwnerFilterToggle";
 import { useDividendForecast } from "@/lib/hooks/use-dividend-forecast";
 import { useDividends } from "@/lib/hooks/use-dividends";
 import { useDisplayCurrency } from "@/lib/currency-context";
+import { useOwnerFilter } from "@/lib/owner-filter-context";
 import { useAssetModal } from "@/lib/asset-modal-context";
 import {
   dividendToKrw,
@@ -18,6 +21,22 @@ import {
 } from "@/lib/services/dividend-service";
 import { formatMoney } from "@/lib/format";
 import { DividendRecord } from "@/lib/models/dividend";
+import { ASSET_OWNER_LABEL, OwnerFilter } from "@/lib/models/asset-owner";
+import { AssetOwner } from "@/lib/models/asset";
+
+function recordOwner(record: DividendRecord): AssetOwner {
+  return record.owner ?? "JOINT";
+}
+
+function matchesOwner(owner: AssetOwner, filter: OwnerFilter): boolean {
+  return filter === "ALL" || owner === filter;
+}
+
+const OWNER_BADGE_CLASS: Record<AssetOwner, string> = {
+  SELF: "bg-fall/10 text-fall",
+  SPOUSE: "bg-[#c9548a]/10 text-[#c9548a]",
+  JOINT: "bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-gray-400",
+};
 
 function formatMonthHeading(month: string): string {
   const [year, m] = month.split("-");
@@ -25,11 +44,26 @@ function formatMonthHeading(month: string): string {
 }
 
 export default function DividendsPage() {
-  const { dividends, isLoading, addDividend, deleteDividend } = useDividends();
+  const { dividends: allDividends, isLoading, addDividend, deleteDividend } = useDividends();
   const { forecast, isLoading: isForecastLoading } = useDividendForecast();
   const { displayCurrency, usdKrw } = useDisplayCurrency();
+  const { ownerFilter } = useOwnerFilter();
   const { showToast } = useAssetModal();
   const [isFormOpen, setIsFormOpen] = useState(false);
+
+  // Every card below is scoped by the shared household owner filter.
+  const dividends = useMemo(
+    () => allDividends.filter((r) => matchesOwner(recordOwner(r), ownerFilter)),
+    [allDividends, ownerFilter]
+  );
+  const scopedForecast = useMemo(() => {
+    if (!forecast || ownerFilter === "ALL") return forecast;
+    return {
+      ...forecast,
+      holdings: forecast.holdings.filter((h) => h.owner === ownerFilter),
+      suggestions: forecast.suggestions.filter((s) => s.owner === ownerFilter),
+    };
+  }, [forecast, ownerFilter]);
 
   const summary = useMemo(() => getDividendSummary(dividends, usdKrw), [dividends, usdKrw]);
   const monthly = useMemo(() => getMonthlyDividends(dividends, usdKrw), [dividends, usdKrw]);
@@ -71,7 +105,8 @@ export default function DividendsPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">배당</h1>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <OwnerFilterToggle />
           <CurrencyToggle />
           <button
             type="button"
@@ -96,9 +131,20 @@ export default function DividendsPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[3fr_2fr]">
-        <DividendForecastCard forecast={forecast} isLoading={isForecastLoading} />
-        <UpcomingDividendsCard forecast={forecast} isLoading={isForecastLoading} />
+        <DividendForecastCard forecast={scopedForecast ?? null} isLoading={isForecastLoading} />
+        <UpcomingDividendsCard forecast={scopedForecast ?? null} isLoading={isForecastLoading} />
       </div>
+
+      {scopedForecast && (
+        <DividendSuggestions
+          suggestions={scopedForecast.suggestions}
+          existing={allDividends}
+          onAdd={async (input) => {
+            await addDividend(input);
+            showToast(`${input.name} 배당이 기록되었습니다.`);
+          }}
+        />
+      )}
 
       <MonthlyDividendChart months={monthly} />
 
@@ -125,8 +171,15 @@ export default function DividendsPage() {
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         {record.name}
+                        <span
+                          className={`ml-1.5 rounded px-1 py-0.5 text-[10px] font-semibold ${
+                            OWNER_BADGE_CLASS[recordOwner(record)]
+                          }`}
+                        >
+                          {ASSET_OWNER_LABEL[recordOwner(record)]}
+                        </span>
                         {record.currency === "USD" && (
-                          <span className="ml-1.5 rounded bg-gray-100 px-1 py-0.5 text-[10px] font-semibold text-gray-500 dark:bg-white/10 dark:text-gray-400">
+                          <span className="ml-1 rounded bg-gray-100 px-1 py-0.5 text-[10px] font-semibold text-gray-500 dark:bg-white/10 dark:text-gray-400">
                             USD
                           </span>
                         )}

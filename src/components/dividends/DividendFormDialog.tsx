@@ -2,7 +2,8 @@
 
 import { FormEvent, useState } from "react";
 import { X } from "lucide-react";
-import { Currency } from "@/lib/models/asset";
+import { AssetOwner, Currency } from "@/lib/models/asset";
+import { ASSET_OWNER_LABEL, ASSET_OWNERS } from "@/lib/models/asset-owner";
 import { DividendInput } from "@/lib/models/dividend";
 import { usePortfolio } from "@/lib/portfolio-context";
 import MoneyInput from "@/components/common/MoneyInput";
@@ -23,6 +24,7 @@ export default function DividendFormDialog({
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState<Currency>("KRW");
+  const [owner, setOwner] = useState<AssetOwner>("SELF");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [memo, setMemo] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +63,7 @@ export default function DividendFormDialog({
         name: trimmedName,
         amount: value,
         currency,
+        owner,
         date,
         memo: memo.trim() || undefined,
       });
@@ -133,6 +136,26 @@ export default function DividendFormDialog({
                   }`}
                 >
                   {c === "KRW" ? "₩" : "$"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className={labelTextClass}>소유자</span>
+            <div className="flex gap-1 rounded-lg bg-gray-50 p-0.5 dark:bg-white/5">
+              {ASSET_OWNERS.map((o) => (
+                <button
+                  key={o}
+                  type="button"
+                  onClick={() => setOwner(o)}
+                  className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
+                    owner === o
+                      ? "bg-white text-gray-900 shadow-sm dark:bg-white/15 dark:text-gray-100"
+                      : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                  }`}
+                >
+                  {ASSET_OWNER_LABEL[o]}
                 </button>
               ))}
             </div>

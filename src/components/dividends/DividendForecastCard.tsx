@@ -4,6 +4,7 @@ import type {
   DividendForecast,
   HoldingDividendForecast,
 } from "@/lib/services/dividend-forecast-service";
+import { DIVIDEND_TAX_RATE } from "@/lib/models/dividend";
 import { formatMoney } from "@/lib/format";
 import { useDisplayCurrency } from "@/lib/currency-context";
 
@@ -30,6 +31,11 @@ export default function DividendForecastCard({
 
   const paying = forecast ? payers(forecast.holdings) : [];
   const nonPaying = forecast ? forecast.holdings.length - paying.length : 0;
+  // Totals derived from the (possibly owner-filtered) holdings passed in.
+  const totalAnnualKrw = paying.reduce((sum, h) => sum + h.annualEstimateKrw, 0);
+  const totalValuationKrw = paying.reduce((sum, h) => sum + h.valuationKrw, 0);
+  const yieldPct = totalValuationKrw > 0 ? (totalAnnualKrw / totalValuationKrw) * 100 : null;
+  const afterTaxKrw = totalAnnualKrw * (1 - DIVIDEND_TAX_RATE);
 
   return (
     <section className="rounded-2xl bg-white p-6 shadow-sm dark:bg-card-dark">
@@ -50,14 +56,18 @@ export default function DividendForecastCard({
         <>
           <div className="mt-4 flex items-baseline gap-3">
             <p className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-              {formatMoney(forecast.totalAnnualKrw, displayCurrency, usdKrw)}
+              {formatMoney(totalAnnualKrw, displayCurrency, usdKrw)}
             </p>
-            {forecast.portfolioYieldPct !== null && (
+            {yieldPct !== null && (
               <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">
-                배당수익률 {forecast.portfolioYieldPct.toFixed(2)}%
+                배당수익률 {yieldPct.toFixed(2)}%
               </p>
             )}
           </div>
+          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+            세후 약 {formatMoney(afterTaxKrw, displayCurrency, usdKrw)}
+            <span className="ml-1">(원천징수 {(DIVIDEND_TAX_RATE * 100).toFixed(1)}% 가정)</span>
+          </p>
 
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[430px] text-sm">

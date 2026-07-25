@@ -73,13 +73,18 @@ function createDb(): DatabaseSync {
     );
   `);
 
-  // Idempotent migration: add the owner-history column to databases
-  // created before it existed. ALTER fails if the column is already
-  // there, so the error is expected and ignored.
-  try {
-    db.exec("ALTER TABLE snapshots ADD COLUMN by_owner TEXT");
-  } catch {
-    // column already present
+  // Idempotent migrations: add columns to databases created before they
+  // existed. ALTER fails if the column is already there, so the error is
+  // expected and ignored.
+  for (const migration of [
+    "ALTER TABLE snapshots ADD COLUMN by_owner TEXT",
+    "ALTER TABLE dividends ADD COLUMN owner TEXT",
+  ]) {
+    try {
+      db.exec(migration);
+    } catch {
+      // column already present
+    }
   }
 
   return db;

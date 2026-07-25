@@ -1,4 +1,4 @@
-import { Currency } from "./asset";
+import { AssetOwner, Currency } from "./asset";
 
 /**
  * A dividend (or interest) payment event. Deliberately not foreign-keyed
@@ -12,6 +12,8 @@ export interface DividendRecord {
   /** Amount in `currency` (undefined = KRW). */
   amount: number;
   currency?: Currency;
+  /** Household owner of the payout. undefined = "JOINT". */
+  owner?: AssetOwner;
   /** Payment date, YYYY-MM-DD. */
   date: string;
   memo?: string;
@@ -20,6 +22,9 @@ export interface DividendRecord {
 }
 
 export type DividendInput = Omit<DividendRecord, "id" | "createdAt" | "updatedAt">;
+
+/** Korean dividend/interest withholding (14% income + 1.4% local). */
+export const DIVIDEND_TAX_RATE = 0.154;
 
 /** Minimal runtime shape check for API request bodies. */
 export function isValidDividendInput(value: unknown): value is DividendInput {
@@ -30,6 +35,14 @@ export function isValidDividendInput(value: unknown): value is DividendInput {
     return false;
   if (input.currency !== undefined && input.currency !== "KRW" && input.currency !== "USD")
     return false;
+  if (
+    input.owner !== undefined &&
+    input.owner !== "SELF" &&
+    input.owner !== "SPOUSE" &&
+    input.owner !== "JOINT"
+  ) {
+    return false;
+  }
   if (typeof input.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(input.date)) return false;
   if (input.memo !== undefined && typeof input.memo !== "string") return false;
   return true;
