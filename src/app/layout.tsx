@@ -6,6 +6,7 @@ import Toast from "@/components/common/Toast";
 import { AssetModalProvider } from "@/lib/asset-modal-context";
 import { CurrencyProvider } from "@/lib/currency-context";
 import { OwnerFilterProvider } from "@/lib/owner-filter-context";
+import { SettingsProvider } from "@/lib/settings-context";
 import { PortfolioProvider } from "@/lib/portfolio-context";
 import { THEME_INIT_SCRIPT, ThemeProvider } from "@/lib/theme-provider";
 
@@ -26,6 +27,7 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased">
         <ThemeProvider>
+          <SettingsProvider>
           <CurrencyProvider>
             <OwnerFilterProvider>
             <PortfolioProvider>
@@ -42,6 +44,7 @@ export default function RootLayout({
             </PortfolioProvider>
             </OwnerFilterProvider>
           </CurrencyProvider>
+          </SettingsProvider>
         </ThemeProvider>
       </body>
     </html>

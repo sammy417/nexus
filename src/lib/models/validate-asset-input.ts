@@ -17,6 +17,7 @@ export function isValidAssetInput(value: unknown): value is AssetInput {
     input.owner !== undefined &&
     input.owner !== "SELF" &&
     input.owner !== "SPOUSE" &&
+    input.owner !== "CHILD" &&
     input.owner !== "JOINT"
   ) {
     return false;

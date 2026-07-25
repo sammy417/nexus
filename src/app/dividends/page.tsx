@@ -21,8 +21,9 @@ import {
 } from "@/lib/services/dividend-service";
 import { formatMoney } from "@/lib/format";
 import { DividendRecord } from "@/lib/models/dividend";
-import { ASSET_OWNER_LABEL, OwnerFilter } from "@/lib/models/asset-owner";
+import { OWNER_BADGE_CLASS, OwnerFilter } from "@/lib/models/asset-owner";
 import { AssetOwner } from "@/lib/models/asset";
+import { useSettings } from "@/lib/settings-context";
 
 function recordOwner(record: DividendRecord): AssetOwner {
   return record.owner ?? "JOINT";
@@ -31,12 +32,6 @@ function recordOwner(record: DividendRecord): AssetOwner {
 function matchesOwner(owner: AssetOwner, filter: OwnerFilter): boolean {
   return filter === "ALL" || owner === filter;
 }
-
-const OWNER_BADGE_CLASS: Record<AssetOwner, string> = {
-  SELF: "bg-fall/10 text-fall",
-  SPOUSE: "bg-[#c9548a]/10 text-[#c9548a]",
-  JOINT: "bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-gray-400",
-};
 
 function formatMonthHeading(month: string): string {
   const [year, m] = month.split("-");
@@ -48,6 +43,7 @@ export default function DividendsPage() {
   const { forecast, isLoading: isForecastLoading } = useDividendForecast();
   const { displayCurrency, usdKrw } = useDisplayCurrency();
   const { ownerFilter } = useOwnerFilter();
+  const { ownerName } = useSettings();
   const { showToast } = useAssetModal();
   const [isFormOpen, setIsFormOpen] = useState(false);
 
@@ -176,7 +172,7 @@ export default function DividendsPage() {
                             OWNER_BADGE_CLASS[recordOwner(record)]
                           }`}
                         >
-                          {ASSET_OWNER_LABEL[recordOwner(record)]}
+                          {ownerName(recordOwner(record))}
                         </span>
                         {record.currency === "USD" && (
                           <span className="ml-1 rounded bg-gray-100 px-1 py-0.5 text-[10px] font-semibold text-gray-500 dark:bg-white/10 dark:text-gray-400">

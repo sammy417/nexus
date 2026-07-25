@@ -32,7 +32,7 @@ export type Currency = "KRW" | "USD";
  * filtering and display. undefined = JOINT (공동), so pre-existing data
  * needs no migration.
  */
-export type AssetOwner = "SELF" | "SPOUSE" | "JOINT";
+export type AssetOwner = "SELF" | "SPOUSE" | "CHILD" | "JOINT";
 
 /**
  * Monetary fields on an asset are denominated in its `currency`

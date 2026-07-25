@@ -8,21 +8,16 @@ import { usePortfolio } from "@/lib/portfolio-context";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { formatMoney, formatPercent, formatSignedMoney } from "@/lib/format";
 import { getAssetCategoryLabel } from "@/lib/models/portfolio-category";
-import { ASSET_OWNER_LABEL, getAssetOwner } from "@/lib/models/asset-owner";
+import { getAssetOwner, OWNER_BADGE_CLASS } from "@/lib/models/asset-owner";
 import { DisplayHolding } from "@/lib/services/merge-holdings";
-import { Asset, AssetOwner } from "@/lib/models/asset";
+import { useSettings } from "@/lib/settings-context";
+import { Asset } from "@/lib/models/asset";
 
 const headerCellClass =
   "px-4 py-3 text-xs font-medium text-gray-400 dark:text-gray-500";
 
 /** Rows shown before the "전체보기" toggle. */
 const DEFAULT_VISIBLE = 5;
-
-const OWNER_BADGE_CLASS: Record<AssetOwner, string> = {
-  SELF: "bg-fall/10 text-fall",
-  SPOUSE: "bg-[#c9548a]/10 text-[#c9548a]",
-  JOINT: "bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-gray-400",
-};
 
 type SortKey = "name" | "principal" | "valuation" | "weight" | "profit";
 type SortDirection = "asc" | "desc";
@@ -92,6 +87,7 @@ export default function AssetTable({ holdings }: { holdings: DisplayHolding[] })
   const { openEditModal, showToast } = useAssetModal();
   const { deleteAsset } = usePortfolio();
   const { displayCurrency, usdKrw } = useDisplayCurrency();
+  const { ownerName } = useSettings();
   const [sort, setSort] = useState<SortState | null>(null);
   const [expanded, setExpanded] = useState(false);
 
@@ -179,7 +175,7 @@ export default function AssetTable({ holdings }: { holdings: DisplayHolding[] })
               ? `${merged.count}건 합산: ${merged.parts
                   .map(
                     (part) =>
-                      `${ASSET_OWNER_LABEL[part.owner]} ${part.quantity.toLocaleString("ko-KR")}주`
+                      `${ownerName(part.owner)} ${part.quantity.toLocaleString("ko-KR")}주`
                   )
                   .join(" · ")}`
               : null;
@@ -202,7 +198,7 @@ export default function AssetTable({ holdings }: { holdings: DisplayHolding[] })
                           OWNER_BADGE_CLASS[badgeOwner]
                         }`}
                       >
-                        {ASSET_OWNER_LABEL[badgeOwner]}
+                        {ownerName(badgeOwner)}
                       </span>
                     ))}
                     {asset.currency === "USD" && (

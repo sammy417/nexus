@@ -1,20 +1,16 @@
 "use client";
 
 import { Asset } from "@/lib/models/asset";
-import { ASSET_OWNER_LABEL, ASSET_OWNERS, getAssetOwner } from "@/lib/models/asset-owner";
+import { ASSET_OWNERS, getAssetOwner, OWNER_COLOR } from "@/lib/models/asset-owner";
 import { getPortfolioSummary } from "@/lib/services/portfolio-service";
 import { formatMoney, formatPercent, formatSignedMoney } from "@/lib/format";
 import { useDisplayCurrency } from "@/lib/currency-context";
-
-const OWNER_COLOR = {
-  SELF: "#3182F6",
-  SPOUSE: "#c9548a",
-  JOINT: "#c98500",
-} as const;
+import { useSettings } from "@/lib/settings-context";
 
 /** Current valuation / P&L per household owner, side by side. */
 export default function OwnerComparison({ assets }: { assets: Asset[] }) {
   const { displayCurrency, usdKrw } = useDisplayCurrency();
+  const { ownerName } = useSettings();
 
   const rows = ASSET_OWNERS.map((owner) => {
     const summary = getPortfolioSummary(
@@ -33,7 +29,11 @@ export default function OwnerComparison({ assets }: { assets: Asset[] }) {
         현재 보유 자산 기준 · 소유자별 평가금액과 원금 대비 손익
       </p>
 
-      <div className={`mt-4 grid gap-4 ${rows.length >= 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+      <div
+        className={`mt-4 grid gap-4 sm:grid-cols-2 ${
+          rows.length >= 4 ? "xl:grid-cols-4" : rows.length === 3 ? "xl:grid-cols-3" : ""
+        }`}
+      >
         {rows.map(({ owner, summary }) => {
           const isProfit = summary.totalProfit >= 0;
           return (
@@ -47,7 +47,7 @@ export default function OwnerComparison({ assets }: { assets: Asset[] }) {
                   className="h-2 w-2 rounded-full"
                   style={{ backgroundColor: OWNER_COLOR[owner] }}
                 />
-                {ASSET_OWNER_LABEL[owner]}
+                {ownerName(owner)}
               </p>
               <p className="mt-2 text-lg font-bold tracking-tight text-gray-900 dark:text-gray-100">
                 {formatMoney(summary.totalValuation, displayCurrency, usdKrw)}

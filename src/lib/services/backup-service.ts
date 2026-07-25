@@ -2,11 +2,13 @@ import "server-only";
 import { Asset } from "@/lib/models/asset";
 import { DividendRecord } from "@/lib/models/dividend";
 import { PortfolioSnapshot } from "@/lib/models/snapshot";
+import { AppSettings, normalizeSettings } from "@/lib/models/settings";
 import { isValidAssetInput } from "@/lib/models/validate-asset-input";
 import { isValidDividendInput } from "@/lib/models/dividend";
 import {
   getAssetRepository,
   getDividendRepository,
+  getSettingsRepository,
   getSnapshotRepository,
 } from "@/lib/repositories";
 
@@ -19,13 +21,15 @@ export interface BackupFile {
   assets: Asset[];
   dividends: DividendRecord[];
   snapshots: PortfolioSnapshot[];
+  settings: AppSettings;
 }
 
 export async function exportBackup(): Promise<BackupFile> {
-  const [assets, dividends, snapshots] = await Promise.all([
+  const [assets, dividends, snapshots, settings] = await Promise.all([
     getAssetRepository().list(),
     getDividendRepository().list(),
     getSnapshotRepository().list(),
+    getSettingsRepository().get(),
   ]);
   return {
     app: "nexus",
@@ -34,6 +38,7 @@ export async function exportBackup(): Promise<BackupFile> {
     assets,
     dividends,
     snapshots,
+    settings,
   };
 }
 
@@ -90,6 +95,10 @@ export async function importBackup(data: unknown): Promise<ImportResult> {
   await getAssetRepository().replaceAll(assets as Asset[]);
   await getDividendRepository().replaceAll(dividends as DividendRecord[]);
   await getSnapshotRepository().replaceAll(snapshots as PortfolioSnapshot[]);
+  // Older backups may omit settings; normalizeSettings fills in defaults.
+  if (backup.settings !== undefined) {
+    await getSettingsRepository().save(normalizeSettings(backup.settings));
+  }
 
   return { assets: assets.length, dividends: dividends.length, snapshots: snapshots.length };
 }

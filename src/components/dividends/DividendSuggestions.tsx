@@ -4,9 +4,9 @@ import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import type { DividendSuggestion } from "@/lib/services/dividend-forecast-service";
 import { DividendInput, DividendRecord } from "@/lib/models/dividend";
-import { ASSET_OWNER_LABEL } from "@/lib/models/asset-owner";
 import { formatMoney } from "@/lib/format";
 import { useDisplayCurrency } from "@/lib/currency-context";
+import { useSettings } from "@/lib/settings-context";
 
 /**
  * Past ex-dividends from external data that aren't in the user's records
@@ -23,6 +23,7 @@ export default function DividendSuggestions({
   onAdd: (input: DividendInput) => Promise<void>;
 }) {
   const { displayCurrency, usdKrw } = useDisplayCurrency();
+  const { ownerName } = useSettings();
   const [addingKey, setAddingKey] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
@@ -75,7 +76,7 @@ export default function DividendSuggestions({
                 <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
                   {suggestion.name}
                   <span className="ml-1.5 rounded bg-gray-100 px-1 py-0.5 text-[10px] font-semibold text-gray-500 dark:bg-white/10 dark:text-gray-400">
-                    {ASSET_OWNER_LABEL[suggestion.owner]}
+                    {ownerName(suggestion.owner)}
                   </span>
                 </p>
                 <p className="text-[11px] text-gray-400 dark:text-gray-500">{suggestion.date}</p>

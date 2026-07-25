@@ -3,9 +3,10 @@
 import { FormEvent, useState } from "react";
 import { X } from "lucide-react";
 import { AssetOwner, Currency } from "@/lib/models/asset";
-import { ASSET_OWNER_LABEL, ASSET_OWNERS } from "@/lib/models/asset-owner";
+import { ASSET_OWNERS } from "@/lib/models/asset-owner";
 import { DividendInput } from "@/lib/models/dividend";
 import { usePortfolio } from "@/lib/portfolio-context";
+import { useSettings } from "@/lib/settings-context";
 import MoneyInput from "@/components/common/MoneyInput";
 
 const inputClass =
@@ -21,6 +22,7 @@ export default function DividendFormDialog({
   onClose: () => void;
 }) {
   const { assets } = usePortfolio();
+  const { ownerName } = useSettings();
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState<Currency>("KRW");
@@ -155,7 +157,7 @@ export default function DividendFormDialog({
                       : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                   }`}
                 >
-                  {ASSET_OWNER_LABEL[o]}
+                  {ownerName(o)}
                 </button>
               ))}
             </div>

@@ -18,12 +18,13 @@ import {
   getMonthlyReturns,
   getWindowReturn,
 } from "@/lib/services/analytics-service";
-import { ASSET_OWNER_LABEL } from "@/lib/models/asset-owner";
+import { useSettings } from "@/lib/settings-context";
 
 export default function AnalyticsPage() {
   const { assets, allAssets, snapshots, summary, isLoading } = usePortfolio();
   const { usdKrw } = useDisplayCurrency();
   const { ownerFilter } = useOwnerFilter();
+  const { ownerName } = useSettings();
 
   if (isLoading) {
     return <p className="py-24 text-center text-sm text-gray-400 dark:text-gray-500">불러오는 중...</p>;
@@ -38,7 +39,7 @@ export default function AnalyticsPage() {
 
   const monthlyReturns = getMonthlyReturns(series);
   const categoryProfits = getCategoryProfits(assets, usdKrw);
-  const scopeLabel = ownerFilter === "ALL" ? "전체" : ASSET_OWNER_LABEL[ownerFilter];
+  const scopeLabel = ownerFilter === "ALL" ? "전체" : ownerName(ownerFilter);
   const approximated = usesFallback(snapshots, ownerFilter);
 
   return (

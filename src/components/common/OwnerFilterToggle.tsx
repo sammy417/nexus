@@ -1,20 +1,22 @@
 "use client";
 
-import { ASSET_OWNER_LABEL, ASSET_OWNERS, OwnerFilter } from "@/lib/models/asset-owner";
+import { ASSET_OWNERS, OwnerFilter } from "@/lib/models/asset-owner";
 import { useOwnerFilter } from "@/lib/owner-filter-context";
-
-const OPTIONS: { value: OwnerFilter; label: string }[] = [
-  { value: "ALL", label: "전체" },
-  ...ASSET_OWNERS.map((owner) => ({ value: owner as OwnerFilter, label: ASSET_OWNER_LABEL[owner] })),
-];
+import { useSettings } from "@/lib/settings-context";
 
 /** Segmented control scoping the views to one household member (or all). */
 export default function OwnerFilterToggle() {
   const { ownerFilter, setOwnerFilter } = useOwnerFilter();
+  const { ownerName } = useSettings();
+
+  const options: { value: OwnerFilter; label: string }[] = [
+    { value: "ALL", label: "전체" },
+    ...ASSET_OWNERS.map((owner) => ({ value: owner as OwnerFilter, label: ownerName(owner) })),
+  ];
 
   return (
     <div className="flex gap-1 rounded-lg bg-gray-50 p-0.5 dark:bg-white/5">
-      {OPTIONS.map(({ value, label }) => (
+      {options.map(({ value, label }) => (
         <button
           key={value}
           type="button"

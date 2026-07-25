@@ -5,7 +5,8 @@ import { Trash2, X } from "lucide-react";
 import { useAssetModal } from "@/lib/asset-modal-context";
 import { AssetInput, usePortfolio } from "@/lib/portfolio-context";
 import { ASSET_TYPE_LABEL, ASSET_TYPES } from "@/lib/models/asset-types";
-import { ASSET_OWNER_LABEL, ASSET_OWNERS } from "@/lib/models/asset-owner";
+import { ASSET_OWNERS } from "@/lib/models/asset-owner";
+import { useSettings } from "@/lib/settings-context";
 import { Asset, AssetOwner, AssetType, Currency } from "@/lib/models/asset";
 import { formatKRW } from "@/lib/format";
 import MoneyInput from "@/components/common/MoneyInput";
@@ -70,6 +71,7 @@ async function fetchQuotePrice(
 
 function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
   const { closeModal, showToast } = useAssetModal();
+  const { ownerName } = useSettings();
   const { addAsset, updateAsset, deleteAsset } = usePortfolio();
   const isEditing = editingAsset !== null;
 
@@ -339,7 +341,7 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
                     : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                 }`}
               >
-                {ASSET_OWNER_LABEL[o]}
+                {ownerName(o)}
               </button>
             ))}
           </div>
