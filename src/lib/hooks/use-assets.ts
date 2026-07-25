@@ -67,5 +67,5 @@ export function useAssets() {
     setAssets(data);
   }, []);
 
-  return { assets, isLoading, error, addAsset, updateAsset, deleteAsset, resetAssets };
+  return { assets, isLoading, error, refresh, addAsset, updateAsset, deleteAsset, resetAssets };
 }

@@ -5,6 +5,7 @@ import AssetTable from "@/components/portfolio/AssetTable";
 import TopHoldingsChart from "@/components/portfolio/TopHoldingsChart";
 import CurrencyToggle from "@/components/common/CurrencyToggle";
 import OwnerFilterToggle from "@/components/common/OwnerFilterToggle";
+import RefreshPricesButton from "@/components/common/RefreshPricesButton";
 import { usePortfolio } from "@/lib/portfolio-context";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { formatMoney } from "@/lib/format";
@@ -59,6 +60,7 @@ export default function PortfolioPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          <RefreshPricesButton />
           <button
             type="button"
             onClick={toggleMerge}

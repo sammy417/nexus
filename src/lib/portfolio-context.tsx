@@ -25,6 +25,8 @@ interface PortfolioContextValue {
   updateAsset: (id: string, input: AssetInput) => Promise<Asset>;
   deleteAsset: (id: string) => Promise<void>;
   resetPortfolio: () => Promise<void>;
+  /** Reload assets + history from the server (e.g. after a price refresh). */
+  refreshData: () => Promise<void>;
 }
 
 const PortfolioContext = createContext<PortfolioContextValue | null>(null);
@@ -34,6 +36,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     assets: allAssets,
     isLoading,
     error,
+    refresh: refreshAssets,
     addAsset,
     updateAsset,
     deleteAsset,
@@ -84,6 +87,10 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     refreshSnapshots();
   }, [resetAssets, refreshSnapshots]);
 
+  const refreshData = useCallback(async () => {
+    await Promise.all([refreshAssets(), refreshSnapshots()]);
+  }, [refreshAssets, refreshSnapshots]);
+
   const value = useMemo(
     () => ({
       assets,
@@ -96,6 +103,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       updateAsset: updateAssetAndSync,
       deleteAsset: deleteAssetAndSync,
       resetPortfolio,
+      refreshData,
     }),
     [
       assets,
@@ -108,6 +116,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       updateAssetAndSync,
       deleteAssetAndSync,
       resetPortfolio,
+      refreshData,
     ]
   );
 

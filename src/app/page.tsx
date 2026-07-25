@@ -7,6 +7,7 @@ import OwnerBreakdown from "@/components/dashboard/OwnerBreakdown";
 import TrendChart from "@/components/dashboard/TrendChart";
 import CurrencyToggle from "@/components/common/CurrencyToggle";
 import OwnerFilterToggle from "@/components/common/OwnerFilterToggle";
+import RefreshPricesButton from "@/components/common/RefreshPricesButton";
 import { usePortfolio } from "@/lib/portfolio-context";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useOwnerFilter } from "@/lib/owner-filter-context";
@@ -30,6 +31,7 @@ export default function DashboardPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">대시보드</h1>
         <div className="flex items-center gap-3">
+          <RefreshPricesButton />
           <OwnerFilterToggle />
           <CurrencyToggle />
         </div>
