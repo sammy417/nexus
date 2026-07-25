@@ -8,6 +8,7 @@ import { ASSET_TYPE_LABEL, ASSET_TYPES } from "@/lib/models/asset-types";
 import { ASSET_OWNER_LABEL, ASSET_OWNERS } from "@/lib/models/asset-owner";
 import { Asset, AssetOwner, AssetType, Currency } from "@/lib/models/asset";
 import { formatKRW } from "@/lib/format";
+import MoneyInput from "@/components/common/MoneyInput";
 
 const inputClass =
   "rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-300 focus:ring-2 focus:ring-gray-900/10 dark:bg-white/5 dark:text-gray-100 dark:placeholder:text-gray-600 dark:focus:ring-white/10";
@@ -394,12 +395,10 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
             <div className="grid grid-cols-2 gap-3">
               <label className={labelClass}>
                 <span className={labelTextClass}>납입 원금</span>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min="0"
+                <MoneyInput
                   value={purchasePrice}
-                  onChange={(event) => setPurchasePrice(event.target.value)}
+                  onChange={setPurchasePrice}
+                  currency={currency}
                   placeholder="0"
                   required
                   className={inputClass}
@@ -407,12 +406,10 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
               </label>
               <label className={labelClass}>
                 <span className={labelTextClass}>현재 평가 금액 (선택)</span>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min="0"
+                <MoneyInput
                   value={currentValue}
-                  onChange={(event) => setCurrentValue(event.target.value)}
+                  onChange={setCurrentValue}
+                  currency={currency}
                   placeholder="미입력 시 납입 원금과 동일"
                   className={inputClass}
                 />
@@ -461,12 +458,10 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
               </label>
               <label className={labelClass}>
                 <span className={labelTextClass}>평단가 (선택)</span>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
+                <MoneyInput
                   value={avgPrice}
-                  onChange={(event) => setAvgPrice(event.target.value)}
+                  onChange={setAvgPrice}
+                  currency={currency}
                   placeholder="0"
                   className={inputClass}
                 />
@@ -492,12 +487,10 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
           <div className="grid grid-cols-2 gap-3">
             <label className={labelClass}>
               <span className={labelTextClass}>매입 금액</span>
-              <input
-                type="number"
-                inputMode="numeric"
-                min="0"
+              <MoneyInput
                 value={purchasePrice}
-                onChange={(event) => setPurchasePrice(event.target.value)}
+                onChange={setPurchasePrice}
+                currency={currency}
                 placeholder="0"
                 required
                 className={inputClass}
@@ -505,12 +498,10 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
             </label>
             <label className={labelClass}>
               <span className={labelTextClass}>현재 평가 금액 (선택)</span>
-              <input
-                type="number"
-                inputMode="numeric"
-                min="0"
+              <MoneyInput
                 value={currentValue}
-                onChange={(event) => setCurrentValue(event.target.value)}
+                onChange={setCurrentValue}
+                currency={currency}
                 placeholder="미입력 시 매입 금액과 동일"
                 className={inputClass}
               />
@@ -550,12 +541,10 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
         {type === "CASH" && (
           <label className={labelClass}>
             <span className={labelTextClass}>금액</span>
-            <input
-              type="number"
-              inputMode="numeric"
-              min="0"
+            <MoneyInput
               value={balance}
-              onChange={(event) => setBalance(event.target.value)}
+              onChange={setBalance}
+              currency={currency}
               placeholder="0"
               required
               className={inputClass}

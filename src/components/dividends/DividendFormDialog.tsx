@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { Currency } from "@/lib/models/asset";
 import { DividendInput } from "@/lib/models/dividend";
 import { usePortfolio } from "@/lib/portfolio-context";
+import MoneyInput from "@/components/common/MoneyInput";
 
 const inputClass =
   "rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-300 focus:ring-2 focus:ring-gray-900/10 dark:bg-white/5 dark:text-gray-100 dark:placeholder:text-gray-600 dark:focus:ring-white/10";
@@ -110,13 +111,10 @@ export default function DividendFormDialog({
           <div className="grid grid-cols-[1fr_auto] items-end gap-3">
             <label className={labelClass}>
               <span className={labelTextClass}>금액 (세후)</span>
-              <input
-                type="number"
-                inputMode="decimal"
-                min="0"
-                step="any"
+              <MoneyInput
                 value={amount}
-                onChange={(event) => setAmount(event.target.value)}
+                onChange={setAmount}
+                currency={currency}
                 placeholder="0"
                 required
                 className={inputClass}
