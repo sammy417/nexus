@@ -1,4 +1,9 @@
-import { AssetType } from "./asset";
+import { AssetOwner, AssetType } from "./asset";
+
+export interface OwnerSnapshotEntry {
+  principal: number;
+  valuation: number;
+}
 
 /**
  * One point of portfolio history: the whole portfolio's state on a given
@@ -12,4 +17,10 @@ export interface PortfolioSnapshot {
   totalValuation: number;
   /** Valuation per asset type on that day (types with 0 omitted). */
   byType: Partial<Record<AssetType, number>>;
+  /**
+   * Principal/valuation per household owner. Optional: snapshots recorded
+   * before this field existed omit it, and consumers fall back to the
+   * owner's current share (see selectOwnerHistory).
+   */
+  byOwner?: Partial<Record<AssetOwner, OwnerSnapshotEntry>>;
 }

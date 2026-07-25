@@ -1,11 +1,13 @@
 import { Asset } from "@/lib/models/asset";
-import { PortfolioSnapshot } from "@/lib/models/snapshot";
 import {
   getPortfolioCategory,
   PORTFOLIO_CATEGORIES,
   PortfolioCategory,
 } from "@/lib/models/portfolio-category";
 import { getAssetMetrics } from "./portfolio-service";
+
+/** The history shape these derivations need — snapshots and owner series both satisfy it. */
+type ValuationPoint = { date: string; totalValuation: number };
 
 /**
  * Pure derivations over the snapshot history and current assets for the
@@ -23,8 +25,8 @@ export interface MonthlyReturn {
 }
 
 /** Last snapshot of each month → month-over-month valuation change. */
-export function getMonthlyReturns(snapshots: PortfolioSnapshot[], maxMonths = 12): MonthlyReturn[] {
-  const lastPerMonth = new Map<string, PortfolioSnapshot>();
+export function getMonthlyReturns(snapshots: ValuationPoint[], maxMonths = 12): MonthlyReturn[] {
+  const lastPerMonth = new Map<string, ValuationPoint>();
   for (const snapshot of snapshots) {
     lastPerMonth.set(snapshot.date.slice(0, 7), snapshot);
   }
@@ -45,7 +47,7 @@ export function getMonthlyReturns(snapshots: PortfolioSnapshot[], maxMonths = 12
 }
 
 /** Valuation change over the trailing N days, in percent (null if not enough history). */
-export function getWindowReturn(snapshots: PortfolioSnapshot[], days: number): number | null {
+export function getWindowReturn(snapshots: ValuationPoint[], days: number): number | null {
   if (snapshots.length < 2) return null;
   const cutoff = new Date();
   cutoff.setUTCDate(cutoff.getUTCDate() - days);
@@ -58,7 +60,7 @@ export function getWindowReturn(snapshots: PortfolioSnapshot[], days: number): n
 }
 
 /** Maximum drawdown over the whole history, as a negative percent. */
-export function getMaxDrawdown(snapshots: PortfolioSnapshot[]): number | null {
+export function getMaxDrawdown(snapshots: ValuationPoint[]): number | null {
   if (snapshots.length < 2) return null;
   let peak = -Infinity;
   let maxDrawdown = 0;

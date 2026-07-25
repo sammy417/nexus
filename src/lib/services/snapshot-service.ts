@@ -1,5 +1,6 @@
-import { Asset } from "@/lib/models/asset";
-import { PortfolioSnapshot } from "@/lib/models/snapshot";
+import { Asset, AssetOwner } from "@/lib/models/asset";
+import { ASSET_OWNERS, getAssetOwner } from "@/lib/models/asset-owner";
+import { OwnerSnapshotEntry, PortfolioSnapshot } from "@/lib/models/snapshot";
 import { getAllocationByType, getPortfolioSummary } from "./portfolio-service";
 
 export function toDateKey(date: Date): string {
@@ -13,11 +14,27 @@ export function buildSnapshot(assets: Asset[], date: string, usdKrw: number): Po
   for (const entry of getAllocationByType(assets, usdKrw)) {
     byType[entry.type] = entry.valuation;
   }
+
+  const byOwner: PortfolioSnapshot["byOwner"] = {};
+  for (const owner of ASSET_OWNERS) {
+    const ownerSummary = getPortfolioSummary(
+      assets.filter((asset) => getAssetOwner(asset) === owner),
+      usdKrw
+    );
+    if (ownerSummary.totalValuation > 0 || ownerSummary.totalPrincipal > 0) {
+      byOwner[owner] = {
+        principal: ownerSummary.totalPrincipal,
+        valuation: ownerSummary.totalValuation,
+      };
+    }
+  }
+
   return {
     date,
     totalPrincipal: summary.totalPrincipal,
     totalValuation: summary.totalValuation,
     byType,
+    byOwner,
   };
 }
 
@@ -63,11 +80,24 @@ export function generateSeedHistory(
       byType[type as keyof PortfolioSnapshot["byType"]] = Math.round(value * scale);
     }
 
+    // Owner valuations ride the same daily factor; principal stays put.
+    const byOwner: Partial<Record<AssetOwner, OwnerSnapshotEntry>> = {};
+    for (const [owner, entry] of Object.entries(today.byOwner ?? {}) as [
+      AssetOwner,
+      OwnerSnapshotEntry,
+    ][]) {
+      byOwner[owner] = {
+        principal: entry.principal,
+        valuation: Math.round(entry.valuation * scale),
+      };
+    }
+
     snapshots.push({
       date: toDateKey(date),
       totalPrincipal: today.totalPrincipal,
       totalValuation: Math.round(valuation),
       byType,
+      byOwner,
     });
   }
 

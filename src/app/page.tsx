@@ -11,7 +11,12 @@ import RefreshPricesButton from "@/components/common/RefreshPricesButton";
 import { usePortfolio } from "@/lib/portfolio-context";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useOwnerFilter } from "@/lib/owner-filter-context";
-import { getAllocationByCategory, getAllocationByOwner } from "@/lib/services/portfolio-service";
+import {
+  getAllocationByCategory,
+  getAllocationByOwner,
+  getPortfolioSummary,
+} from "@/lib/services/portfolio-service";
+import { selectOwnerHistory } from "@/lib/services/owner-history";
 
 export default function DashboardPage() {
   const { assets, allAssets, snapshots, summary, isLoading } = usePortfolio();
@@ -21,6 +26,15 @@ export default function DashboardPage() {
   // Household split stays ALL-based on purpose — it answers "whose share
   // of the whole", which a filtered view can't.
   const ownerAllocation = getAllocationByOwner(allAssets, usdKrw);
+
+  // Owner-scoped history: real byOwner where stored, else scaled by the
+  // owner's current share of the household.
+  const household = getPortfolioSummary(allAssets, usdKrw);
+  const fallbackShare = {
+    principal: household.totalPrincipal === 0 ? 0 : summary.totalPrincipal / household.totalPrincipal,
+    valuation: household.totalValuation === 0 ? 0 : summary.totalValuation / household.totalValuation,
+  };
+  const trendSeries = selectOwnerHistory(snapshots, ownerFilter, fallbackShare);
 
   if (isLoading) {
     return <p className="py-24 text-center text-sm text-gray-400 dark:text-gray-500">불러오는 중...</p>;
@@ -42,12 +56,7 @@ export default function DashboardPage() {
         </div>
         <AllocationBreakdown allocation={allocation} />
         <div className="lg:col-span-3">
-          {ownerFilter !== "ALL" && (
-            <p className="mb-2 px-1 text-[11px] text-gray-400 dark:text-gray-500">
-              총 자산 추이는 전체(합산) 기준입니다 — 소유자별 히스토리는 아직 기록되지 않습니다.
-            </p>
-          )}
-          <TrendChart snapshots={snapshots} />
+          <TrendChart snapshots={trendSeries} />
         </div>
         <OwnerBreakdown allocation={ownerAllocation} />
         <div className="lg:col-span-2">

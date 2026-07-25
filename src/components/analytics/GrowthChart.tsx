@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { PortfolioSnapshot } from "@/lib/models/snapshot";
+import { HistoryPoint } from "@/lib/services/owner-history";
 import { formatCompactMoney, formatMoney } from "@/lib/format";
 import { useDisplayCurrency } from "@/lib/currency-context";
 
@@ -29,7 +29,7 @@ function formatTickDate(date: string): string {
 }
 
 /** 평가 금액 vs 투자 원금, full history — two lines with a shared crosshair. */
-export default function GrowthChart({ snapshots }: { snapshots: PortfolioSnapshot[] }) {
+export default function GrowthChart({ snapshots }: { snapshots: HistoryPoint[] }) {
   const { displayCurrency, usdKrw } = useDisplayCurrency();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [width, setWidth] = useState(0);
@@ -60,7 +60,7 @@ export default function GrowthChart({ snapshots }: { snapshots: PortfolioSnapsho
     const x = (i: number) => MARGIN.left + (i / (snapshots.length - 1)) * plotWidth;
     const y = (v: number) => MARGIN.top + plotHeight - ((v - yMin) / (yMax - yMin)) * plotHeight;
 
-    const linePath = (pick: (s: PortfolioSnapshot) => number) =>
+    const linePath = (pick: (s: HistoryPoint) => number) =>
       snapshots
         .map((s, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(pick(s)).toFixed(1)}`)
         .join("");

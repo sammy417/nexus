@@ -8,6 +8,7 @@ interface SnapshotRow {
   total_principal: number;
   total_valuation: number;
   by_type: string;
+  by_owner: string | null;
 }
 
 function rowToSnapshot(row: SnapshotRow): PortfolioSnapshot {
@@ -16,6 +17,7 @@ function rowToSnapshot(row: SnapshotRow): PortfolioSnapshot {
     totalPrincipal: row.total_principal,
     totalValuation: row.total_valuation,
     byType: JSON.parse(row.by_type),
+    byOwner: row.by_owner ? JSON.parse(row.by_owner) : undefined,
   };
 }
 
@@ -30,18 +32,20 @@ export class SqliteSnapshotRepository implements SnapshotRepository {
   async upsert(snapshot: PortfolioSnapshot): Promise<void> {
     getDb()
       .prepare(
-        `INSERT INTO snapshots (date, total_principal, total_valuation, by_type)
-         VALUES (?, ?, ?, ?)
+        `INSERT INTO snapshots (date, total_principal, total_valuation, by_type, by_owner)
+         VALUES (?, ?, ?, ?, ?)
          ON CONFLICT(date) DO UPDATE SET
            total_principal = excluded.total_principal,
            total_valuation = excluded.total_valuation,
-           by_type = excluded.by_type`
+           by_type = excluded.by_type,
+           by_owner = excluded.by_owner`
       )
       .run(
         snapshot.date,
         snapshot.totalPrincipal,
         snapshot.totalValuation,
-        JSON.stringify(snapshot.byType)
+        JSON.stringify(snapshot.byType),
+        snapshot.byOwner ? JSON.stringify(snapshot.byOwner) : null
       );
   }
 

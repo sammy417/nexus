@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { PortfolioSnapshot } from "@/lib/models/snapshot";
+import { HistoryPoint } from "@/lib/services/owner-history";
 import { formatCompactMoney, formatMoney, formatPercent, formatSignedMoney } from "@/lib/format";
 import { useDisplayCurrency } from "@/lib/currency-context";
 
@@ -43,7 +43,7 @@ function formatFullDate(date: string): string {
   return `${year}년 ${Number(month)}월 ${Number(day)}일`;
 }
 
-export default function TrendChart({ snapshots }: { snapshots: PortfolioSnapshot[] }) {
+export default function TrendChart({ snapshots }: { snapshots: HistoryPoint[] }) {
   const { displayCurrency, usdKrw } = useDisplayCurrency();
   const [range, setRange] = useState<RangeKey>("1M");
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
