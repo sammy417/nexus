@@ -12,14 +12,17 @@ import EmptyState from "@/components/common/EmptyState";
 import CurrencyToggle from "@/components/common/CurrencyToggle";
 import OwnerFilterToggle from "@/components/common/OwnerFilterToggle";
 import RefreshPricesButton from "@/components/common/RefreshPricesButton";
+import MergeHoldingsToggle from "@/components/common/MergeHoldingsToggle";
 import { usePortfolio } from "@/lib/portfolio-context";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useOwnerFilter } from "@/lib/owner-filter-context";
 import { useSettings } from "@/lib/settings-context";
 import { useAssetModal } from "@/lib/asset-modal-context";
 import { useT } from "@/lib/i18n/locale-context";
+import { useMergeHoldings } from "@/lib/hooks/use-merge-holdings";
 import { formatPercent } from "@/lib/format";
-import { sectorColor } from "@/lib/models/stock-sector";
+import { assignSectorColors, formatSectorLabel } from "@/lib/models/stock-sector";
+import { mergeHoldings } from "@/lib/services/merge-holdings";
 import { StockAsset } from "@/lib/models/asset";
 import {
   getConcentration,
@@ -43,17 +46,25 @@ export default function StocksPage() {
   const { ownerName } = useSettings();
   const { openAddModal } = useAssetModal();
   const t = useT();
+  const { mergeSame, toggle: toggleMerge } = useMergeHoldings();
   const [selected, setSelected] = useState<StockAsset | null>(null);
 
   if (isLoading) return <StocksSkeleton />;
 
-  const holdings = getStockHoldings(assets, usdKrw);
+  // Optionally collapse same-ticker positions into one synthetic holding
+  // (quantity summed, avg price position-weighted), mirroring the portfolio.
+  const stockAssets = assets.filter(isStock);
+  const displayAssets = mergeSame
+    ? mergeHoldings(stockAssets).map((h) => h.asset)
+    : stockAssets;
+  const holdings = getStockHoldings(displayAssets, usdKrw);
 
   const header = (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t("주식")}</h1>
       <div className="flex flex-wrap items-center gap-3">
         <RefreshPricesButton />
+        <MergeHoldingsToggle active={mergeSame} onToggle={toggleMerge} />
         <OwnerFilterToggle />
         <CurrencyToggle />
       </div>
@@ -89,6 +100,7 @@ export default function StocksPage() {
 
   const summary = getStockSummary(holdings);
   const sectors = getSectorAllocation(holdings);
+  const sectorColors = assignSectorColors(sectors);
   const regions = getRegionAllocation(holdings);
   const currencies = getCurrencyAllocation(holdings);
   const concentration = getConcentration(holdings);
@@ -104,6 +116,14 @@ export default function StocksPage() {
   return (
     <div className="flex flex-col gap-6">
       {header}
+
+      {mergeSame && (
+        <p className="-mt-4 px-1 text-[11px] text-gray-400 dark:text-gray-500">
+          {t(
+            "같은 티커의 주식을 하나로 합쳐 분석합니다 (수량 합산, 평단가는 가중평균). 합산 종목은 수정할 수 없으며, 개별 수정은 합산을 해제한 뒤 진행하세요."
+          )}
+        </p>
+      )}
 
       {/* Summary tiles */}
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
@@ -133,13 +153,13 @@ export default function StocksPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <DonutBreakdownCard
           title={t("섹터 구성")}
-          subtitle={t("보유 주식 평가금액 기준")}
+          subtitle={t("보유 주식 평가금액 기준 · 세부 섹터까지 구분")}
           ariaLabel={t("섹터별 주식 구성 도넛 차트")}
           centerTitle={t("주식 평가 금액")}
-          entries={sectors.map((s) => ({
+          entries={sectors.map((s, i) => ({
             id: s.key,
-            label: t(s.key),
-            color: sectorColor(s.key),
+            label: formatSectorLabel(s.baseSector, s.subSector, t),
+            color: sectorColors[i],
             valuation: s.valuation,
             ratio: s.ratio,
           }))}

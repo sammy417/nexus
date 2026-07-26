@@ -5,6 +5,7 @@ import { Pencil, X } from "lucide-react";
 import { StockAsset } from "@/lib/models/asset";
 import { getStockSector, getStockSectorLabel, sectorColor } from "@/lib/models/stock-sector";
 import { hexWithAlpha } from "@/lib/models/asset-owner";
+import { isMergedAsset } from "@/lib/services/merge-holdings";
 import { formatMarketCap } from "@/lib/models/stock-valuation";
 import { ClosePoint } from "@/lib/models/stock-history";
 import { getAssetMetrics } from "@/lib/services/portfolio-service";
@@ -159,6 +160,7 @@ export default function StockDetailModal({ asset, onClose }: { asset: StockAsset
   const closes = key ? history[key] ?? [] : [];
   const risk = getRiskRows([asset], history)[0];
   const { principal, valuation, profit, profitRate } = getAssetMetrics(asset, usdKrw);
+  const merged = isMergedAsset(asset);
   const owner = asset.owner ?? "JOINT";
   const sector = getStockSector(asset);
   const color = sectorColor(sector);
@@ -184,29 +186,37 @@ export default function StockDetailModal({ asset, onClose }: { asset: StockAsset
               >
                 {getStockSectorLabel(asset, t)}
               </span>
-              <span
-                className="rounded px-1.5 py-0.5 text-[11px] font-semibold"
-                style={{ color: ownerColor(owner), backgroundColor: hexWithAlpha(ownerColor(owner), 0.12) }}
-              >
-                {ownerName(owner)}
-              </span>
+              {merged ? (
+                <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[11px] font-semibold text-gray-500 dark:bg-white/10 dark:text-gray-400">
+                  {t("합산")}
+                </span>
+              ) : (
+                <span
+                  className="rounded px-1.5 py-0.5 text-[11px] font-semibold"
+                  style={{ color: ownerColor(owner), backgroundColor: hexWithAlpha(ownerColor(owner), 0.12) }}
+                >
+                  {ownerName(owner)}
+                </span>
+              )}
             </div>
             <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
               {[asset.market, asset.ticker, asset.currency ?? "KRW"].filter(Boolean).join(" · ")}
             </p>
           </div>
           <div className="flex items-center gap-1">
-            <button
-              type="button"
-              aria-label={t("수정")}
-              onClick={() => {
-                onClose();
-                openEditModal(asset);
-              }}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10"
-            >
-              <Pencil size={16} />
-            </button>
+            {!merged && (
+              <button
+                type="button"
+                aria-label={t("수정")}
+                onClick={() => {
+                  onClose();
+                  openEditModal(asset);
+                }}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10"
+              >
+                <Pencil size={16} />
+              </button>
+            )}
             <button
               type="button"
               aria-label={t("닫기")}

@@ -18,6 +18,14 @@ export interface DisplayHolding {
   merged?: { count: number; parts: MergedPart[] };
 }
 
+/** Prefix on the synthetic id of a merged (read-only) holding. */
+export const MERGED_ID_PREFIX = "merged:";
+
+/** Whether an asset is a synthetic merged holding (not a real, editable row). */
+export function isMergedAsset(asset: Asset): boolean {
+  return asset.id.startsWith(MERGED_ID_PREFIX);
+}
+
 export function toDisplayHoldings(assets: Asset[]): DisplayHolding[] {
   return assets.map((asset) => ({ asset }));
 }
@@ -59,7 +67,7 @@ export function mergeHoldings(assets: Asset[]): DisplayHolding[] {
         holdings.push({
           asset: {
             ...latest,
-            id: `merged:${key}`,
+            id: `${MERGED_ID_PREFIX}${key}`,
             quantity,
             avgPrice: principal / quantity,
             currentPrice: latest.currentPrice,

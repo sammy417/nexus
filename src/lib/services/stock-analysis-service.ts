@@ -1,5 +1,5 @@
 import { Asset, StockAsset } from "@/lib/models/asset";
-import { getStockSector } from "@/lib/models/stock-sector";
+import { getStockSector, getStockSectorLabel } from "@/lib/models/stock-sector";
 import { getPortfolioCategory } from "@/lib/models/portfolio-category";
 import { getAssetMetrics } from "./portfolio-service";
 
@@ -72,9 +72,41 @@ export interface GroupWeight {
   ratio: number;
 }
 
-/** Valuation share per sector, largest first. */
-export function getSectorAllocation(holdings: StockHolding[]): GroupWeight[] {
-  return groupBy(holdings, (h) => h.sector);
+export interface SectorGroupWeight extends GroupWeight {
+  /** Base sector (for coloring/grouping the shades). */
+  baseSector: string;
+  /** Free-text sub-sector, when the holdings carry one. */
+  subSector?: string;
+}
+
+/**
+ * Valuation share per sector, largest first. Holdings that carry a free-text
+ * sub-sector are split out into their own slice (e.g. "기술 (반도체)" vs
+ * "기술 (AI SW)"), so a dominant sector can be broken down further; the base
+ * sector is kept on each slice for consistent coloring.
+ */
+export function getSectorAllocation(holdings: StockHolding[]): SectorGroupWeight[] {
+  const total = holdings.reduce((s, h) => s + h.valuation, 0);
+  const map = new Map<string, { valuation: number; baseSector: string; subSector?: string }>();
+  for (const h of holdings) {
+    const key = getStockSectorLabel(h.asset);
+    const entry = map.get(key) ?? {
+      valuation: 0,
+      baseSector: h.sector,
+      subSector: h.asset.subSector?.trim() || undefined,
+    };
+    entry.valuation += h.valuation;
+    map.set(key, entry);
+  }
+  return [...map.entries()]
+    .map(([key, e]) => ({
+      key,
+      valuation: e.valuation,
+      ratio: total === 0 ? 0 : (e.valuation / total) * 100,
+      baseSector: e.baseSector,
+      subSector: e.subSector,
+    }))
+    .sort((a, b) => b.valuation - a.valuation);
 }
 
 /** KR vs foreign valuation share. */

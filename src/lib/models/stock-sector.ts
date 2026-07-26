@@ -85,16 +85,68 @@ export function getStockSector(asset: StockAsset): string {
 }
 
 /**
+ * Compose a display label from a base sector and an optional sub-sector,
+ * e.g. "기술 (반도체)". `translate` localizes the base sector; the
+ * sub-sector is user free text and stays as-is.
+ */
+export function formatSectorLabel(
+  baseSector: string,
+  subSector: string | undefined,
+  translate: (sector: string) => string = (s) => s
+): string {
+  const base = translate(baseSector);
+  const sub = subSector?.trim();
+  return sub ? `${base} (${sub})` : base;
+}
+
+/**
  * Display label combining the (translated) base sector with the user's
  * free-text sub-sector, e.g. "기술 (반도체)". Grouping/coloring still use
- * `getStockSector` (base only) — this is presentation only. `translate`
- * localizes the base sector; the sub-sector is user text and stays as-is.
+ * `getStockSector` (base only) — this is presentation only.
  */
 export function getStockSectorLabel(
   asset: StockAsset,
   translate: (sector: string) => string = (s) => s
 ): string {
-  const base = translate(getStockSector(asset));
-  const sub = asset.subSector?.trim();
-  return sub ? `${base} (${sub})` : base;
+  return formatSectorLabel(getStockSector(asset), asset.subSector?.trim() || undefined, translate);
+}
+
+/**
+ * Mix a hex color toward white (amount > 0) or black (amount < 0). Used to
+ * derive distinguishable shades of a base sector color for its sub-sectors.
+ */
+export function shadeHex(hex: string, amount: number): string {
+  const m = hex.replace("#", "");
+  const channels = [m.slice(0, 2), m.slice(2, 4), m.slice(4, 6)].map((c) => parseInt(c, 16));
+  const target = amount >= 0 ? 255 : 0;
+  const ratio = Math.min(Math.abs(amount), 1);
+  return (
+    "#" +
+    channels
+      .map((c) => Math.round(c + (target - c) * ratio).toString(16).padStart(2, "0"))
+      .join("")
+  );
+}
+
+// Shade offsets applied within a single base sector, first (largest) slice
+// keeping the base color and the rest fanning out lighter/darker.
+const SECTOR_SHADE_OFFSETS = [0, 0.24, -0.2, 0.44, -0.36, 0.62, -0.5];
+
+/**
+ * Assign a donut color to each sector slice. A base sector with a single
+ * slice keeps its canonical color; when it splits into sub-sectors, the
+ * slices get progressively lighter/darker shades of that base color so
+ * they read as one family while staying distinguishable.
+ */
+export function assignSectorColors(entries: readonly { baseSector: string }[]): string[] {
+  const counts = new Map<string, number>();
+  for (const e of entries) counts.set(e.baseSector, (counts.get(e.baseSector) ?? 0) + 1);
+  const seen = new Map<string, number>();
+  return entries.map((e) => {
+    const base = sectorColor(e.baseSector);
+    if ((counts.get(e.baseSector) ?? 0) <= 1) return base;
+    const idx = seen.get(e.baseSector) ?? 0;
+    seen.set(e.baseSector, idx + 1);
+    return shadeHex(base, SECTOR_SHADE_OFFSETS[idx % SECTOR_SHADE_OFFSETS.length]);
+  });
 }

@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import AssetTable from "@/components/portfolio/AssetTable";
 import TopHoldingsChart from "@/components/portfolio/TopHoldingsChart";
 import CurrencyToggle from "@/components/common/CurrencyToggle";
 import OwnerFilterToggle from "@/components/common/OwnerFilterToggle";
 import RefreshPricesButton from "@/components/common/RefreshPricesButton";
+import MergeHoldingsToggle from "@/components/common/MergeHoldingsToggle";
 import EmptyState from "@/components/common/EmptyState";
 import PortfolioSkeleton from "@/components/skeletons/PortfolioSkeleton";
 import { Plus, WalletCards } from "lucide-react";
@@ -15,6 +15,7 @@ import { useOwnerFilter } from "@/lib/owner-filter-context";
 import { useAssetModal } from "@/lib/asset-modal-context";
 import { useSettings } from "@/lib/settings-context";
 import { useT } from "@/lib/i18n/locale-context";
+import { useMergeHoldings } from "@/lib/hooks/use-merge-holdings";
 import { getAssetMetrics } from "@/lib/services/portfolio-service";
 import { mergeHoldings, toDisplayHoldings } from "@/lib/services/merge-holdings";
 import {
@@ -24,8 +25,6 @@ import {
   PORTFOLIO_CATEGORY_LABEL,
 } from "@/lib/models/portfolio-category";
 
-const MERGE_STORAGE_KEY = "nexus:merge-holdings";
-
 export default function PortfolioPage() {
   const { assets, allAssets, isLoading } = usePortfolio();
   const { usdKrw, money } = useDisplayCurrency();
@@ -33,28 +32,7 @@ export default function PortfolioPage() {
   const { ownerName } = useSettings();
   const { openAddModal } = useAssetModal();
   const t = useT();
-  const [mergeSame, setMergeSame] = useState(false);
-
-  useEffect(() => {
-    try {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (window.localStorage.getItem(MERGE_STORAGE_KEY) === "1") setMergeSame(true);
-    } catch {
-      // ignore storage failures
-    }
-  }, []);
-
-  function toggleMerge() {
-    setMergeSame((prev) => {
-      const next = !prev;
-      try {
-        window.localStorage.setItem(MERGE_STORAGE_KEY, next ? "1" : "0");
-      } catch {
-        // ignore storage failures
-      }
-      return next;
-    });
-  }
+  const { mergeSame, toggle: toggleMerge } = useMergeHoldings();
 
   if (isLoading) {
     return <PortfolioSkeleton />;
@@ -71,18 +49,7 @@ export default function PortfolioPage() {
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <RefreshPricesButton />
-          <button
-            type="button"
-            onClick={toggleMerge}
-            aria-pressed={mergeSame}
-            className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
-              mergeSame
-                ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
-                : "bg-gray-50 text-gray-400 hover:text-gray-600 dark:bg-white/5 dark:text-gray-500 dark:hover:text-gray-300"
-            }`}
-          >
-            {t("같은 종목 합산")}
-          </button>
+          <MergeHoldingsToggle active={mergeSame} onToggle={toggleMerge} />
           <OwnerFilterToggle />
           <CurrencyToggle />
         </div>

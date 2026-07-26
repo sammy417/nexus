@@ -85,6 +85,8 @@ export const EN: Record<string, string> = {
   "같은 종목 합산": "Merge same tickers",
   "같은 티커의 주식을 하나로 합쳐 표시합니다 (수량 합산, 평단가는 가중평균). 합산 행은 수정/삭제할 수 없으며, 개별 수정은 합산을 해제한 뒤 진행하세요.":
     "Merges stocks with the same ticker into one row (summed quantity, weighted average cost). Merged rows can't be edited/deleted — turn merging off to edit individually.",
+  "같은 티커의 주식을 하나로 합쳐 분석합니다 (수량 합산, 평단가는 가중평균). 합산 종목은 수정할 수 없으며, 개별 수정은 합산을 해제한 뒤 진행하세요.":
+    "Analyzes stocks with the same ticker as one (summed quantity, weighted average cost). Merged holdings can't be edited — turn merging off to edit individually.",
   자산: "Asset",
   종류: "Type",
   "보유 수량": "Quantity",
@@ -341,6 +343,7 @@ export const EN: Record<string, string> = {
   "실질 {n}종목": "Effective {n}",
   "섹터 구성": "By sector",
   "보유 주식 평가금액 기준": "By stock valuation",
+  "보유 주식 평가금액 기준 · 세부 섹터까지 구분": "By stock valuation · split by sub-sector",
   "섹터별 주식 구성 도넛 차트": "Stock allocation by sector donut chart",
   "지역 구성": "By region",
   "통화 노출": "Currency exposure",
