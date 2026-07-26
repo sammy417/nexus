@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import type {
   DividendForecast,
   HoldingDividendForecast,
@@ -8,6 +10,9 @@ import { DIVIDEND_TAX_RATE } from "@/lib/models/dividend";
 import { Skeleton } from "@/components/common/Skeleton";
 import AnimatedNumber from "@/components/common/AnimatedNumber";
 import { useDisplayCurrency } from "@/lib/currency-context";
+
+/** Rows shown before the "더보기" toggle. */
+const DEFAULT_VISIBLE = 5;
 
 function formatPerShare(value: number, currency: string): string {
   if (currency === "USD") {
@@ -29,9 +34,16 @@ export default function DividendForecastCard({
   isLoading: boolean;
 }) {
   const { money } = useDisplayCurrency();
+  const [expanded, setExpanded] = useState(false);
 
-  const paying = forecast ? payers(forecast.holdings) : [];
+  // Biggest estimated payout first, so the collapsed view is the real Top 5.
+  const paying = forecast
+    ? payers(forecast.holdings).sort((a, b) => b.annualEstimateKrw - a.annualEstimateKrw)
+    : [];
   const nonPaying = forecast ? forecast.holdings.length - paying.length : 0;
+  const hiddenCount = paying.length - DEFAULT_VISIBLE;
+  const isCollapsible = hiddenCount > 0;
+  const visiblePaying = isCollapsible && !expanded ? paying.slice(0, DEFAULT_VISIBLE) : paying;
   // Totals derived from the (possibly owner-filtered) holdings passed in.
   const totalAnnualKrw = paying.reduce((sum, h) => sum + h.annualEstimateKrw, 0);
   const totalValuationKrw = paying.reduce((sum, h) => sum + h.valuationKrw, 0);
@@ -90,7 +102,7 @@ export default function DividendForecastCard({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-white/5">
-                {paying.map((holding) => (
+                {visiblePaying.map((holding) => (
                   <tr key={holding.assetId}>
                     <td className="py-2.5 pr-3">
                       <p className="font-medium text-gray-900 dark:text-gray-100">{holding.name}</p>
@@ -112,6 +124,20 @@ export default function DividendForecastCard({
               </tbody>
             </table>
           </div>
+
+          {isCollapsible && (
+            <button
+              type="button"
+              onClick={() => setExpanded((prev) => !prev)}
+              className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg py-2 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200"
+            >
+              {expanded ? "접기" : `더보기 (${hiddenCount}개 더)`}
+              <ChevronDown
+                size={14}
+                className={`transition-transform ${expanded ? "rotate-180" : ""}`}
+              />
+            </button>
+          )}
 
           {(nonPaying > 0 || forecast.failedTickers.length > 0) && (
             <p className="mt-3 text-[11px] leading-relaxed text-gray-400 dark:text-gray-500">

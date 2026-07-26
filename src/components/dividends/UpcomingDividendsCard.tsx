@@ -1,9 +1,13 @@
 "use client";
 
-import { CalendarClock } from "lucide-react";
+import { useState } from "react";
+import { CalendarClock, ChevronDown } from "lucide-react";
 import type { DividendForecast } from "@/lib/services/dividend-forecast-service";
 import { Skeleton } from "@/components/common/Skeleton";
 import { useDisplayCurrency } from "@/lib/currency-context";
+
+/** Rows shown before the "더보기" toggle. */
+const DEFAULT_VISIBLE = 5;
 
 function frequencyLabel(perYear: number): string {
   if (perYear >= 10) return "월배당";
@@ -30,10 +34,14 @@ export default function UpcomingDividendsCard({
   isLoading: boolean;
 }) {
   const { money } = useDisplayCurrency();
+  const [expanded, setExpanded] = useState(false);
 
   const upcoming = (forecast?.holdings ?? [])
     .filter((h) => h.nextExDateEstimate !== null && h.nextAmountKrw !== null)
     .sort((a, b) => a.nextExDateEstimate!.localeCompare(b.nextExDateEstimate!));
+  const hiddenCount = upcoming.length - DEFAULT_VISIBLE;
+  const isCollapsible = hiddenCount > 0;
+  const visibleUpcoming = isCollapsible && !expanded ? upcoming.slice(0, DEFAULT_VISIBLE) : upcoming;
 
   return (
     <section className="rounded-2xl bg-white p-6 shadow-sm dark:bg-card-dark">
@@ -61,7 +69,7 @@ export default function UpcomingDividendsCard({
         </p>
       ) : (
         <ul className="mt-4 flex flex-col divide-y divide-gray-50 dark:divide-white/5">
-          {upcoming.map((holding) => {
+          {visibleUpcoming.map((holding) => {
             const days = daysUntil(holding.nextExDateEstimate!);
             return (
               <li key={holding.assetId} className="flex items-center justify-between gap-3 py-3">
@@ -86,6 +94,21 @@ export default function UpcomingDividendsCard({
               </li>
             );
           })}
+          {isCollapsible && (
+            <li>
+              <button
+                type="button"
+                onClick={() => setExpanded((prev) => !prev)}
+                className="flex w-full items-center justify-center gap-1 rounded-lg py-2.5 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200"
+              >
+                {expanded ? "접기" : `더보기 (${hiddenCount}개 더)`}
+                <ChevronDown
+                  size={14}
+                  className={`transition-transform ${expanded ? "rotate-180" : ""}`}
+                />
+              </button>
+            </li>
+          )}
         </ul>
       )}
     </section>
