@@ -7,6 +7,7 @@ import GrowthChart from "@/components/analytics/GrowthChart";
 import OwnerComparison from "@/components/analytics/OwnerComparison";
 import CurrencyToggle from "@/components/common/CurrencyToggle";
 import OwnerFilterToggle from "@/components/common/OwnerFilterToggle";
+import AnalyticsSkeleton from "@/components/skeletons/AnalyticsSkeleton";
 import { usePortfolio } from "@/lib/portfolio-context";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useOwnerFilter } from "@/lib/owner-filter-context";
@@ -27,7 +28,7 @@ export default function AnalyticsPage() {
   const { ownerName } = useSettings();
 
   if (isLoading) {
-    return <p className="py-24 text-center text-sm text-gray-400 dark:text-gray-500">불러오는 중...</p>;
+    return <AnalyticsSkeleton />;
   }
 
   // Owner-scoped history (real byOwner, else scaled by current share).

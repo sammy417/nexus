@@ -5,6 +5,7 @@ import type {
   HoldingDividendForecast,
 } from "@/lib/services/dividend-forecast-service";
 import { DIVIDEND_TAX_RATE } from "@/lib/models/dividend";
+import { Skeleton } from "@/components/common/Skeleton";
 import { useDisplayCurrency } from "@/lib/currency-context";
 
 function formatPerShare(value: number, currency: string): string {
@@ -44,9 +45,18 @@ export default function DividendForecastCard({
       </p>
 
       {isLoading ? (
-        <p className="py-12 text-center text-sm text-gray-400 dark:text-gray-500">
-          배당 정보를 조회하는 중...
-        </p>
+        <div className="mt-4">
+          <Skeleton className="h-9 w-40" />
+          <Skeleton className="mt-2 h-3 w-48" />
+          <div className="mt-5 flex flex-col gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center justify-between">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-20" />
+              </div>
+            ))}
+          </div>
+        </div>
       ) : !forecast || paying.length === 0 ? (
         <p className="py-12 text-center text-sm text-gray-400 dark:text-gray-500">
           배당 이력이 조회된 보유 종목이 없습니다.

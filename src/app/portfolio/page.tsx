@@ -6,6 +6,7 @@ import TopHoldingsChart from "@/components/portfolio/TopHoldingsChart";
 import CurrencyToggle from "@/components/common/CurrencyToggle";
 import OwnerFilterToggle from "@/components/common/OwnerFilterToggle";
 import RefreshPricesButton from "@/components/common/RefreshPricesButton";
+import PortfolioSkeleton from "@/components/skeletons/PortfolioSkeleton";
 import { usePortfolio } from "@/lib/portfolio-context";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { getAssetMetrics } from "@/lib/services/portfolio-service";
@@ -46,7 +47,7 @@ export default function PortfolioPage() {
   }
 
   if (isLoading) {
-    return <p className="py-24 text-center text-sm text-gray-400 dark:text-gray-500">불러오는 중...</p>;
+    return <PortfolioSkeleton />;
   }
 
   return (

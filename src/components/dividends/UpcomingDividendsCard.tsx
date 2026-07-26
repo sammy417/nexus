@@ -2,6 +2,7 @@
 
 import { CalendarClock } from "lucide-react";
 import type { DividendForecast } from "@/lib/services/dividend-forecast-service";
+import { Skeleton } from "@/components/common/Skeleton";
 import { useDisplayCurrency } from "@/lib/currency-context";
 
 function frequencyLabel(perYear: number): string {
@@ -42,9 +43,18 @@ export default function UpcomingDividendsCard({
       </p>
 
       {isLoading ? (
-        <p className="py-12 text-center text-sm text-gray-400 dark:text-gray-500">
-          배당 정보를 조회하는 중...
-        </p>
+        <div className="mt-4 flex flex-col gap-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <Skeleton className="h-9 w-9 shrink-0 rounded-full" />
+              <div className="flex flex-1 flex-col gap-1.5">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+              <Skeleton className="h-4 w-16" />
+            </div>
+          ))}
+        </div>
       ) : upcoming.length === 0 ? (
         <p className="py-12 text-center text-sm text-gray-400 dark:text-gray-500">
           추정할 배당 일정이 없습니다.

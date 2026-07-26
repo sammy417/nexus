@@ -9,6 +9,7 @@ import DividendSuggestions from "@/components/dividends/DividendSuggestions";
 import UpcomingDividendsCard from "@/components/dividends/UpcomingDividendsCard";
 import CurrencyToggle from "@/components/common/CurrencyToggle";
 import OwnerFilterToggle from "@/components/common/OwnerFilterToggle";
+import DividendsSkeleton from "@/components/skeletons/DividendsSkeleton";
 import { useDividendForecast } from "@/lib/hooks/use-dividend-forecast";
 import { useDividends } from "@/lib/hooks/use-dividends";
 import { useDisplayCurrency } from "@/lib/currency-context";
@@ -86,7 +87,7 @@ export default function DividendsPage() {
   }
 
   if (isLoading) {
-    return <p className="py-24 text-center text-sm text-gray-400 dark:text-gray-500">불러오는 중...</p>;
+    return <DividendsSkeleton />;
   }
 
   const tiles = [
