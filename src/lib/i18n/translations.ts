@@ -368,6 +368,17 @@ export const EN: Record<string, string> = {
   "52주 위치": "52-week position",
   "티커가 입력된 주식이 없어 조회할 수 없습니다.": "No stocks with a ticker to look up.",
   "밸류에이션 데이터를 불러오지 못했습니다.": "Couldn't load valuation data.",
+  "리스크 분석": "Risk analysis",
+  "최근 1년 일간 시세 기준 · 변동성은 연율화":
+    "Based on the last year of daily prices · volatility annualized",
+  "변동성 (연율)": "Volatility (ann.)",
+  "1년 수익률": "1-yr return",
+  "최대 낙폭": "Max drawdown",
+  "시세 이력을 불러오지 못했습니다 (티커 필요).":
+    "Couldn't load price history (ticker required).",
+  상관관계: "Correlation",
+  "일간 수익률 상관계수 · 빨강=동조, 파랑=역행 (공통 {days}일)":
+    "Daily-return correlation · red = move together, blue = inverse ({days} common days)",
 
   // --- Sector labels ---
   기술: "Technology",

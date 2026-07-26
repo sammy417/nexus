@@ -1,5 +1,6 @@
 import "server-only";
 import type { StockValuation } from "@/lib/models/stock-valuation";
+import type { ClosePoint } from "@/lib/models/stock-history";
 
 /**
  * Live price lookup via the (unofficial, key-less) Yahoo Finance chart
@@ -216,6 +217,57 @@ export async function fetchStockSector(ticker: string, market?: string): Promise
   const sector = typeof raw === "string" && raw.trim() ? raw.trim() : undefined;
   getProfileCache().set(symbol, { sector, fetchedAt: Date.now() });
   return sector;
+}
+
+// --- Daily price history (chart range=1y) ---
+
+const HISTORY_TTL_MS = 6 * 60 * 60 * 1000;
+
+const globalForHistory = globalThis as unknown as {
+  __nexusPriceHistoryCache?: Map<string, { closes: ClosePoint[]; fetchedAt: number }>;
+};
+
+function getHistoryCache() {
+  if (!globalForHistory.__nexusPriceHistoryCache) {
+    globalForHistory.__nexusPriceHistoryCache = new Map();
+  }
+  return globalForHistory.__nexusPriceHistoryCache;
+}
+
+/** ~1 year of daily closes for a ticker (6h cache). Throws on failure. */
+export async function fetchPriceHistory(ticker: string, market?: string): Promise<ClosePoint[]> {
+  const symbol = toQuoteSymbol(ticker, market);
+  const cached = getHistoryCache().get(symbol);
+  if (cached && Date.now() - cached.fetchedAt < HISTORY_TTL_MS) {
+    return cached.closes;
+  }
+
+  const base = process.env.QUOTE_API_BASE ?? "https://query1.finance.yahoo.com";
+  const url = `${base}/v8/finance/chart/${encodeURIComponent(symbol)}?range=1y&interval=1d`;
+  const response = await fetch(url, {
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; nexus-portfolio)" },
+    signal: AbortSignal.timeout(8000),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(`History lookup failed for ${symbol} (upstream ${response.status})`);
+  }
+
+  const result = (await response.json())?.chart?.result?.[0];
+  const timestamps: unknown = result?.timestamp;
+  const closeArr: unknown = result?.indicators?.quote?.[0]?.close;
+  const closes: ClosePoint[] = [];
+  if (Array.isArray(timestamps) && Array.isArray(closeArr)) {
+    for (let i = 0; i < timestamps.length; i++) {
+      const ts = timestamps[i];
+      const close = closeArr[i];
+      if (typeof ts === "number" && typeof close === "number" && Number.isFinite(close)) {
+        closes.push({ date: new Date(ts * 1000).toISOString().slice(0, 10), close });
+      }
+    }
+  }
+  getHistoryCache().set(symbol, { closes, fetchedAt: Date.now() });
+  return closes;
 }
 
 // --- Valuation / fundamentals via quoteSummary ---

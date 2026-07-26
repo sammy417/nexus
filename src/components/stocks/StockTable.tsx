@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { formatPercent } from "@/lib/format";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useT } from "@/lib/i18n/locale-context";
@@ -10,11 +12,21 @@ import type { Contribution } from "@/lib/services/stock-analysis-service";
 
 const headerCellClass = "px-4 py-3 text-xs font-medium text-gray-400 dark:text-gray-500";
 
+/** Rows shown before the "더보기" toggle. */
+const DEFAULT_VISIBLE = 5;
+
 /** Per-stock table: sector, region, weight, valuation, P&L, contribution. */
 export default function StockTable({ rows }: { rows: Contribution[] }) {
   const { money, signedMoney } = useDisplayCurrency();
   const { openEditModal } = useAssetModal();
   const t = useT();
+  const [expanded, setExpanded] = useState(false);
+
+  // Biggest positions first, so the collapsed view is the real Top 5.
+  const sorted = [...rows].sort((a, b) => b.holding.weight - a.holding.weight);
+  const hiddenCount = sorted.length - DEFAULT_VISIBLE;
+  const isCollapsible = hiddenCount > 0;
+  const visible = isCollapsible && !expanded ? sorted.slice(0, DEFAULT_VISIBLE) : sorted;
 
   return (
     <div className="overflow-x-auto rounded-2xl bg-white shadow-sm dark:bg-card-dark">
@@ -30,7 +42,7 @@ export default function StockTable({ rows }: { rows: Contribution[] }) {
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-50 dark:divide-white/5">
-          {rows.map(({ holding, share }) => {
+          {visible.map(({ holding, share }) => {
             const isProfit = holding.profit >= 0;
             const color = sectorColor(holding.sector);
             return (
@@ -84,6 +96,25 @@ export default function StockTable({ rows }: { rows: Contribution[] }) {
             );
           })}
         </tbody>
+        {isCollapsible && (
+          <tfoot>
+            <tr>
+              <td colSpan={6} className="border-t border-border p-0 dark:border-border-dark">
+                <button
+                  type="button"
+                  onClick={() => setExpanded((prev) => !prev)}
+                  className="flex w-full items-center justify-center gap-1 py-3 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200"
+                >
+                  {expanded ? t("접기") : t("전체보기 ({count}개 더)", { count: hiddenCount })}
+                  <ChevronDown
+                    size={14}
+                    className={`transition-transform ${expanded ? "rotate-180" : ""}`}
+                  />
+                </button>
+              </td>
+            </tr>
+          </tfoot>
+        )}
       </table>
     </div>
   );

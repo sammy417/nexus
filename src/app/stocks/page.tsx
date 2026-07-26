@@ -4,6 +4,7 @@ import { LineChart, Plus, TrendingDown, TrendingUp } from "lucide-react";
 import DonutBreakdownCard from "@/components/common/DonutBreakdownCard";
 import StockTable from "@/components/stocks/StockTable";
 import StockValuationTable from "@/components/stocks/StockValuationTable";
+import StockRiskSection from "@/components/stocks/StockRiskSection";
 import StocksSkeleton from "@/components/skeletons/StocksSkeleton";
 import EmptyState from "@/components/common/EmptyState";
 import CurrencyToggle from "@/components/common/CurrencyToggle";
@@ -211,6 +212,9 @@ export default function StocksPage() {
 
       {/* Valuation comparison (external fundamentals) */}
       <StockValuationTable stocks={holdings.map((h) => h.asset)} />
+
+      {/* Risk: volatility / return / drawdown + correlation heatmap */}
+      <StockRiskSection stocks={holdings.map((h) => h.asset)} />
     </div>
   );
 }
