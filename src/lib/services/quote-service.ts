@@ -1,4 +1,5 @@
 import "server-only";
+import type { StockValuation } from "@/lib/models/stock-valuation";
 
 /**
  * Live price lookup via the (unofficial, key-less) Yahoo Finance chart
@@ -215,6 +216,66 @@ export async function fetchStockSector(ticker: string, market?: string): Promise
   const sector = typeof raw === "string" && raw.trim() ? raw.trim() : undefined;
   getProfileCache().set(symbol, { sector, fetchedAt: Date.now() });
   return sector;
+}
+
+// --- Valuation / fundamentals via quoteSummary ---
+
+const VALUATION_TTL_MS = 60 * 60 * 1000;
+
+const globalForValuations = globalThis as unknown as {
+  __nexusValuationCache?: Map<string, { value: StockValuation; fetchedAt: number }>;
+};
+
+function getValuationCache() {
+  if (!globalForValuations.__nexusValuationCache) {
+    globalForValuations.__nexusValuationCache = new Map();
+  }
+  return globalForValuations.__nexusValuationCache;
+}
+
+function rawNumber(node: unknown): number | null {
+  const raw = (node as { raw?: unknown } | undefined)?.raw;
+  return typeof raw === "number" && Number.isFinite(raw) ? raw : null;
+}
+
+/** Best-effort valuation metrics (Yahoo quoteSummary). 1h cache; throws on failure. */
+export async function fetchStockValuation(ticker: string, market?: string): Promise<StockValuation> {
+  const symbol = toQuoteSymbol(ticker, market);
+  const cached = getValuationCache().get(symbol);
+  if (cached && Date.now() - cached.fetchedAt < VALUATION_TTL_MS) {
+    return cached.value;
+  }
+
+  const base = process.env.QUOTE_API_BASE ?? "https://query1.finance.yahoo.com";
+  const modules = "summaryDetail,defaultKeyStatistics,price";
+  const url = `${base}/v10/finance/quoteSummary/${encodeURIComponent(symbol)}?modules=${modules}`;
+  const response = await fetch(url, {
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; nexus-portfolio)" },
+    signal: AbortSignal.timeout(8000),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(`Valuation lookup failed for ${symbol} (upstream ${response.status})`);
+  }
+
+  const result = (await response.json())?.quoteSummary?.result?.[0] ?? {};
+  const detail = result.summaryDetail ?? {};
+  const stats = result.defaultKeyStatistics ?? {};
+  const price = result.price ?? {};
+  const yieldRaw = rawNumber(detail.dividendYield);
+
+  const value: StockValuation = {
+    per: rawNumber(detail.trailingPE) ?? rawNumber(stats.trailingPE),
+    pbr: rawNumber(stats.priceToBook),
+    marketCap: rawNumber(detail.marketCap) ?? rawNumber(price.marketCap),
+    dividendYield: yieldRaw === null ? null : yieldRaw * 100,
+    fiftyTwoWeekHigh: rawNumber(detail.fiftyTwoWeekHigh),
+    fiftyTwoWeekLow: rawNumber(detail.fiftyTwoWeekLow),
+    price: rawNumber(price.regularMarketPrice),
+    currency: typeof price.currency === "string" ? price.currency : null,
+  };
+  getValuationCache().set(symbol, { value, fetchedAt: Date.now() });
+  return value;
 }
 
 export interface QuoteResult {

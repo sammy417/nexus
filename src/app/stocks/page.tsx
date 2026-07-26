@@ -3,6 +3,7 @@
 import { LineChart, Plus, TrendingDown, TrendingUp } from "lucide-react";
 import DonutBreakdownCard from "@/components/common/DonutBreakdownCard";
 import StockTable from "@/components/stocks/StockTable";
+import StockValuationTable from "@/components/stocks/StockValuationTable";
 import StocksSkeleton from "@/components/skeletons/StocksSkeleton";
 import EmptyState from "@/components/common/EmptyState";
 import CurrencyToggle from "@/components/common/CurrencyToggle";
@@ -207,6 +208,9 @@ export default function StocksPage() {
 
       {/* Per-stock table */}
       <StockTable rows={contributions} />
+
+      {/* Valuation comparison (external fundamentals) */}
+      <StockValuationTable stocks={holdings.map((h) => h.asset)} />
     </div>
   );
 }

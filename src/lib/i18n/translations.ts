@@ -360,6 +360,14 @@ export const EN: Record<string, string> = {
   "주식을 추가하면 섹터·지역 구성과 종목별 성과·집중도 분석이 여기에 표시됩니다.":
     "Add stocks to see sector/region breakdowns and per-stock performance & concentration here.",
   "주식 추가": "Add stock",
+  "밸류에이션 비교": "Valuation comparison",
+  "외부 시세 제공사 기준 · PER·PBR·시가총액·배당수익률·52주 위치":
+    "Per external data provider · P/E, P/B, market cap, yield, 52-week position",
+  시가총액: "Market cap",
+  배당수익률: "Dividend yield",
+  "52주 위치": "52-week position",
+  "티커가 입력된 주식이 없어 조회할 수 없습니다.": "No stocks with a ticker to look up.",
+  "밸류에이션 데이터를 불러오지 못했습니다.": "Couldn't load valuation data.",
 
   // --- Sector labels ---
   기술: "Technology",
