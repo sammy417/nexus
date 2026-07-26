@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
+import { SortableHeader, sortRows, useSort } from "@/components/common/SortableHeader";
 import { StockAsset } from "@/lib/models/asset";
 import { formatPercent } from "@/lib/format";
 import { hexWithAlpha } from "@/lib/models/asset-owner";
@@ -14,9 +16,10 @@ import {
 
 const RISE = "#F04452";
 const FALL = "#3182F6";
-const headerCellClass = "px-4 py-3 text-xs font-medium text-gray-400 dark:text-gray-500";
 const numCellClass =
   "px-4 py-3.5 text-right [font-variant-numeric:tabular-nums]";
+
+type SortKey = "name" | "volatility" | "return1y" | "maxDrawdown" | "position";
 
 function toneClass(value: number): string {
   return value >= 0 ? "text-rise" : "text-fall";
@@ -30,8 +33,16 @@ function label(asset: StockAsset): string {
 export default function StockRiskSection({ stocks }: { stocks: StockAsset[] }) {
   const { history, isLoading } = useStockHistory(stocks);
   const t = useT();
+  const { sort, toggle: toggleSort } = useSort<SortKey>(["name"]);
 
-  const rows = getRiskRows(stocks, history);
+  const riskRows = getRiskRows(stocks, history);
+  const rows = useMemo(
+    () =>
+      sortRows(riskRows, sort, (row, key) =>
+        key === "name" ? row.asset.name : row[key]
+      ),
+    [riskRows, sort]
+  );
   const correlation = getCorrelationMatrix(stocks, history);
 
   if (isLoading) {
@@ -73,11 +84,11 @@ export default function StockRiskSection({ stocks }: { stocks: StockAsset[] }) {
           <table className="w-full min-w-[560px] text-sm">
             <thead>
               <tr className="border-b border-border text-left dark:border-border-dark">
-                <th className={headerCellClass}>{t("종목")}</th>
-                <th className={`${headerCellClass} text-right`}>{t("변동성 (연율)")}</th>
-                <th className={`${headerCellClass} text-right`}>{t("1년 수익률")}</th>
-                <th className={`${headerCellClass} text-right`}>{t("최대 낙폭")}</th>
-                <th className={`${headerCellClass} text-right`}>{t("52주 위치")}</th>
+                <SortableHeader label="종목" sortKey="name" align="left" sort={sort} onToggle={toggleSort} />
+                <SortableHeader label="변동성 (연율)" sortKey="volatility" sort={sort} onToggle={toggleSort} />
+                <SortableHeader label="1년 수익률" sortKey="return1y" sort={sort} onToggle={toggleSort} />
+                <SortableHeader label="최대 낙폭" sortKey="maxDrawdown" sort={sort} onToggle={toggleSort} />
+                <SortableHeader label="52주 위치" sortKey="position" sort={sort} onToggle={toggleSort} />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-white/5">

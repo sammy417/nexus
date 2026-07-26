@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { SortableHeader, sortRows, useSort } from "@/components/common/SortableHeader";
 import type {
   DividendForecast,
   HoldingDividendForecast,
@@ -14,6 +15,8 @@ import { useT } from "@/lib/i18n/locale-context";
 
 /** Rows shown before the "더보기" toggle. */
 const DEFAULT_VISIBLE = 5;
+
+type SortKey = "name" | "perShare" | "annual" | "yield";
 
 function formatPerShare(value: number, currency: string): string {
   if (currency === "USD") {
@@ -36,12 +39,25 @@ export default function DividendForecastCard({
 }) {
   const { money } = useDisplayCurrency();
   const t = useT();
+  const { sort, toggle: toggleSort } = useSort<SortKey>(["name"]);
   const [expanded, setExpanded] = useState(false);
 
-  // Biggest estimated payout first, so the collapsed view is the real Top 5.
-  const paying = forecast
-    ? payers(forecast.holdings).sort((a, b) => b.annualEstimateKrw - a.annualEstimateKrw)
-    : [];
+  // Default = biggest estimated payout first, so the collapsed view is the
+  // real Top 5.
+  const paying = useMemo(() => {
+    const base = forecast ? payers(forecast.holdings) : [];
+    return sortRows(
+      base,
+      sort,
+      (h, key) => {
+        if (key === "name") return h.name;
+        if (key === "perShare") return h.perShareTrailing12m;
+        if (key === "yield") return h.yieldPct;
+        return h.annualEstimateKrw;
+      },
+      { key: "annual", direction: "desc" }
+    );
+  }, [forecast, sort]);
   const nonPaying = forecast ? forecast.holdings.length - paying.length : 0;
   const hiddenCount = paying.length - DEFAULT_VISIBLE;
   const isCollapsible = hiddenCount > 0;
@@ -99,10 +115,10 @@ export default function DividendForecastCard({
             <table className="w-full min-w-[430px] text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-xs font-medium text-gray-400 dark:border-border-dark dark:text-gray-500">
-                  <th className="py-2 pr-3">{t("종목")}</th>
-                  <th className="py-2 pr-3 text-right">{t("주당 배당 (12개월)")}</th>
-                  <th className="py-2 pr-3 text-right">{t("예상 연간 수령액")}</th>
-                  <th className="py-2 text-right">{t("시가 배당률")}</th>
+                  <SortableHeader label="종목" sortKey="name" align="left" sort={sort} onToggle={toggleSort} className="!px-0 !py-2 !pr-3" />
+                  <SortableHeader label="주당 배당 (12개월)" sortKey="perShare" sort={sort} onToggle={toggleSort} className="!px-0 !py-2 !pr-3" />
+                  <SortableHeader label="예상 연간 수령액" sortKey="annual" sort={sort} onToggle={toggleSort} className="!px-0 !py-2 !pr-3" />
+                  <SortableHeader label="시가 배당률" sortKey="yield" sort={sort} onToggle={toggleSort} className="!px-0 !py-2" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-white/5">

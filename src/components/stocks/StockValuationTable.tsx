@@ -1,14 +1,17 @@
 "use client";
 
+import { useMemo } from "react";
+import { SortableHeader, sortRows, useSort } from "@/components/common/SortableHeader";
 import { StockAsset } from "@/lib/models/asset";
 import { formatMarketCap } from "@/lib/models/stock-valuation";
 import { useStockValuations } from "@/lib/hooks/use-stock-valuations";
 import { useT } from "@/lib/i18n/locale-context";
 import { Skeleton } from "@/components/common/Skeleton";
 
-const headerCellClass = "px-4 py-3 text-xs font-medium text-gray-400 dark:text-gray-500";
 const numCellClass =
   "px-4 py-3.5 text-right text-gray-700 [font-variant-numeric:tabular-nums] dark:text-gray-300";
+
+type SortKey = "name" | "per" | "pbr" | "marketCap" | "dividendYield" | "position";
 
 function num(value: number | null, digits: number, suffix = ""): string {
   return value === null ? "-" : `${value.toFixed(digits)}${suffix}`;
@@ -35,9 +38,33 @@ function RangeBar({ position }: { position: number }) {
 export default function StockValuationTable({ stocks }: { stocks: StockAsset[] }) {
   const { valuations, isLoading } = useStockValuations(stocks);
   const t = useT();
+  const { sort, toggle: toggleSort } = useSort<SortKey>(["name"]);
 
   const withTicker = stocks.filter((s) => s.ticker?.trim());
   const hasAny = withTicker.some((s) => valuations[s.ticker!.trim().toUpperCase()]);
+
+  // Precompute each row's comparable values (incl. the 52-week position),
+  // so nullish metrics can sink to the bottom while sorting.
+  const rows = useMemo(() => {
+    const computed = withTicker.map((asset) => {
+      const v = valuations[asset.ticker!.trim().toUpperCase()];
+      const position =
+        v && v.price !== null && v.fiftyTwoWeekHigh !== null && v.fiftyTwoWeekLow !== null
+          ? v.fiftyTwoWeekHigh === v.fiftyTwoWeekLow
+            ? 100
+            : ((v.price - v.fiftyTwoWeekLow) / (v.fiftyTwoWeekHigh - v.fiftyTwoWeekLow)) * 100
+          : null;
+      return { asset, v, position };
+    });
+    return sortRows(computed, sort, (row, key) => {
+      if (key === "name") return row.asset.name;
+      if (key === "position") return row.position;
+      if (key === "per") return row.v?.per ?? null;
+      if (key === "pbr") return row.v?.pbr ?? null;
+      if (key === "marketCap") return row.v?.marketCap ?? null;
+      return row.v?.dividendYield ?? null;
+    });
+  }, [withTicker, valuations, sort]);
 
   return (
     <section className="rounded-2xl bg-white p-6 shadow-sm dark:bg-card-dark">
@@ -68,23 +95,16 @@ export default function StockValuationTable({ stocks }: { stocks: StockAsset[] }
           <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="border-b border-border text-left dark:border-border-dark">
-                <th className={headerCellClass}>{t("종목")}</th>
-                <th className={`${headerCellClass} text-right`}>PER</th>
-                <th className={`${headerCellClass} text-right`}>PBR</th>
-                <th className={`${headerCellClass} text-right`}>{t("시가총액")}</th>
-                <th className={`${headerCellClass} text-right`}>{t("배당수익률")}</th>
-                <th className={`${headerCellClass} text-right`}>{t("52주 위치")}</th>
+                <SortableHeader label="종목" sortKey="name" align="left" sort={sort} onToggle={toggleSort} />
+                <SortableHeader label="PER" sortKey="per" sort={sort} onToggle={toggleSort} />
+                <SortableHeader label="PBR" sortKey="pbr" sort={sort} onToggle={toggleSort} />
+                <SortableHeader label="시가총액" sortKey="marketCap" sort={sort} onToggle={toggleSort} />
+                <SortableHeader label="배당수익률" sortKey="dividendYield" sort={sort} onToggle={toggleSort} />
+                <SortableHeader label="52주 위치" sortKey="position" sort={sort} onToggle={toggleSort} />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-white/5">
-              {withTicker.map((asset) => {
-                const v = valuations[asset.ticker!.trim().toUpperCase()];
-                const position =
-                  v && v.price !== null && v.fiftyTwoWeekHigh !== null && v.fiftyTwoWeekLow !== null
-                    ? v.fiftyTwoWeekHigh === v.fiftyTwoWeekLow
-                      ? 100
-                      : ((v.price - v.fiftyTwoWeekLow) / (v.fiftyTwoWeekHigh - v.fiftyTwoWeekLow)) * 100
-                    : null;
+              {rows.map(({ asset, v, position }) => {
                 return (
                   <tr key={asset.id}>
                     <td className="px-4 py-3.5">

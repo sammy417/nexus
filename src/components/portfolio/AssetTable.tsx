@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, ChevronDown, ChevronsUpDown, Pencil, Trash2 } from "lucide-react";
+import { ChevronDown, Pencil, Trash2 } from "lucide-react";
+import { SortableHeader, sortRows, useSort } from "@/components/common/SortableHeader";
 import { getAssetMetrics } from "@/lib/services/portfolio-service";
 import { useAssetModal } from "@/lib/asset-modal-context";
 import { usePortfolio } from "@/lib/portfolio-context";
@@ -21,51 +22,6 @@ const headerCellClass =
 const DEFAULT_VISIBLE = 5;
 
 type SortKey = "name" | "principal" | "valuation" | "weight" | "profit";
-type SortDirection = "asc" | "desc";
-interface SortState {
-  key: SortKey;
-  direction: SortDirection;
-}
-
-function SortableHeader({
-  label,
-  sortKey,
-  sort,
-  onToggle,
-  align = "right",
-}: {
-  label: string;
-  sortKey: SortKey;
-  sort: SortState | null;
-  onToggle: (key: SortKey) => void;
-  align?: "left" | "right";
-}) {
-  const active = sort?.key === sortKey;
-  const t = useT();
-  return (
-    <th className={`${headerCellClass} ${align === "right" ? "text-right" : ""}`}>
-      <button
-        type="button"
-        onClick={() => onToggle(sortKey)}
-        aria-label={t("{label} 기준 정렬", { label: t(label) })}
-        className={`group/sort inline-flex items-center gap-0.5 transition-colors hover:text-gray-600 dark:hover:text-gray-300 ${
-          active ? "text-gray-700 dark:text-gray-200" : ""
-        }`}
-      >
-        {t(label)}
-        {active ? (
-          sort!.direction === "desc" ? (
-            <ArrowDown size={12} />
-          ) : (
-            <ArrowUp size={12} />
-          )
-        ) : (
-          <ChevronsUpDown size={12} className="opacity-0 group-hover/sort:opacity-60" />
-        )}
-      </button>
-    </th>
-  );
-}
 
 function subLine(asset: Asset, t: TFn): string | null {
   if (asset.type === "STOCK") {
@@ -91,7 +47,7 @@ export default function AssetTable({ holdings }: { holdings: DisplayHolding[] })
   const { usdKrw, money, signedMoney } = useDisplayCurrency();
   const { ownerName, ownerColor } = useSettings();
   const t = useT();
-  const [sort, setSort] = useState<SortState | null>(null);
+  const { sort, toggle: toggleSort } = useSort<SortKey>(["name"]);
   const [expanded, setExpanded] = useState(false);
 
   async function handleDelete(asset: Asset) {
@@ -111,42 +67,24 @@ export default function AssetTable({ holdings }: { holdings: DisplayHolding[] })
   );
 
   const sortedHoldings = useMemo(() => {
-    // Default (no explicit sort) = valuation desc, so the collapsed view
-    // really shows the top holdings.
-    const effective: SortState = sort ?? { key: "valuation", direction: "desc" };
-    const sortValue = (asset: Asset): number | string => {
-      if (effective.key === "name") return asset.name;
+    const sortValue = (holding: DisplayHolding, key: SortKey): number | string => {
+      const asset = holding.asset;
+      if (key === "name") return asset.name;
       const { principal, valuation, profit } = getAssetMetrics(asset, usdKrw);
       // 비중 is valuation / group total — same ordering as valuation.
-      if (effective.key === "principal") return principal;
-      if (effective.key === "profit") return profit;
+      if (key === "principal") return principal;
+      if (key === "profit") return profit;
       return valuation;
     };
-    return [...holdings].sort((a, b) => {
-      const va = sortValue(a.asset);
-      const vb = sortValue(b.asset);
-      const compared =
-        typeof va === "string" && typeof vb === "string"
-          ? va.localeCompare(vb, "ko")
-          : (va as number) - (vb as number);
-      return effective.direction === "asc" ? compared : -compared;
-    });
+    // Default (no explicit sort) = valuation desc, so the collapsed view
+    // really shows the top holdings.
+    return sortRows(holdings, sort, sortValue, { key: "valuation", direction: "desc" });
   }, [holdings, sort, usdKrw]);
 
   const hiddenCount = sortedHoldings.length - DEFAULT_VISIBLE;
   const isCollapsible = hiddenCount > 0;
   const visibleHoldings =
     isCollapsible && !expanded ? sortedHoldings.slice(0, DEFAULT_VISIBLE) : sortedHoldings;
-
-  function toggleSort(key: SortKey) {
-    setSort((prev) => {
-      if (!prev || prev.key !== key) {
-        // Numeric columns start with the largest first; names start A→Z.
-        return { key, direction: key === "name" ? "asc" : "desc" };
-      }
-      return { key, direction: prev.direction === "desc" ? "asc" : "desc" };
-    });
-  }
 
   return (
     <div className="overflow-x-auto rounded-2xl bg-white shadow-sm dark:bg-card-dark">
