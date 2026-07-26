@@ -5,9 +5,9 @@ import { ChevronDown } from "lucide-react";
 import { formatPercent } from "@/lib/format";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useT } from "@/lib/i18n/locale-context";
-import { useAssetModal } from "@/lib/asset-modal-context";
 import { sectorColor } from "@/lib/models/stock-sector";
 import { hexWithAlpha } from "@/lib/models/asset-owner";
+import { StockAsset } from "@/lib/models/asset";
 import type { Contribution } from "@/lib/services/stock-analysis-service";
 
 const headerCellClass = "px-4 py-3 text-xs font-medium text-gray-400 dark:text-gray-500";
@@ -16,9 +16,14 @@ const headerCellClass = "px-4 py-3 text-xs font-medium text-gray-400 dark:text-g
 const DEFAULT_VISIBLE = 5;
 
 /** Per-stock table: sector, region, weight, valuation, P&L, contribution. */
-export default function StockTable({ rows }: { rows: Contribution[] }) {
+export default function StockTable({
+  rows,
+  onSelect,
+}: {
+  rows: Contribution[];
+  onSelect: (asset: StockAsset) => void;
+}) {
   const { money, signedMoney } = useDisplayCurrency();
-  const { openEditModal } = useAssetModal();
   const t = useT();
   const [expanded, setExpanded] = useState(false);
 
@@ -48,7 +53,7 @@ export default function StockTable({ rows }: { rows: Contribution[] }) {
             return (
               <tr
                 key={holding.asset.id}
-                onClick={() => openEditModal(holding.asset)}
+                onClick={() => onSelect(holding.asset)}
                 className="group cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-white/5"
               >
                 <td className="px-4 py-3.5">

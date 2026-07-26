@@ -379,6 +379,14 @@ export const EN: Record<string, string> = {
   상관관계: "Correlation",
   "일간 수익률 상관계수 · 빨강=동조, 파랑=역행 (공통 {days}일)":
     "Daily-return correlation · red = move together, blue = inverse ({days} common days)",
+  수정: "Edit",
+  수량: "Quantity",
+  평단가: "Avg. price",
+  현재가: "Current price",
+  "가격 차트": "Price chart",
+  "차트 데이터가 없습니다.": "No chart data.",
+  지표: "Metrics",
+  "1년": "1Y",
 
   // --- Sector labels ---
   기술: "Technology",

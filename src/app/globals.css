@@ -18,8 +18,14 @@ body {
   }
 }
 
+/*
+ * `backwards` (not `both`): the from-state applies before the run so there's
+ * no flash, but no transform persists after — a lingering transform would
+ * make `position: fixed` modals contain to this element instead of the
+ * viewport.
+ */
 .animate-content-in {
-  animation: nexus-fade-in 0.28s ease-out both;
+  animation: nexus-fade-in 0.28s ease-out backwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
