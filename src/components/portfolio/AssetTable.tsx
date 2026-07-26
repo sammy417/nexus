@@ -6,7 +6,7 @@ import { getAssetMetrics } from "@/lib/services/portfolio-service";
 import { useAssetModal } from "@/lib/asset-modal-context";
 import { usePortfolio } from "@/lib/portfolio-context";
 import { useDisplayCurrency } from "@/lib/currency-context";
-import { formatMoney, formatPercent, formatSignedMoney } from "@/lib/format";
+import { formatPercent } from "@/lib/format";
 import { getAssetCategoryLabel } from "@/lib/models/portfolio-category";
 import { getAssetOwner, OWNER_BADGE_CLASS } from "@/lib/models/asset-owner";
 import { DisplayHolding } from "@/lib/services/merge-holdings";
@@ -86,7 +86,7 @@ function subLine(asset: Asset): string | null {
 export default function AssetTable({ holdings }: { holdings: DisplayHolding[] }) {
   const { openEditModal, showToast } = useAssetModal();
   const { deleteAsset } = usePortfolio();
-  const { displayCurrency, usdKrw } = useDisplayCurrency();
+  const { usdKrw, money, signedMoney } = useDisplayCurrency();
   const { ownerName } = useSettings();
   const [sort, setSort] = useState<SortState | null>(null);
   const [expanded, setExpanded] = useState(false);
@@ -220,10 +220,10 @@ export default function AssetTable({ holdings }: { holdings: DisplayHolding[] })
                   {asset.type === "STOCK" ? `${asset.quantity.toLocaleString("ko-KR")}주` : "-"}
                 </td>
                 <td className="px-4 py-3.5 text-right text-gray-700 dark:text-gray-300">
-                  {formatMoney(principal, displayCurrency, usdKrw)}
+                  {money(principal)}
                 </td>
                 <td className="px-4 py-3.5 text-right font-medium text-gray-900 dark:text-gray-100">
-                  {formatMoney(valuation, displayCurrency, usdKrw)}
+                  {money(valuation)}
                 </td>
                 <td className="px-4 py-3.5 text-right text-gray-700 [font-variant-numeric:tabular-nums] dark:text-gray-300">
                   {weight.toFixed(1)}%
@@ -233,7 +233,7 @@ export default function AssetTable({ holdings }: { holdings: DisplayHolding[] })
                     <span className="text-gray-400 dark:text-gray-500">-</span>
                   ) : (
                     <span className={`font-medium ${isProfit ? "text-rise" : "text-fall"}`}>
-                      {formatSignedMoney(profit, displayCurrency, usdKrw)} ({formatPercent(profitRate)})
+                      {signedMoney(profit)} ({formatPercent(profitRate)})
                     </span>
                   )}
                 </td>

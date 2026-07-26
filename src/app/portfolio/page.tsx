@@ -8,7 +8,6 @@ import OwnerFilterToggle from "@/components/common/OwnerFilterToggle";
 import RefreshPricesButton from "@/components/common/RefreshPricesButton";
 import { usePortfolio } from "@/lib/portfolio-context";
 import { useDisplayCurrency } from "@/lib/currency-context";
-import { formatMoney } from "@/lib/format";
 import { getAssetMetrics } from "@/lib/services/portfolio-service";
 import { mergeHoldings, toDisplayHoldings } from "@/lib/services/merge-holdings";
 import {
@@ -22,7 +21,7 @@ const MERGE_STORAGE_KEY = "nexus:merge-holdings";
 
 export default function PortfolioPage() {
   const { assets, isLoading } = usePortfolio();
-  const { displayCurrency, usdKrw } = useDisplayCurrency();
+  const { usdKrw, money } = useDisplayCurrency();
   const [mergeSame, setMergeSame] = useState(false);
 
   useEffect(() => {
@@ -118,7 +117,7 @@ export default function PortfolioPage() {
                   {PORTFOLIO_CATEGORY_LABEL[category]} {holdings.length}
                 </h2>
                 <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  {formatMoney(groupTotal, displayCurrency, usdKrw)}
+                  {money(groupTotal)}
                 </p>
               </div>
               <TopHoldingsChart

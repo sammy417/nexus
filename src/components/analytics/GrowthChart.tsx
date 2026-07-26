@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { HistoryPoint } from "@/lib/services/owner-history";
-import { formatCompactMoney, formatMoney } from "@/lib/format";
 import { useDisplayCurrency } from "@/lib/currency-context";
 
 const VALUATION_COLOR = "#3182F6";
@@ -30,7 +29,7 @@ function formatTickDate(date: string): string {
 
 /** 평가 금액 vs 투자 원금, full history — two lines with a shared crosshair. */
 export default function GrowthChart({ snapshots }: { snapshots: HistoryPoint[] }) {
-  const { displayCurrency, usdKrw } = useDisplayCurrency();
+  const { money, compactMoney } = useDisplayCurrency();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [width, setWidth] = useState(0);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
@@ -149,7 +148,7 @@ export default function GrowthChart({ snapshots }: { snapshots: HistoryPoint[] }
                     dominantBaseline="middle"
                     className="fill-gray-400 text-[11px] [font-variant-numeric:tabular-nums] dark:fill-gray-500"
                   >
-                    {formatCompactMoney(tick, displayCurrency, usdKrw)}
+                    {compactMoney(tick)}
                   </text>
                 </g>
               ))}
@@ -226,7 +225,7 @@ export default function GrowthChart({ snapshots }: { snapshots: HistoryPoint[] }
                     평가
                   </span>
                   <span className="font-semibold text-gray-900 [font-variant-numeric:tabular-nums] dark:text-gray-100">
-                    {formatMoney(hovered.totalValuation, displayCurrency, usdKrw)}
+                    {money(hovered.totalValuation)}
                   </span>
                 </p>
                 <p className="mt-0.5 flex items-center justify-between gap-2 text-xs">
@@ -238,7 +237,7 @@ export default function GrowthChart({ snapshots }: { snapshots: HistoryPoint[] }
                     원금
                   </span>
                   <span className="font-semibold text-gray-900 [font-variant-numeric:tabular-nums] dark:text-gray-100">
-                    {formatMoney(hovered.totalPrincipal, displayCurrency, usdKrw)}
+                    {money(hovered.totalPrincipal)}
                   </span>
                 </p>
               </div>

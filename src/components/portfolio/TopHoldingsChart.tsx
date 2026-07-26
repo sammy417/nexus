@@ -1,7 +1,6 @@
 "use client";
 
 import { getAssetMetrics } from "@/lib/services/portfolio-service";
-import { formatMoney } from "@/lib/format";
 import { Asset } from "@/lib/models/asset";
 import { useDisplayCurrency } from "@/lib/currency-context";
 
@@ -18,7 +17,7 @@ export default function TopHoldingsChart({
   assets: Asset[];
   color: string;
 }) {
-  const { displayCurrency, usdKrw } = useDisplayCurrency();
+  const { usdKrw, money } = useDisplayCurrency();
 
   const withMetrics = assets.map((asset) => ({
     asset,
@@ -57,7 +56,7 @@ export default function TopHoldingsChart({
                   {ratio.toFixed(1)}%
                 </span>
                 <span className="ml-1.5 text-gray-400 dark:text-gray-500">
-                  {formatMoney(valuation, displayCurrency, usdKrw)}
+                  {money(valuation)}
                 </span>
               </span>
             </li>

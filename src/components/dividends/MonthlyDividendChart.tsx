@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MonthlyDividend } from "@/lib/services/dividend-service";
-import { formatCompactMoney, formatMoney } from "@/lib/format";
 import { useDisplayCurrency } from "@/lib/currency-context";
 
 const BAR_COLOR = "#1baf7a";
@@ -23,7 +22,7 @@ function niceTicks(max: number): number[] {
 
 /** Trailing 12 months of payouts as single-hue columns. */
 export default function MonthlyDividendChart({ months }: { months: MonthlyDividend[] }) {
-  const { displayCurrency, usdKrw } = useDisplayCurrency();
+  const { money, compactMoney } = useDisplayCurrency();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [width, setWidth] = useState(0);
   const [hovered, setHovered] = useState<number | null>(null);
@@ -74,7 +73,7 @@ export default function MonthlyDividendChart({ months }: { months: MonthlyDivide
               dominantBaseline="middle"
               className="fill-gray-400 text-[11px] [font-variant-numeric:tabular-nums] dark:fill-gray-500"
             >
-              {formatCompactMoney(tick, displayCurrency, usdKrw)}
+              {compactMoney(tick)}
             </text>
           </g>
         ))}
@@ -137,7 +136,7 @@ export default function MonthlyDividendChart({ months }: { months: MonthlyDivide
               <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 rounded-xl border border-border bg-white px-3 py-1.5 text-xs shadow-md dark:border-border-dark dark:bg-[#1E242C]">
                 <span className="text-gray-400 dark:text-gray-500">{months[hovered].label} </span>
                 <span className="font-semibold text-gray-900 dark:text-gray-100">
-                  {formatMoney(months[hovered].totalKrw, displayCurrency, usdKrw)}
+                  {money(months[hovered].totalKrw)}
                 </span>
               </div>
             )}

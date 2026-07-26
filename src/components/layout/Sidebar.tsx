@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import {
   BarChart3,
   Coins,
+  Eye,
+  EyeOff,
   LayoutGrid,
   Moon,
   Plus,
@@ -15,6 +17,7 @@ import {
 } from "lucide-react";
 import { useAssetModal } from "@/lib/asset-modal-context";
 import { usePortfolio } from "@/lib/portfolio-context";
+import { useDisplayCurrency } from "@/lib/currency-context";
 import { useTheme } from "@/lib/theme-provider";
 
 const navItems = [
@@ -29,6 +32,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { openAddModal, showToast } = useAssetModal();
   const { resetPortfolio } = usePortfolio();
+  const { isAmountHidden, toggleAmountHidden } = useDisplayCurrency();
   const { theme, toggleTheme } = useTheme();
 
   const handleReset = () => {
@@ -76,6 +80,20 @@ export default function Sidebar() {
       </button>
 
       <div className="mt-auto flex items-center gap-1 px-1">
+        <button
+          type="button"
+          aria-label={isAmountHidden ? "금액 표시" : "금액 숨기기"}
+          aria-pressed={isAmountHidden}
+          title={isAmountHidden ? "금액 표시" : "금액 숨기기"}
+          onClick={toggleAmountHidden}
+          className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100 dark:hover:bg-white/10 ${
+            isAmountHidden
+              ? "text-gray-900 dark:text-gray-100"
+              : "text-gray-500 dark:text-gray-400"
+          }`}
+        >
+          {isAmountHidden ? <EyeOff size={18} strokeWidth={2} /> : <Eye size={18} strokeWidth={2} />}
+        </button>
         <button
           type="button"
           aria-label={theme === "dark" ? "라이트 모드로 전환" : "다크 모드로 전환"}

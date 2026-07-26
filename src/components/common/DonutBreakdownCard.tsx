@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { formatMoney } from "@/lib/format";
 import { useDisplayCurrency } from "@/lib/currency-context";
 
 export interface DonutEntry {
@@ -47,7 +46,7 @@ export default function DonutBreakdownCard({
   entries: DonutEntry[];
   centerTitle?: string;
 }) {
-  const { displayCurrency, usdKrw } = useDisplayCurrency();
+  const { money } = useDisplayCurrency();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   if (entries.length === 0) return null;
@@ -106,7 +105,7 @@ export default function DonutBreakdownCard({
             {hovered ? hovered.label : centerTitle}
           </p>
           <p className="mt-0.5 max-w-[7.5rem] truncate text-sm font-bold text-gray-900 dark:text-gray-100">
-            {formatMoney(hovered ? hovered.valuation : total, displayCurrency, usdKrw)}
+            {money(hovered ? hovered.valuation : total)}
           </p>
           {hovered && (
             <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
@@ -133,7 +132,7 @@ export default function DonutBreakdownCard({
             </div>
             <div className="flex items-center gap-2 text-right">
               <span className="text-gray-400 dark:text-gray-500">
-                {formatMoney(entry.valuation, displayCurrency, usdKrw)}
+                {money(entry.valuation)}
               </span>
               <span className="w-12 font-semibold text-gray-900 dark:text-gray-100">
                 {entry.ratio.toFixed(1)}%

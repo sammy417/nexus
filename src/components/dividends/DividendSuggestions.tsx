@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import type { DividendSuggestion } from "@/lib/services/dividend-forecast-service";
 import { DividendInput, DividendRecord } from "@/lib/models/dividend";
-import { formatMoney } from "@/lib/format";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useSettings } from "@/lib/settings-context";
 
@@ -22,7 +21,7 @@ export default function DividendSuggestions({
   existing: DividendRecord[];
   onAdd: (input: DividendInput) => Promise<void>;
 }) {
-  const { displayCurrency, usdKrw } = useDisplayCurrency();
+  const { money } = useDisplayCurrency();
   const { ownerName } = useSettings();
   const [addingKey, setAddingKey] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
@@ -83,7 +82,7 @@ export default function DividendSuggestions({
               </div>
               <div className="flex shrink-0 items-center gap-3">
                 <p className="text-sm font-semibold text-gray-900 [font-variant-numeric:tabular-nums] dark:text-gray-100">
-                  {formatMoney(suggestion.amountKrw, displayCurrency, usdKrw)}
+                  {money(suggestion.amountKrw)}
                 </p>
                 <button
                   type="button"

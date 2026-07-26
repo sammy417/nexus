@@ -1,6 +1,6 @@
 "use client";
 
-import { formatPercent, formatSignedMoney } from "@/lib/format";
+import { formatPercent } from "@/lib/format";
 import { useDisplayCurrency } from "@/lib/currency-context";
 
 interface Tile {
@@ -20,7 +20,7 @@ function rateClass(rate: number | null, tone: Tile["tone"]): string {
 }
 
 export default function StatTiles({ tiles }: { tiles: Tile[] }) {
-  const { displayCurrency, usdKrw } = useDisplayCurrency();
+  const { signedMoney } = useDisplayCurrency();
 
   return (
     <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
@@ -32,7 +32,7 @@ export default function StatTiles({ tiles }: { tiles: Tile[] }) {
           </p>
           {tile.amountKrw !== undefined && (
             <p className="mt-0.5 text-xs font-medium text-gray-400 dark:text-gray-500">
-              {formatSignedMoney(tile.amountKrw, displayCurrency, usdKrw)}
+              {signedMoney(tile.amountKrw)}
             </p>
           )}
         </div>

@@ -19,7 +19,6 @@ import {
   getDividendSummary,
   getMonthlyDividends,
 } from "@/lib/services/dividend-service";
-import { formatMoney } from "@/lib/format";
 import { DividendRecord } from "@/lib/models/dividend";
 import { OWNER_BADGE_CLASS, OwnerFilter } from "@/lib/models/asset-owner";
 import { AssetOwner } from "@/lib/models/asset";
@@ -41,7 +40,7 @@ function formatMonthHeading(month: string): string {
 export default function DividendsPage() {
   const { dividends: allDividends, isLoading, addDividend, deleteDividend } = useDividends();
   const { forecast, isLoading: isForecastLoading } = useDividendForecast();
-  const { displayCurrency, usdKrw } = useDisplayCurrency();
+  const { usdKrw, money } = useDisplayCurrency();
   const { ownerFilter } = useOwnerFilter();
   const { ownerName } = useSettings();
   const { showToast } = useAssetModal();
@@ -120,7 +119,7 @@ export default function DividendsPage() {
           <div key={tile.label} className="rounded-2xl bg-white p-5 shadow-sm dark:bg-card-dark">
             <p className="text-xs font-medium text-gray-400 dark:text-gray-500">{tile.label}</p>
             <p className="mt-1.5 truncate text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-              {formatMoney(tile.valueKrw, displayCurrency, usdKrw)}
+              {money(tile.valueKrw)}
             </p>
           </div>
         ))}
@@ -158,7 +157,7 @@ export default function DividendsPage() {
                   {formatMonthHeading(month)} {records.length}건
                 </h2>
                 <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  {formatMoney(monthTotal, displayCurrency, usdKrw)}
+                  {money(monthTotal)}
                 </p>
               </div>
               <ul className="divide-y divide-gray-50 rounded-2xl bg-white shadow-sm dark:divide-white/5 dark:bg-card-dark">
@@ -187,7 +186,7 @@ export default function DividendsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-semibold text-gray-900 [font-variant-numeric:tabular-nums] dark:text-gray-100">
-                        {formatMoney(dividendToKrw(record, usdKrw), displayCurrency, usdKrw)}
+                        {money(dividendToKrw(record, usdKrw))}
                       </p>
                       <button
                         type="button"

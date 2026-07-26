@@ -3,13 +3,13 @@
 import { Asset } from "@/lib/models/asset";
 import { ASSET_OWNERS, getAssetOwner, OWNER_COLOR } from "@/lib/models/asset-owner";
 import { getPortfolioSummary } from "@/lib/services/portfolio-service";
-import { formatMoney, formatPercent, formatSignedMoney } from "@/lib/format";
+import { formatPercent } from "@/lib/format";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useSettings } from "@/lib/settings-context";
 
 /** Current valuation / P&L per household owner, side by side. */
 export default function OwnerComparison({ assets }: { assets: Asset[] }) {
-  const { displayCurrency, usdKrw } = useDisplayCurrency();
+  const { usdKrw, money, signedMoney } = useDisplayCurrency();
   const { ownerName } = useSettings();
 
   const rows = ASSET_OWNERS.map((owner) => {
@@ -50,10 +50,10 @@ export default function OwnerComparison({ assets }: { assets: Asset[] }) {
                 {ownerName(owner)}
               </p>
               <p className="mt-2 text-lg font-bold tracking-tight text-gray-900 dark:text-gray-100">
-                {formatMoney(summary.totalValuation, displayCurrency, usdKrw)}
+                {money(summary.totalValuation)}
               </p>
               <p className={`mt-0.5 text-xs font-medium ${isProfit ? "text-rise" : "text-fall"}`}>
-                {formatSignedMoney(summary.totalProfit, displayCurrency, usdKrw)} (
+                {signedMoney(summary.totalProfit)} (
                 {formatPercent(summary.totalProfitRate)})
               </p>
             </div>

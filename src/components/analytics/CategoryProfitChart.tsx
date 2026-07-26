@@ -1,7 +1,7 @@
 "use client";
 
 import { CategoryProfit } from "@/lib/services/analytics-service";
-import { formatPercent, formatSignedMoney } from "@/lib/format";
+import { formatPercent } from "@/lib/format";
 import { PORTFOLIO_CATEGORY_LABEL } from "@/lib/models/portfolio-category";
 import { useDisplayCurrency } from "@/lib/currency-context";
 
@@ -11,7 +11,7 @@ import { useDisplayCurrency } from "@/lib/currency-context";
  * blue). Every bar is directly labeled with the signed amount and rate.
  */
 export default function CategoryProfitChart({ profits }: { profits: CategoryProfit[] }) {
-  const { displayCurrency, usdKrw } = useDisplayCurrency();
+  const { signedMoney } = useDisplayCurrency();
 
   const maxAbs = Math.max(...profits.map((entry) => Math.abs(entry.profit)), 1);
 
@@ -47,7 +47,7 @@ export default function CategoryProfitChart({ profits }: { profits: CategoryProf
                 </div>
                 <span className="w-40 shrink-0 text-right text-xs [font-variant-numeric:tabular-nums]">
                   <span className={`font-semibold ${positive ? "text-rise" : "text-fall"}`}>
-                    {formatSignedMoney(entry.profit, displayCurrency, usdKrw)}
+                    {signedMoney(entry.profit)}
                   </span>
                   <span className="ml-1 text-gray-400 dark:text-gray-500">
                     ({formatPercent(entry.profitRate)})

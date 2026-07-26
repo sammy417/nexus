@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { getAssetMetrics } from "@/lib/services/portfolio-service";
-import { formatMoney, formatPercent } from "@/lib/format";
+import { formatPercent } from "@/lib/format";
 import { getAssetCategoryLabel } from "@/lib/models/portfolio-category";
 import { Asset } from "@/lib/models/asset";
 import { useDisplayCurrency } from "@/lib/currency-context";
 
 export default function AssetsPreview({ assets }: { assets: Asset[] }) {
-  const { displayCurrency, usdKrw } = useDisplayCurrency();
+  const { usdKrw, money } = useDisplayCurrency();
   const topAssets = [...assets]
     .sort((a, b) => getAssetMetrics(b, usdKrw).valuation - getAssetMetrics(a, usdKrw).valuation)
     .slice(0, 5);
@@ -47,7 +47,7 @@ export default function AssetsPreview({ assets }: { assets: Asset[] }) {
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {formatMoney(valuation, displayCurrency, usdKrw)}
+                    {money(valuation)}
                   </p>
                   {asset.type !== "CASH" && (
                     <p className={`text-xs font-medium ${isProfit ? "text-rise" : "text-fall"}`}>

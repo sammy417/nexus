@@ -5,7 +5,6 @@ import type {
   HoldingDividendForecast,
 } from "@/lib/services/dividend-forecast-service";
 import { DIVIDEND_TAX_RATE } from "@/lib/models/dividend";
-import { formatMoney } from "@/lib/format";
 import { useDisplayCurrency } from "@/lib/currency-context";
 
 function formatPerShare(value: number, currency: string): string {
@@ -27,7 +26,7 @@ export default function DividendForecastCard({
   forecast: DividendForecast | null;
   isLoading: boolean;
 }) {
-  const { displayCurrency, usdKrw } = useDisplayCurrency();
+  const { money } = useDisplayCurrency();
 
   const paying = forecast ? payers(forecast.holdings) : [];
   const nonPaying = forecast ? forecast.holdings.length - paying.length : 0;
@@ -56,7 +55,7 @@ export default function DividendForecastCard({
         <>
           <div className="mt-4 flex items-baseline gap-3">
             <p className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-              {formatMoney(totalAnnualKrw, displayCurrency, usdKrw)}
+              {money(totalAnnualKrw)}
             </p>
             {yieldPct !== null && (
               <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">
@@ -65,7 +64,7 @@ export default function DividendForecastCard({
             )}
           </div>
           <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-            세후 약 {formatMoney(afterTaxKrw, displayCurrency, usdKrw)}
+            세후 약 {money(afterTaxKrw)}
             <span className="ml-1">(원천징수 {(DIVIDEND_TAX_RATE * 100).toFixed(1)}% 가정)</span>
           </p>
 
@@ -92,7 +91,7 @@ export default function DividendForecastCard({
                       {formatPerShare(holding.perShareTrailing12m, holding.currency)}
                     </td>
                     <td className="py-2.5 pr-3 text-right font-medium text-gray-900 [font-variant-numeric:tabular-nums] dark:text-gray-100">
-                      {formatMoney(holding.annualEstimateKrw, displayCurrency, usdKrw)}
+                      {money(holding.annualEstimateKrw)}
                     </td>
                     <td className="py-2.5 text-right text-gray-700 [font-variant-numeric:tabular-nums] dark:text-gray-300">
                       {holding.yieldPct === null ? "-" : `${holding.yieldPct.toFixed(2)}%`}

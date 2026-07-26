@@ -2,7 +2,6 @@
 
 import { CalendarClock } from "lucide-react";
 import type { DividendForecast } from "@/lib/services/dividend-forecast-service";
-import { formatMoney } from "@/lib/format";
 import { useDisplayCurrency } from "@/lib/currency-context";
 
 function frequencyLabel(perYear: number): string {
@@ -29,7 +28,7 @@ export default function UpcomingDividendsCard({
   forecast: DividendForecast | null;
   isLoading: boolean;
 }) {
-  const { displayCurrency, usdKrw } = useDisplayCurrency();
+  const { money } = useDisplayCurrency();
 
   const upcoming = (forecast?.holdings ?? [])
     .filter((h) => h.nextExDateEstimate !== null && h.nextAmountKrw !== null)
@@ -72,7 +71,7 @@ export default function UpcomingDividendsCard({
                   </div>
                 </div>
                 <p className="shrink-0 text-sm font-semibold text-gray-900 [font-variant-numeric:tabular-nums] dark:text-gray-100">
-                  {formatMoney(holding.nextAmountKrw!, displayCurrency, usdKrw)}
+                  {money(holding.nextAmountKrw!)}
                 </p>
               </li>
             );
