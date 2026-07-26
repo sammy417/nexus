@@ -6,9 +6,14 @@ import TopHoldingsChart from "@/components/portfolio/TopHoldingsChart";
 import CurrencyToggle from "@/components/common/CurrencyToggle";
 import OwnerFilterToggle from "@/components/common/OwnerFilterToggle";
 import RefreshPricesButton from "@/components/common/RefreshPricesButton";
+import EmptyState from "@/components/common/EmptyState";
 import PortfolioSkeleton from "@/components/skeletons/PortfolioSkeleton";
+import { Plus, WalletCards } from "lucide-react";
 import { usePortfolio } from "@/lib/portfolio-context";
 import { useDisplayCurrency } from "@/lib/currency-context";
+import { useOwnerFilter } from "@/lib/owner-filter-context";
+import { useAssetModal } from "@/lib/asset-modal-context";
+import { useSettings } from "@/lib/settings-context";
 import { getAssetMetrics } from "@/lib/services/portfolio-service";
 import { mergeHoldings, toDisplayHoldings } from "@/lib/services/merge-holdings";
 import {
@@ -21,8 +26,11 @@ import {
 const MERGE_STORAGE_KEY = "nexus:merge-holdings";
 
 export default function PortfolioPage() {
-  const { assets, isLoading } = usePortfolio();
+  const { assets, allAssets, isLoading } = usePortfolio();
   const { usdKrw, money } = useDisplayCurrency();
+  const { ownerFilter } = useOwnerFilter();
+  const { ownerName } = useSettings();
+  const { openAddModal } = useAssetModal();
   const [mergeSame, setMergeSame] = useState(false);
 
   useEffect(() => {
@@ -86,9 +94,29 @@ export default function PortfolioPage() {
       )}
 
       {assets.length === 0 ? (
-        <p className="py-24 text-center text-sm text-gray-400 dark:text-gray-500">
-          보유 자산이 없습니다.
-        </p>
+        allAssets.length === 0 ? (
+          <EmptyState
+            icon={WalletCards}
+            title="아직 등록한 자산이 없어요"
+            description="첫 자산을 추가하면 카테고리별로 정리된 보유 현황과 비중 차트가 여기에 표시됩니다."
+            action={{
+              label: "첫 자산 추가하기",
+              onClick: openAddModal,
+              icon: <Plus size={16} strokeWidth={2.5} />,
+            }}
+          />
+        ) : (
+          <EmptyState
+            icon={WalletCards}
+            title={`${ownerFilter === "ALL" ? "" : ownerName(ownerFilter) + " 명의의 "}자산이 없어요`}
+            description="상단의 소유자 필터를 바꾸거나 새 자산을 추가해 보세요."
+            action={{
+              label: "자산 추가",
+              onClick: openAddModal,
+              icon: <Plus size={16} strokeWidth={2.5} />,
+            }}
+          />
+        )
       ) : (
         PORTFOLIO_CATEGORIES.map((category) => {
           const groupAssets = assets.filter(

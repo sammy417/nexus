@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Coins, Plus, Trash2 } from "lucide-react";
+import EmptyState from "@/components/common/EmptyState";
 import MonthlyDividendChart from "@/components/dividends/MonthlyDividendChart";
 import DividendFormDialog from "@/components/dividends/DividendFormDialog";
 import DividendForecastCard from "@/components/dividends/DividendForecastCard";
@@ -145,9 +146,29 @@ export default function DividendsPage() {
       <MonthlyDividendChart months={monthly} />
 
       {byMonth.length === 0 ? (
-        <p className="py-16 text-center text-sm text-gray-400 dark:text-gray-500">
-          아직 기록된 배당이 없습니다. 우측 상단의 &quot;배당 추가&quot;로 첫 기록을 남겨보세요.
-        </p>
+        allDividends.length === 0 ? (
+          <EmptyState
+            icon={Coins}
+            title="아직 기록된 배당이 없어요"
+            description="받은 배당을 추가하면 월별 추이와 통계가 채워집니다. 보유 종목의 배당 이력은 위 '받은 배당 기록 제안'에서 한 번에 추가할 수도 있어요."
+            action={{
+              label: "배당 추가",
+              onClick: () => setIsFormOpen(true),
+              icon: <Plus size={16} strokeWidth={2.5} />,
+            }}
+          />
+        ) : (
+          <EmptyState
+            icon={Coins}
+            title={`${ownerFilter === "ALL" ? "" : ownerName(ownerFilter) + " "}배당 기록이 없어요`}
+            description="상단의 소유자 필터를 바꾸거나 새 배당을 추가해 보세요."
+            action={{
+              label: "배당 추가",
+              onClick: () => setIsFormOpen(true),
+              icon: <Plus size={16} strokeWidth={2.5} />,
+            }}
+          />
+        )
       ) : (
         byMonth.map(([month, records]) => {
           const monthTotal = records.reduce((sum, r) => sum + dividendToKrw(r, usdKrw), 0);

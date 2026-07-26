@@ -5,6 +5,7 @@ import AssetsPreview from "@/components/dashboard/AssetsPreview";
 import AllocationBreakdown from "@/components/dashboard/AllocationBreakdown";
 import OwnerBreakdown from "@/components/dashboard/OwnerBreakdown";
 import TrendChart from "@/components/dashboard/TrendChart";
+import DashboardOnboarding from "@/components/dashboard/DashboardOnboarding";
 import CurrencyToggle from "@/components/common/CurrencyToggle";
 import OwnerFilterToggle from "@/components/common/OwnerFilterToggle";
 import RefreshPricesButton from "@/components/common/RefreshPricesButton";
@@ -39,6 +40,12 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return <DashboardSkeleton />;
+  }
+
+  // First run: nothing in the household yet — welcome + onboarding instead
+  // of a grid of empty ₩0 cards.
+  if (allAssets.length === 0) {
+    return <DashboardOnboarding />;
   }
 
   return (

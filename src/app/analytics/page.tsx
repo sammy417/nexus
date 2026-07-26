@@ -8,7 +8,10 @@ import OwnerComparison from "@/components/analytics/OwnerComparison";
 import CurrencyToggle from "@/components/common/CurrencyToggle";
 import OwnerFilterToggle from "@/components/common/OwnerFilterToggle";
 import AnalyticsSkeleton from "@/components/skeletons/AnalyticsSkeleton";
+import EmptyState from "@/components/common/EmptyState";
+import { BarChart3, Plus } from "lucide-react";
 import { usePortfolio } from "@/lib/portfolio-context";
+import { useAssetModal } from "@/lib/asset-modal-context";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useOwnerFilter } from "@/lib/owner-filter-context";
 import { getPortfolioSummary } from "@/lib/services/portfolio-service";
@@ -26,9 +29,29 @@ export default function AnalyticsPage() {
   const { usdKrw } = useDisplayCurrency();
   const { ownerFilter } = useOwnerFilter();
   const { ownerName } = useSettings();
+  const { openAddModal } = useAssetModal();
 
   if (isLoading) {
     return <AnalyticsSkeleton />;
+  }
+
+  // No assets in the household yet — analytics has nothing to compute.
+  if (allAssets.length === 0) {
+    return (
+      <div className="flex flex-col gap-6">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">분석</h1>
+        <EmptyState
+          icon={BarChart3}
+          title="분석할 자산이 아직 없어요"
+          description="자산을 추가하면 기간 수익률·최대 낙폭·카테고리별 손익과 성장 추이를 자동으로 계산해 보여드려요."
+          action={{
+            label: "첫 자산 추가하기",
+            onClick: openAddModal,
+            icon: <Plus size={16} strokeWidth={2.5} />,
+          }}
+        />
+      </div>
+    );
   }
 
   // Owner-scoped history (real byOwner, else scaled by current share).
