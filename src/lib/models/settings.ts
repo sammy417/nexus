@@ -1,29 +1,49 @@
 import { AssetOwner } from "./asset";
-import { ASSET_OWNER_LABEL, ASSET_OWNERS } from "./asset-owner";
+import { ASSET_OWNER_LABEL, ASSET_OWNERS, OWNER_COLOR } from "./asset-owner";
 
 /** Household-level preferences (one shared dataset, so not per-user). */
 export interface AppSettings {
   /** Custom display names for each owner tag (본인/배우자/자녀/공동 by default). */
   ownerNames: Record<AssetOwner, string>;
+  /** Custom hex colors (badge text/dot/donut) for each owner tag. */
+  ownerColors: Record<AssetOwner, string>;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
   ownerNames: { ...ASSET_OWNER_LABEL },
+  ownerColors: { ...OWNER_COLOR },
 };
+
+const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+
+/** Keep only well-formed `#rgb`/`#rrggbb` values; fall back otherwise. */
+function normalizeHex(value: unknown, fallback: string): string {
+  return typeof value === "string" && HEX_RE.test(value.trim()) ? value.trim() : fallback;
+}
 
 /** Coerce an unknown stored/imported value into a complete AppSettings. */
 export function normalizeSettings(value: unknown): AppSettings {
   const ownerNames: Record<AssetOwner, string> = { ...DEFAULT_SETTINGS.ownerNames };
+  const ownerColors: Record<AssetOwner, string> = { ...DEFAULT_SETTINGS.ownerColors };
   if (value && typeof value === "object") {
-    const raw = (value as { ownerNames?: unknown }).ownerNames;
-    if (raw && typeof raw === "object") {
+    const rawNames = (value as { ownerNames?: unknown }).ownerNames;
+    if (rawNames && typeof rawNames === "object") {
       for (const owner of ASSET_OWNERS) {
-        const name = (raw as Record<string, unknown>)[owner];
+        const name = (rawNames as Record<string, unknown>)[owner];
         if (typeof name === "string" && name.trim().length > 0) {
           ownerNames[owner] = name.trim();
         }
       }
     }
+    const rawColors = (value as { ownerColors?: unknown }).ownerColors;
+    if (rawColors && typeof rawColors === "object") {
+      for (const owner of ASSET_OWNERS) {
+        ownerColors[owner] = normalizeHex(
+          (rawColors as Record<string, unknown>)[owner],
+          DEFAULT_SETTINGS.ownerColors[owner]
+        );
+      }
+    }
   }
-  return { ownerNames };
+  return { ownerNames, ownerColors };
 }

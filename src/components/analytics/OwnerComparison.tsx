@@ -1,7 +1,7 @@
 "use client";
 
 import { Asset } from "@/lib/models/asset";
-import { ASSET_OWNERS, getAssetOwner, OWNER_COLOR } from "@/lib/models/asset-owner";
+import { ASSET_OWNERS, getAssetOwner } from "@/lib/models/asset-owner";
 import { getPortfolioSummary } from "@/lib/services/portfolio-service";
 import { formatPercent } from "@/lib/format";
 import { useDisplayCurrency } from "@/lib/currency-context";
@@ -10,7 +10,7 @@ import { useSettings } from "@/lib/settings-context";
 /** Current valuation / P&L per household owner, side by side. */
 export default function OwnerComparison({ assets }: { assets: Asset[] }) {
   const { usdKrw, money, signedMoney } = useDisplayCurrency();
-  const { ownerName } = useSettings();
+  const { ownerName, ownerColor } = useSettings();
 
   const rows = ASSET_OWNERS.map((owner) => {
     const summary = getPortfolioSummary(
@@ -45,7 +45,7 @@ export default function OwnerComparison({ assets }: { assets: Asset[] }) {
                 <span
                   aria-hidden
                   className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: OWNER_COLOR[owner] }}
+                  style={{ backgroundColor: ownerColor(owner) }}
                 />
                 {ownerName(owner)}
               </p>

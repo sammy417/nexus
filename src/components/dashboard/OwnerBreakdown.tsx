@@ -2,7 +2,6 @@
 
 import DonutBreakdownCard from "@/components/common/DonutBreakdownCard";
 import { OwnerAllocationEntry } from "@/lib/services/portfolio-service";
-import { OWNER_COLOR } from "@/lib/models/asset-owner";
 import { useSettings } from "@/lib/settings-context";
 
 export default function OwnerBreakdown({
@@ -10,7 +9,7 @@ export default function OwnerBreakdown({
 }: {
   allocation: OwnerAllocationEntry[];
 }) {
-  const { ownerName } = useSettings();
+  const { ownerName, ownerColor } = useSettings();
 
   return (
     <DonutBreakdownCard
@@ -20,7 +19,7 @@ export default function OwnerBreakdown({
       entries={allocation.map((entry) => ({
         id: entry.owner,
         label: ownerName(entry.owner),
-        color: OWNER_COLOR[entry.owner],
+        color: ownerColor(entry.owner),
         valuation: entry.valuation,
         ratio: entry.ratio,
       }))}

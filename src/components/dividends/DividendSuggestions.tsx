@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import type { DividendSuggestion } from "@/lib/services/dividend-forecast-service";
 import { DividendInput, DividendRecord } from "@/lib/models/dividend";
+import { hexWithAlpha } from "@/lib/models/asset-owner";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useSettings } from "@/lib/settings-context";
 
@@ -22,7 +23,7 @@ export default function DividendSuggestions({
   onAdd: (input: DividendInput) => Promise<void>;
 }) {
   const { money } = useDisplayCurrency();
-  const { ownerName } = useSettings();
+  const { ownerName, ownerColor } = useSettings();
   const [addingKey, setAddingKey] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
@@ -74,7 +75,13 @@ export default function DividendSuggestions({
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
                   {suggestion.name}
-                  <span className="ml-1.5 rounded bg-gray-100 px-1 py-0.5 text-[10px] font-semibold text-gray-500 dark:bg-white/10 dark:text-gray-400">
+                  <span
+                    className="ml-1.5 rounded px-1 py-0.5 text-[10px] font-semibold"
+                    style={{
+                      color: ownerColor(suggestion.owner),
+                      backgroundColor: hexWithAlpha(ownerColor(suggestion.owner), 0.12),
+                    }}
+                  >
                     {ownerName(suggestion.owner)}
                   </span>
                 </p>

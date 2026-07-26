@@ -8,6 +8,8 @@ interface SettingsContextValue {
   settings: AppSettings;
   /** Custom (or default) display name for an owner tag. */
   ownerName: (owner: AssetOwner) => string;
+  /** Custom (or default) hex color for an owner tag. */
+  ownerColor: (owner: AssetOwner) => string;
   /** Persist new settings to the server and update local state. */
   save: (settings: AppSettings) => Promise<void>;
 }
@@ -47,7 +49,15 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     [settings]
   );
 
-  const value = useMemo(() => ({ settings, ownerName, save }), [settings, ownerName, save]);
+  const ownerColor = useCallback(
+    (owner: AssetOwner) => settings.ownerColors?.[owner] ?? DEFAULT_SETTINGS.ownerColors[owner],
+    [settings]
+  );
+
+  const value = useMemo(
+    () => ({ settings, ownerName, ownerColor, save }),
+    [settings, ownerName, ownerColor, save]
+  );
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
 }

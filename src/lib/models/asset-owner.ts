@@ -10,7 +10,11 @@ export const ASSET_OWNER_LABEL: Record<AssetOwner, string> = {
   JOINT: "공동",
 };
 
-/** Donut/legend hex colors — validated 4-slot palette for both surfaces. */
+/**
+ * Default owner hex colors — a validated 4-slot palette that reads on both
+ * light and dark surfaces. Overridable per household in settings; used for
+ * donut/legend, dots, and tinted badges (text = hue, bg = hue at low alpha).
+ */
 export const OWNER_COLOR: Record<AssetOwner, string> = {
   SELF: "#3182F6",
   SPOUSE: "#c9548a",
@@ -18,13 +22,16 @@ export const OWNER_COLOR: Record<AssetOwner, string> = {
   JOINT: "#c98500",
 };
 
-/** Tailwind badge classes tinted to match OWNER_COLOR. */
-export const OWNER_BADGE_CLASS: Record<AssetOwner, string> = {
-  SELF: "bg-fall/10 text-fall",
-  SPOUSE: "bg-[#c9548a]/10 text-[#c9548a]",
-  CHILD: "bg-[#1baf7a]/10 text-[#1baf7a]",
-  JOINT: "bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-gray-400",
-};
+/** `#rgb`/`#rrggbb` → `rgba(r,g,b,alpha)`, for tinted badge backgrounds. */
+export function hexWithAlpha(hex: string, alpha: number): string {
+  let h = hex.replace("#", "");
+  if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  if ([r, g, b].some((n) => Number.isNaN(n))) return hex;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 /** Filter value: a specific owner or the combined household view. */
 export type OwnerFilter = AssetOwner | "ALL";

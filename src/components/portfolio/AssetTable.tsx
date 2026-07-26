@@ -8,7 +8,7 @@ import { usePortfolio } from "@/lib/portfolio-context";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { formatPercent } from "@/lib/format";
 import { getAssetCategoryLabel } from "@/lib/models/portfolio-category";
-import { getAssetOwner, OWNER_BADGE_CLASS } from "@/lib/models/asset-owner";
+import { getAssetOwner, hexWithAlpha } from "@/lib/models/asset-owner";
 import { DisplayHolding } from "@/lib/services/merge-holdings";
 import { useSettings } from "@/lib/settings-context";
 import { Asset } from "@/lib/models/asset";
@@ -87,7 +87,7 @@ export default function AssetTable({ holdings }: { holdings: DisplayHolding[] })
   const { openEditModal, showToast } = useAssetModal();
   const { deleteAsset } = usePortfolio();
   const { usdKrw, money, signedMoney } = useDisplayCurrency();
-  const { ownerName } = useSettings();
+  const { ownerName, ownerColor } = useSettings();
   const [sort, setSort] = useState<SortState | null>(null);
   const [expanded, setExpanded] = useState(false);
 
@@ -194,9 +194,11 @@ export default function AssetTable({ holdings }: { holdings: DisplayHolding[] })
                     {badgeOwners.map((badgeOwner) => (
                       <span
                         key={badgeOwner}
-                        className={`ml-1.5 inline-block whitespace-nowrap rounded px-1 py-0.5 text-[10px] font-semibold ${
-                          OWNER_BADGE_CLASS[badgeOwner]
-                        }`}
+                        className="ml-1.5 inline-block whitespace-nowrap rounded px-1 py-0.5 text-[10px] font-semibold"
+                        style={{
+                          color: ownerColor(badgeOwner),
+                          backgroundColor: hexWithAlpha(ownerColor(badgeOwner), 0.12),
+                        }}
                       >
                         {ownerName(badgeOwner)}
                       </span>

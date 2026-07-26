@@ -23,7 +23,7 @@ import {
   getMonthlyDividends,
 } from "@/lib/services/dividend-service";
 import { DividendRecord } from "@/lib/models/dividend";
-import { OWNER_BADGE_CLASS, OwnerFilter } from "@/lib/models/asset-owner";
+import { hexWithAlpha, OwnerFilter } from "@/lib/models/asset-owner";
 import { AssetOwner } from "@/lib/models/asset";
 import { useSettings } from "@/lib/settings-context";
 
@@ -45,7 +45,7 @@ export default function DividendsPage() {
   const { forecast, isLoading: isForecastLoading } = useDividendForecast();
   const { usdKrw, money } = useDisplayCurrency();
   const { ownerFilter } = useOwnerFilter();
-  const { ownerName } = useSettings();
+  const { ownerName, ownerColor } = useSettings();
   const { showToast } = useAssetModal();
   const [isFormOpen, setIsFormOpen] = useState(false);
 
@@ -190,9 +190,11 @@ export default function DividendsPage() {
                       <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         {record.name}
                         <span
-                          className={`ml-1.5 rounded px-1 py-0.5 text-[10px] font-semibold ${
-                            OWNER_BADGE_CLASS[recordOwner(record)]
-                          }`}
+                          className="ml-1.5 rounded px-1 py-0.5 text-[10px] font-semibold"
+                          style={{
+                            color: ownerColor(recordOwner(record)),
+                            backgroundColor: hexWithAlpha(ownerColor(recordOwner(record)), 0.12),
+                          }}
                         >
                           {ownerName(recordOwner(record))}
                         </span>
