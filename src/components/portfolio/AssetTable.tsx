@@ -171,14 +171,6 @@ export default function AssetTable({ holdings }: { holdings: DisplayHolding[] })
             const badgeOwners = merged
               ? [...new Set(merged.parts.map((part) => part.owner))]
               : [getAssetOwner(asset)];
-            const mergedNote = merged
-              ? `${merged.count}건 합산: ${merged.parts
-                  .map(
-                    (part) =>
-                      `${ownerName(part.owner)} ${part.quantity.toLocaleString("ko-KR")}주`
-                  )
-                  .join(" · ")}`
-              : null;
 
             return (
               <tr
@@ -209,9 +201,27 @@ export default function AssetTable({ holdings }: { holdings: DisplayHolding[] })
                       </span>
                     )}
                   </p>
-                  {(sub || mergedNote) && (
+                  {(sub || merged) && (
                     <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
-                      {[sub, mergedNote].filter(Boolean).join(" · ")}
+                      {sub}
+                      {sub && merged && " · "}
+                      {merged && (
+                        <>
+                          {merged.count}건 합산:{" "}
+                          {merged.parts.map((part, index) => (
+                            <span key={`${part.owner}-${index}`}>
+                              {index > 0 && " · "}
+                              <span
+                                className="font-medium"
+                                style={{ color: ownerColor(part.owner) }}
+                              >
+                                {ownerName(part.owner)}
+                              </span>{" "}
+                              {part.quantity.toLocaleString("ko-KR")}주
+                            </span>
+                          ))}
+                        </>
+                      )}
                     </p>
                   )}
                 </td>

@@ -28,7 +28,7 @@ export default function AnalyticsPage() {
   const { assets, allAssets, snapshots, summary, isLoading } = usePortfolio();
   const { usdKrw } = useDisplayCurrency();
   const { ownerFilter } = useOwnerFilter();
-  const { ownerName } = useSettings();
+  const { ownerName, ownerColor } = useSettings();
   const { openAddModal } = useAssetModal();
 
   if (isLoading) {
@@ -78,7 +78,10 @@ export default function AnalyticsPage() {
 
       {ownerFilter !== "ALL" && (
         <p className="-mt-2 px-1 text-[11px] text-gray-400 dark:text-gray-500">
-          {scopeLabel} 기준으로 집계했습니다.
+          <span className="font-semibold" style={{ color: ownerColor(ownerFilter) }}>
+            {scopeLabel}
+          </span>{" "}
+          기준으로 집계했습니다.
           {approximated &&
             " 소유자별 기록이 없는 과거 구간은 현재 비중으로 추정한 값입니다."}
         </p>
@@ -104,7 +107,10 @@ export default function AnalyticsPage() {
         <CategoryProfitChart profits={categoryProfits} />
       </div>
 
-      <GrowthChart snapshots={series} />
+      <GrowthChart
+        snapshots={series}
+        color={ownerFilter === "ALL" ? undefined : ownerColor(ownerFilter)}
+      />
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { HistoryPoint } from "@/lib/services/owner-history";
 import { useDisplayCurrency } from "@/lib/currency-context";
 
-const VALUATION_COLOR = "#3182F6";
+const DEFAULT_VALUATION_COLOR = "#3182F6";
 const PRINCIPAL_COLOR = "#8b95a1";
 const MARGIN = { top: 12, right: 12, bottom: 28, left: 56 };
 const HEIGHT = 240;
@@ -28,7 +28,13 @@ function formatTickDate(date: string): string {
 }
 
 /** 평가 금액 vs 투자 원금, full history — two lines with a shared crosshair. */
-export default function GrowthChart({ snapshots }: { snapshots: HistoryPoint[] }) {
+export default function GrowthChart({
+  snapshots,
+  color = DEFAULT_VALUATION_COLOR,
+}: {
+  snapshots: HistoryPoint[];
+  color?: string;
+}) {
   const { money, compactMoney } = useDisplayCurrency();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [width, setWidth] = useState(0);
@@ -105,7 +111,7 @@ export default function GrowthChart({ snapshots }: { snapshots: HistoryPoint[] }
         </div>
         <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
           <span className="flex items-center gap-1.5">
-            <span className="h-0.5 w-4 rounded-full" style={{ backgroundColor: VALUATION_COLOR }} />
+            <span className="h-0.5 w-4 rounded-full" style={{ backgroundColor: color }} />
             평가 금액
           </span>
           <span className="flex items-center gap-1.5">
@@ -176,7 +182,7 @@ export default function GrowthChart({ snapshots }: { snapshots: HistoryPoint[] }
               <path
                 d={geometry.valuationPath}
                 fill="none"
-                stroke={VALUATION_COLOR}
+                stroke={color}
                 strokeWidth={2}
                 strokeLinejoin="round"
                 strokeLinecap="round"
@@ -193,7 +199,7 @@ export default function GrowthChart({ snapshots }: { snapshots: HistoryPoint[] }
                     strokeWidth={1}
                   />
                   {[
-                    { value: hovered.totalValuation, color: VALUATION_COLOR },
+                    { value: hovered.totalValuation, color: color },
                     { value: hovered.totalPrincipal, color: PRINCIPAL_COLOR },
                   ].map(({ value, color }) => (
                     <g key={color}>
@@ -220,7 +226,7 @@ export default function GrowthChart({ snapshots }: { snapshots: HistoryPoint[] }
                   <span className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
                     <span
                       className="h-0.5 w-3 rounded-full"
-                      style={{ backgroundColor: VALUATION_COLOR }}
+                      style={{ backgroundColor: color }}
                     />
                     평가
                   </span>

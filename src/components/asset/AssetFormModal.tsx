@@ -71,7 +71,7 @@ async function fetchQuotePrice(
 
 function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
   const { closeModal, showToast } = useAssetModal();
-  const { ownerName } = useSettings();
+  const { ownerName, ownerColor } = useSettings();
   const { addAsset, updateAsset, deleteAsset } = usePortfolio();
   const isEditing = editingAsset !== null;
 
@@ -335,12 +335,17 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
                 key={o}
                 type="button"
                 onClick={() => setOwner(o)}
-                className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
+                className={`flex items-center gap-1 rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
                   owner === o
                     ? "bg-white text-gray-900 shadow-sm dark:bg-white/15 dark:text-gray-100"
                     : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                 }`}
               >
+                <span
+                  aria-hidden
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: ownerColor(o) }}
+                />
                 {ownerName(o)}
               </button>
             ))}

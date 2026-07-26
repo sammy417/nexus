@@ -22,7 +22,7 @@ export default function DividendFormDialog({
   onClose: () => void;
 }) {
   const { assets } = usePortfolio();
-  const { ownerName } = useSettings();
+  const { ownerName, ownerColor } = useSettings();
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState<Currency>("KRW");
@@ -151,12 +151,17 @@ export default function DividendFormDialog({
                   key={o}
                   type="button"
                   onClick={() => setOwner(o)}
-                  className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
+                  className={`flex items-center gap-1 rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
                     owner === o
                       ? "bg-white text-gray-900 shadow-sm dark:bg-white/15 dark:text-gray-100"
                       : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                   }`}
                 >
+                  <span
+                    aria-hidden
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{ backgroundColor: ownerColor(o) }}
+                  />
                   {ownerName(o)}
                 </button>
               ))}

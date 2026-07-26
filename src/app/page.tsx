@@ -13,6 +13,7 @@ import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
 import { usePortfolio } from "@/lib/portfolio-context";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useOwnerFilter } from "@/lib/owner-filter-context";
+import { useSettings } from "@/lib/settings-context";
 import {
   getAllocationByCategory,
   getAllocationByOwner,
@@ -24,6 +25,7 @@ export default function DashboardPage() {
   const { assets, allAssets, snapshots, summary, isLoading } = usePortfolio();
   const { usdKrw } = useDisplayCurrency();
   const { ownerFilter } = useOwnerFilter();
+  const { ownerColor } = useSettings();
   const allocation = getAllocationByCategory(assets, usdKrw);
   // Household split stays ALL-based on purpose — it answers "whose share
   // of the whole", which a filtered view can't.
@@ -64,7 +66,10 @@ export default function DashboardPage() {
         </div>
         <AllocationBreakdown allocation={allocation} />
         <div className="lg:col-span-3">
-          <TrendChart snapshots={trendSeries} />
+          <TrendChart
+            snapshots={trendSeries}
+            color={ownerFilter === "ALL" ? undefined : ownerColor(ownerFilter)}
+          />
         </div>
         <OwnerBreakdown allocation={ownerAllocation} />
         <div className="lg:col-span-2">

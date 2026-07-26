@@ -5,7 +5,7 @@ import { HistoryPoint } from "@/lib/services/owner-history";
 import { formatPercent } from "@/lib/format";
 import { useDisplayCurrency } from "@/lib/currency-context";
 
-const LINE_COLOR = "#3182F6";
+const DEFAULT_COLOR = "#3182F6";
 const MARGIN = { top: 12, right: 12, bottom: 28, left: 56 };
 const HEIGHT = 240;
 
@@ -43,7 +43,13 @@ function formatFullDate(date: string): string {
   return `${year}년 ${Number(month)}월 ${Number(day)}일`;
 }
 
-export default function TrendChart({ snapshots }: { snapshots: HistoryPoint[] }) {
+export default function TrendChart({
+  snapshots,
+  color = DEFAULT_COLOR,
+}: {
+  snapshots: HistoryPoint[];
+  color?: string;
+}) {
   const { money, signedMoney, compactMoney } = useDisplayCurrency();
   const [range, setRange] = useState<RangeKey>("1M");
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
@@ -235,11 +241,11 @@ export default function TrendChart({ snapshots }: { snapshots: HistoryPoint[] })
                 </text>
               ))}
 
-              <path d={geometry.areaPath} fill={LINE_COLOR} fillOpacity={0.08} />
+              <path d={geometry.areaPath} fill={color} fillOpacity={0.08} />
               <path
                 d={geometry.linePath}
                 fill="none"
-                stroke={LINE_COLOR}
+                stroke={color}
                 strokeWidth={2}
                 strokeLinejoin="round"
                 strokeLinecap="round"
@@ -265,7 +271,7 @@ export default function TrendChart({ snapshots }: { snapshots: HistoryPoint[] })
                     cx={geometry.x(hoverIndex)}
                     cy={geometry.y(points[hoverIndex].totalValuation)}
                     r={4}
-                    fill={LINE_COLOR}
+                    fill={color}
                   />
                 </g>
               )}
@@ -283,7 +289,7 @@ export default function TrendChart({ snapshots }: { snapshots: HistoryPoint[] })
                   <span
                     aria-hidden
                     className="inline-block h-0.5 w-3 rounded-full"
-                    style={{ backgroundColor: LINE_COLOR }}
+                    style={{ backgroundColor: color }}
                   />
                   {money(hovered.totalValuation)}
                 </p>
