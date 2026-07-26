@@ -172,6 +172,51 @@ export async function fetchDividendHistory(
   return entry;
 }
 
+// --- Company profile (sector) via quoteSummary assetProfile ---
+
+const PROFILE_TTL_MS = 24 * 60 * 60 * 1000;
+
+const globalForProfiles = globalThis as unknown as {
+  __nexusStockProfileCache?: Map<string, { sector?: string; fetchedAt: number }>;
+};
+
+function getProfileCache(): Map<string, { sector?: string; fetchedAt: number }> {
+  if (!globalForProfiles.__nexusStockProfileCache) {
+    globalForProfiles.__nexusStockProfileCache = new Map();
+  }
+  return globalForProfiles.__nexusStockProfileCache;
+}
+
+/**
+ * Best-effort sector lookup (Yahoo `quoteSummary` assetProfile). Returns the
+ * raw upstream sector string (English); callers normalize it. 24h cache.
+ * Throws on failure — the sector is optional, so callers should catch.
+ */
+export async function fetchStockSector(ticker: string, market?: string): Promise<string | undefined> {
+  const symbol = toQuoteSymbol(ticker, market);
+  const cached = getProfileCache().get(symbol);
+  if (cached && Date.now() - cached.fetchedAt < PROFILE_TTL_MS) {
+    return cached.sector;
+  }
+
+  const base = process.env.QUOTE_API_BASE ?? "https://query1.finance.yahoo.com";
+  const url = `${base}/v10/finance/quoteSummary/${encodeURIComponent(symbol)}?modules=assetProfile`;
+  const response = await fetch(url, {
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; nexus-portfolio)" },
+    signal: AbortSignal.timeout(8000),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(`Profile lookup failed for ${symbol} (upstream ${response.status})`);
+  }
+
+  const data = await response.json();
+  const raw = data?.quoteSummary?.result?.[0]?.assetProfile?.sector;
+  const sector = typeof raw === "string" && raw.trim() ? raw.trim() : undefined;
+  getProfileCache().set(symbol, { sector, fetchedAt: Date.now() });
+  return sector;
+}
+
 export interface QuoteResult {
   /** Price in the security's own trading currency. */
   price: number;

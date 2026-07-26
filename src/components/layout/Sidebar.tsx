@@ -9,6 +9,7 @@ import {
   EyeOff,
   LayoutGrid,
   Languages,
+  LineChart,
   Moon,
   Plus,
   RotateCcw,
@@ -26,6 +27,7 @@ const navItems = [
   { href: "/", label: "대시보드", icon: LayoutGrid },
   { href: "/portfolio", label: "포트폴리오", icon: WalletCards },
   { href: "/analytics", label: "분석", icon: BarChart3 },
+  { href: "/stocks", label: "주식", icon: LineChart },
   { href: "/dividends", label: "배당", icon: Coins },
   { href: "/settings", label: "설정", icon: Settings },
 ];

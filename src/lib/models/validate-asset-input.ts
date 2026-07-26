@@ -22,6 +22,7 @@ export function isValidAssetInput(value: unknown): value is AssetInput {
   ) {
     return false;
   }
+  if (input.sector !== undefined && typeof input.sector !== "string") return false;
 
   if (input.type === "CASH") {
     return typeof input.balance === "number" && Number.isFinite(input.balance);

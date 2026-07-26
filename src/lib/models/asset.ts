@@ -66,6 +66,12 @@ export interface StockAsset extends BaseAsset {
   quantity: number;
   avgPrice: number;
   currentPrice: number;
+  /**
+   * Sector for the stock-analysis view. Stored as a canonical Korean label
+   * (see `stock-sector.ts`); set manually in the form or auto-filled from
+   * the quote lookup. Optional, so pre-sector data needs no migration.
+   */
+  sector?: string;
 }
 
 export interface BondAsset extends BaseAsset {

@@ -5,6 +5,7 @@ import { Trash2, X } from "lucide-react";
 import { useAssetModal } from "@/lib/asset-modal-context";
 import { AssetInput, usePortfolio } from "@/lib/portfolio-context";
 import { ASSET_TYPE_LABEL, ASSET_TYPES } from "@/lib/models/asset-types";
+import { STOCK_SECTORS } from "@/lib/models/stock-sector";
 import { ASSET_OWNERS } from "@/lib/models/asset-owner";
 import { useSettings } from "@/lib/settings-context";
 import { useT } from "@/lib/i18n/locale-context";
@@ -45,11 +46,11 @@ function parseOptionalPositive(raw: string): number | undefined | null {
 }
 
 /** Quote in the currency the asset is denominated in. */
-async function fetchQuotePrice(
+async function fetchQuote(
   ticker: string,
   market: string,
   currency: Currency
-): Promise<number> {
+): Promise<{ price: number; sector?: string }> {
   const params = new URLSearchParams({ ticker });
   if (market) params.set("market", market);
   const response = await fetch(`/api/quote?${params.toString()}`);
@@ -66,8 +67,14 @@ async function fetchQuotePrice(
   ) {
     throw new Error("Quote returned no usable price");
   }
-  if (currency === "KRW") return data.priceKrw;
-  return data.currency === "USD" ? data.price : data.priceKrw / data.usdKrw;
+  const price =
+    currency === "KRW"
+      ? data.priceKrw
+      : data.currency === "USD"
+        ? data.price
+        : data.priceKrw / data.usdKrw;
+  const sector = typeof data.sector === "string" ? data.sector : undefined;
+  return { price, sector };
 }
 
 function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
@@ -95,6 +102,9 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
   );
   const [ticker, setTicker] = useState(
     editingAsset?.type === "STOCK" ? editingAsset.ticker ?? "" : ""
+  );
+  const [sector, setSector] = useState(
+    editingAsset?.type === "STOCK" ? editingAsset.sector ?? "" : ""
   );
   const [quantity, setQuantity] = useState(
     editingAsset?.type === "STOCK" ? String(editingAsset.quantity) : ""
@@ -147,10 +157,13 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
 
       const trimmedTicker = ticker.trim();
       let quoted: number | undefined;
+      let fetchedSector: string | undefined;
       let quoteFailed = false;
       if (trimmedTicker) {
         try {
-          quoted = await fetchQuotePrice(trimmedTicker, market.trim(), currency);
+          const quote = await fetchQuote(trimmedTicker, market.trim(), currency);
+          quoted = quote.price;
+          fetchedSector = quote.sector;
         } catch {
           quoteFailed = true;
         }
@@ -170,6 +183,14 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
         showToast(t("현재가 조회에 실패해 입력된 값으로 대신 계산했습니다."));
       }
 
+      // Sector: manual choice wins; else the auto-fetched sector; else keep
+      // whatever was stored (on edit).
+      const resolvedSector =
+        sector.trim() ||
+        fetchedSector ||
+        (isEditing && editingAsset?.type === "STOCK" ? editingAsset.sector : undefined) ||
+        undefined;
+
       return {
         type: "STOCK",
         name: trimmedName,
@@ -179,6 +200,7 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
         quantity: q,
         avgPrice: avg ?? current,
         currentPrice: current,
+        sector: resolvedSector,
       };
     }
 
@@ -476,6 +498,21 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
                 />
               </label>
             </div>
+            <label className={labelClass}>
+              <span className={labelTextClass}>{t("섹터 (선택)")}</span>
+              <select
+                value={sector}
+                onChange={(event) => setSector(event.target.value)}
+                className={`${inputClass} appearance-none`}
+              >
+                <option value="">{t("자동 조회 (티커 기준)")}</option>
+                {STOCK_SECTORS.map((s) => (
+                  <option key={s} value={s}>
+                    {t(s)}
+                  </option>
+                ))}
+              </select>
+            </label>
             <p className={hintTextClass}>
               {t(
                 "현재가는 입력하지 않습니다 — 저장 시 티커로 자동 조회해 선택한 통화로 저장합니다 (국내 6자리 코드·미국 티커 지원). 티커가 없거나 조회에 실패하면 평단가로 대신 계산합니다."
