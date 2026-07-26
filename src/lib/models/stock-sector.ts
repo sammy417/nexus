@@ -83,3 +83,18 @@ export function normalizeSector(raw: unknown): string | undefined {
 export function getStockSector(asset: StockAsset): string {
   return asset.sector?.trim() || UNCLASSIFIED_SECTOR;
 }
+
+/**
+ * Display label combining the (translated) base sector with the user's
+ * free-text sub-sector, e.g. "기술 (반도체)". Grouping/coloring still use
+ * `getStockSector` (base only) — this is presentation only. `translate`
+ * localizes the base sector; the sub-sector is user text and stays as-is.
+ */
+export function getStockSectorLabel(
+  asset: StockAsset,
+  translate: (sector: string) => string = (s) => s
+): string {
+  const base = translate(getStockSector(asset));
+  const sub = asset.subSector?.trim();
+  return sub ? `${base} (${sub})` : base;
+}

@@ -330,6 +330,8 @@ export const EN: Record<string, string> = {
   // --- Stock analysis ---
   섹터: "Sector",
   "섹터 (선택)": "Sector (optional)",
+  "세부 섹터 (선택)": "Sub-sector (optional)",
+  "예: 반도체, AI SW": "e.g. Semiconductors, AI SW",
   "자동 조회 (티커 기준)": "Auto (from ticker)",
   "주식 평가 금액": "Stock valuation",
   "보유 종목": "Holdings",

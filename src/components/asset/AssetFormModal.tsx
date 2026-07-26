@@ -106,6 +106,9 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
   const [sector, setSector] = useState(
     editingAsset?.type === "STOCK" ? editingAsset.sector ?? "" : ""
   );
+  const [subSector, setSubSector] = useState(
+    editingAsset?.type === "STOCK" ? editingAsset.subSector ?? "" : ""
+  );
   const [quantity, setQuantity] = useState(
     editingAsset?.type === "STOCK" ? String(editingAsset.quantity) : ""
   );
@@ -191,6 +194,11 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
         (isEditing && editingAsset?.type === "STOCK" ? editingAsset.sector : undefined) ||
         undefined;
 
+      // Sub-sector is a free-text detail on the base sector — only meaningful
+      // when a sector is set, so drop it otherwise.
+      const trimmedSubSector = subSector.trim();
+      const resolvedSubSector = resolvedSector && trimmedSubSector ? trimmedSubSector : undefined;
+
       return {
         type: "STOCK",
         name: trimmedName,
@@ -201,6 +209,7 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
         avgPrice: avg ?? current,
         currentPrice: current,
         sector: resolvedSector,
+        subSector: resolvedSubSector,
       };
     }
 
@@ -498,21 +507,33 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
                 />
               </label>
             </div>
-            <label className={labelClass}>
-              <span className={labelTextClass}>{t("섹터 (선택)")}</span>
-              <select
-                value={sector}
-                onChange={(event) => setSector(event.target.value)}
-                className={`${inputClass} appearance-none`}
-              >
-                <option value="">{t("자동 조회 (티커 기준)")}</option>
-                {STOCK_SECTORS.map((s) => (
-                  <option key={s} value={s}>
-                    {t(s)}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className={labelClass}>
+                <span className={labelTextClass}>{t("섹터 (선택)")}</span>
+                <select
+                  value={sector}
+                  onChange={(event) => setSector(event.target.value)}
+                  className={`${inputClass} appearance-none`}
+                >
+                  <option value="">{t("자동 조회 (티커 기준)")}</option>
+                  {STOCK_SECTORS.map((s) => (
+                    <option key={s} value={s}>
+                      {t(s)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className={labelClass}>
+                <span className={labelTextClass}>{t("세부 섹터 (선택)")}</span>
+                <input
+                  type="text"
+                  value={subSector}
+                  onChange={(event) => setSubSector(event.target.value)}
+                  placeholder={t("예: 반도체, AI SW")}
+                  className={inputClass}
+                />
+              </label>
+            </div>
             <p className={hintTextClass}>
               {t(
                 "현재가는 입력하지 않습니다 — 저장 시 티커로 자동 조회해 선택한 통화로 저장합니다 (국내 6자리 코드·미국 티커 지원). 티커가 없거나 조회에 실패하면 평단가로 대신 계산합니다."

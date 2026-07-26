@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Pencil, X } from "lucide-react";
 import { StockAsset } from "@/lib/models/asset";
-import { getStockSector, sectorColor } from "@/lib/models/stock-sector";
+import { getStockSector, getStockSectorLabel, sectorColor } from "@/lib/models/stock-sector";
 import { hexWithAlpha } from "@/lib/models/asset-owner";
 import { formatMarketCap } from "@/lib/models/stock-valuation";
 import { ClosePoint } from "@/lib/models/stock-history";
@@ -182,7 +182,7 @@ export default function StockDetailModal({ asset, onClose }: { asset: StockAsset
                 className="rounded px-1.5 py-0.5 text-[11px] font-semibold"
                 style={{ color, backgroundColor: hexWithAlpha(color, 0.12) }}
               >
-                {t(sector)}
+                {getStockSectorLabel(asset, t)}
               </span>
               <span
                 className="rounded px-1.5 py-0.5 text-[11px] font-semibold"

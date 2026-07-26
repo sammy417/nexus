@@ -5,7 +5,7 @@ import { ChevronDown } from "lucide-react";
 import { formatPercent } from "@/lib/format";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useT } from "@/lib/i18n/locale-context";
-import { sectorColor } from "@/lib/models/stock-sector";
+import { getStockSectorLabel, sectorColor } from "@/lib/models/stock-sector";
 import { hexWithAlpha } from "@/lib/models/asset-owner";
 import { StockAsset } from "@/lib/models/asset";
 import type { Contribution } from "@/lib/services/stock-analysis-service";
@@ -75,7 +75,7 @@ export default function StockTable({
                     className="rounded px-1.5 py-0.5 text-[11px] font-semibold"
                     style={{ color, backgroundColor: hexWithAlpha(color, 0.12) }}
                   >
-                    {t(holding.sector)}
+                    {getStockSectorLabel(holding.asset, t)}
                   </span>
                 </td>
                 <td className="px-4 py-3.5 text-right text-gray-700 [font-variant-numeric:tabular-nums] dark:text-gray-300">

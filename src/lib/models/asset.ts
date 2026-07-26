@@ -72,6 +72,12 @@ export interface StockAsset extends BaseAsset {
    * the quote lookup. Optional, so pre-sector data needs no migration.
    */
   sector?: string;
+  /**
+   * Optional free-text sub-sector detail entered by the user (e.g. "반도체",
+   * "AI SW"). Shown appended to the base sector as "기술 (반도체)", but
+   * grouping/coloring in the analysis stays on the base `sector`.
+   */
+  subSector?: string;
 }
 
 export interface BondAsset extends BaseAsset {
