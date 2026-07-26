@@ -6,6 +6,7 @@ import type {
 } from "@/lib/services/dividend-forecast-service";
 import { DIVIDEND_TAX_RATE } from "@/lib/models/dividend";
 import { Skeleton } from "@/components/common/Skeleton";
+import AnimatedNumber from "@/components/common/AnimatedNumber";
 import { useDisplayCurrency } from "@/lib/currency-context";
 
 function formatPerShare(value: number, currency: string): string {
@@ -65,7 +66,7 @@ export default function DividendForecastCard({
         <>
           <div className="mt-4 flex items-baseline gap-3">
             <p className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-              {money(totalAnnualKrw)}
+              <AnimatedNumber value={totalAnnualKrw} format={money} />
             </p>
             {yieldPct !== null && (
               <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">

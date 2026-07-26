@@ -4,6 +4,7 @@ import { TrendingDown, TrendingUp } from "lucide-react";
 import { formatPercent } from "@/lib/format";
 import { PortfolioSummary } from "@/lib/services/portfolio-service";
 import { useDisplayCurrency } from "@/lib/currency-context";
+import AnimatedNumber from "@/components/common/AnimatedNumber";
 
 export default function AssetSummary({ summary }: { summary: PortfolioSummary }) {
   const { money, signedMoney } = useDisplayCurrency();
@@ -16,7 +17,7 @@ export default function AssetSummary({ summary }: { summary: PortfolioSummary })
       <div>
         <p className="text-sm font-medium text-gray-400 dark:text-gray-500">총 자산 평가 금액</p>
         <p className="mt-2 text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-          {money(totalValuation)}
+          <AnimatedNumber value={totalValuation} format={money} />
         </p>
       </div>
 
@@ -24,14 +25,14 @@ export default function AssetSummary({ summary }: { summary: PortfolioSummary })
         <div>
           <p className="text-xs font-medium text-gray-400 dark:text-gray-500">총 투자 원금</p>
           <p className="mt-1.5 truncate text-lg font-semibold text-gray-700 dark:text-gray-300">
-            {money(totalPrincipal)}
+            <AnimatedNumber value={totalPrincipal} format={money} />
           </p>
         </div>
         <div>
           <p className="text-xs font-medium text-gray-400 dark:text-gray-500">평가 손익</p>
           <div className={`mt-1.5 flex min-w-0 items-center gap-1.5 text-lg font-semibold ${toneClass}`}>
             {isProfit ? <TrendingUp size={16} className="shrink-0" /> : <TrendingDown size={16} className="shrink-0" />}
-            <span className="truncate">{signedMoney(totalProfit)}</span>
+            <AnimatedNumber className="truncate" value={totalProfit} format={signedMoney} />
             <span className="shrink-0 text-sm">({formatPercent(totalProfitRate)})</span>
           </div>
         </div>

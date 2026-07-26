@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Coins, Plus, Trash2 } from "lucide-react";
 import EmptyState from "@/components/common/EmptyState";
+import AnimatedNumber from "@/components/common/AnimatedNumber";
 import MonthlyDividendChart from "@/components/dividends/MonthlyDividendChart";
 import DividendFormDialog from "@/components/dividends/DividendFormDialog";
 import DividendForecastCard from "@/components/dividends/DividendForecastCard";
@@ -121,7 +122,7 @@ export default function DividendsPage() {
           <div key={tile.label} className="rounded-2xl bg-white p-5 shadow-sm dark:bg-card-dark">
             <p className="text-xs font-medium text-gray-400 dark:text-gray-500">{tile.label}</p>
             <p className="mt-1.5 truncate text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-              {money(tile.valueKrw)}
+              <AnimatedNumber value={tile.valueKrw} format={money} />
             </p>
           </div>
         ))}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Sidebar from "@/components/layout/Sidebar";
+import ContentTransition from "@/components/layout/ContentTransition";
 import AssetFormModal from "@/components/asset/AssetFormModal";
 import Toast from "@/components/common/Toast";
 import { AssetModalProvider } from "@/lib/asset-modal-context";
@@ -35,7 +36,9 @@ export default function RootLayout({
               <div className="flex min-h-dvh bg-surface text-gray-900 dark:bg-surface-dark dark:text-gray-100">
                 <Sidebar />
                 <main className="min-w-0 flex-1">
-                  <div className="mx-auto max-w-5xl px-8 py-10">{children}</div>
+                  <div className="mx-auto max-w-5xl px-8 py-10">
+                    <ContentTransition>{children}</ContentTransition>
+                  </div>
                 </main>
               </div>
               <AssetFormModal />

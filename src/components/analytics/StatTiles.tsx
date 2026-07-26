@@ -2,6 +2,7 @@
 
 import { formatPercent } from "@/lib/format";
 import { useDisplayCurrency } from "@/lib/currency-context";
+import AnimatedNumber from "@/components/common/AnimatedNumber";
 
 interface Tile {
   label: string;
@@ -28,11 +29,11 @@ export default function StatTiles({ tiles }: { tiles: Tile[] }) {
         <div key={tile.label} className="rounded-2xl bg-white p-5 shadow-sm dark:bg-card-dark">
           <p className="text-xs font-medium text-gray-400 dark:text-gray-500">{tile.label}</p>
           <p className={`mt-1.5 text-2xl font-bold tracking-tight ${rateClass(tile.rate, tile.tone)}`}>
-            {tile.rate === null ? "-" : formatPercent(tile.rate)}
+            {tile.rate === null ? "-" : <AnimatedNumber value={tile.rate} format={formatPercent} />}
           </p>
           {tile.amountKrw !== undefined && (
             <p className="mt-0.5 text-xs font-medium text-gray-400 dark:text-gray-500">
-              {signedMoney(tile.amountKrw)}
+              <AnimatedNumber value={tile.amountKrw} format={signedMoney} />
             </p>
           )}
         </div>
