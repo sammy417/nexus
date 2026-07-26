@@ -12,6 +12,7 @@ import EmptyState from "@/components/common/EmptyState";
 import { BarChart3, Plus } from "lucide-react";
 import { usePortfolio } from "@/lib/portfolio-context";
 import { useAssetModal } from "@/lib/asset-modal-context";
+import { useT } from "@/lib/i18n/locale-context";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useOwnerFilter } from "@/lib/owner-filter-context";
 import { getPortfolioSummary } from "@/lib/services/portfolio-service";
@@ -30,6 +31,7 @@ export default function AnalyticsPage() {
   const { ownerFilter } = useOwnerFilter();
   const { ownerName, ownerColor } = useSettings();
   const { openAddModal } = useAssetModal();
+  const t = useT();
 
   if (isLoading) {
     return <AnalyticsSkeleton />;
@@ -39,13 +41,15 @@ export default function AnalyticsPage() {
   if (allAssets.length === 0) {
     return (
       <div className="flex flex-col gap-6">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">분석</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t("분석")}</h1>
         <EmptyState
           icon={BarChart3}
-          title="분석할 자산이 아직 없어요"
-          description="자산을 추가하면 기간 수익률·최대 낙폭·카테고리별 손익과 성장 추이를 자동으로 계산해 보여드려요."
+          title={t("분석할 자산이 아직 없어요")}
+          description={t(
+            "자산을 추가하면 기간 수익률·최대 낙폭·카테고리별 손익과 성장 추이를 자동으로 계산해 보여드려요."
+          )}
           action={{
-            label: "첫 자산 추가하기",
+            label: t("첫 자산 추가하기"),
             onClick: openAddModal,
             icon: <Plus size={16} strokeWidth={2.5} />,
           }}
@@ -63,13 +67,13 @@ export default function AnalyticsPage() {
 
   const monthlyReturns = getMonthlyReturns(series);
   const categoryProfits = getCategoryProfits(assets, usdKrw);
-  const scopeLabel = ownerFilter === "ALL" ? "전체" : ownerName(ownerFilter);
+  const scopeLabel = ownerFilter === "ALL" ? t("전체") : ownerName(ownerFilter);
   const approximated = usesFallback(snapshots, ownerFilter);
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">분석</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t("분석")}</h1>
         <div className="flex items-center gap-3">
           <OwnerFilterToggle />
           <CurrencyToggle />
@@ -81,22 +85,21 @@ export default function AnalyticsPage() {
           <span className="font-semibold" style={{ color: ownerColor(ownerFilter) }}>
             {scopeLabel}
           </span>{" "}
-          기준으로 집계했습니다.
-          {approximated &&
-            " 소유자별 기록이 없는 과거 구간은 현재 비중으로 추정한 값입니다."}
+          {t("기준으로 집계했습니다.")}
+          {approximated && t(" 소유자별 기록이 없는 과거 구간은 현재 비중으로 추정한 값입니다.")}
         </p>
       )}
 
       <StatTiles
         tiles={[
           {
-            label: `${scopeLabel} 수익률 (원금 대비)`,
+            label: t("{scope} 수익률 (원금 대비)", { scope: scopeLabel }),
             rate: summary.totalPrincipal === 0 ? null : summary.totalProfitRate,
             amountKrw: summary.totalProfit,
           },
-          { label: "최근 1개월", rate: getWindowReturn(series, 30) },
-          { label: "최근 3개월", rate: getWindowReturn(series, 90) },
-          { label: "최대 낙폭 (전체 기간)", rate: getMaxDrawdown(series) },
+          { label: t("최근 1개월"), rate: getWindowReturn(series, 30) },
+          { label: t("최근 3개월"), rate: getWindowReturn(series, 90) },
+          { label: t("최대 낙폭 (전체 기간)"), rate: getMaxDrawdown(series) },
         ]}
       />
 

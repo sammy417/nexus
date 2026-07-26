@@ -1,3 +1,7 @@
+"use client";
+
+import { useT } from "@/lib/i18n/locale-context";
+
 /**
  * Loading placeholders. `Skeleton` is a single pulsing block; `SkeletonCard`
  * reuses the app's real card shell so the page keeps its shape (no layout
@@ -23,9 +27,10 @@ export function SkeletonCard({
 
 /** Title + right-aligned control pills, matching each page's header row. */
 export function SkeletonPageHeader({ title }: { title: string }) {
+  const t = useT();
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{title}</h1>
+      <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t(title)}</h1>
       <div className="flex items-center gap-3">
         <Skeleton className="h-8 w-20 rounded-lg" />
         <Skeleton className="h-8 w-24 rounded-lg" />

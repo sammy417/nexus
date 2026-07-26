@@ -4,6 +4,7 @@ import { CategoryProfit } from "@/lib/services/analytics-service";
 import { formatPercent } from "@/lib/format";
 import { PORTFOLIO_CATEGORY_LABEL } from "@/lib/models/portfolio-category";
 import { useDisplayCurrency } from "@/lib/currency-context";
+import { useT } from "@/lib/i18n/locale-context";
 
 /**
  * Current P&L per category as diverging horizontal bars from a shared
@@ -12,14 +13,15 @@ import { useDisplayCurrency } from "@/lib/currency-context";
  */
 export default function CategoryProfitChart({ profits }: { profits: CategoryProfit[] }) {
   const { signedMoney } = useDisplayCurrency();
+  const t = useT();
 
   const maxAbs = Math.max(...profits.map((entry) => Math.abs(entry.profit)), 1);
 
   return (
     <section className="rounded-2xl bg-white p-6 shadow-sm dark:bg-card-dark">
-      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">카테고리별 평가 손익</p>
+      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("카테고리별 평가 손익")}</p>
       <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
-        현재 보유 자산의 원금 대비 손익 (실현 손익 미포함)
+        {t("현재 보유 자산의 원금 대비 손익 (실현 손익 미포함)")}
       </p>
 
       <ul className="mt-4 flex flex-col gap-3">
@@ -30,7 +32,7 @@ export default function CategoryProfitChart({ profits }: { profits: CategoryProf
           return (
             <li key={entry.category} className="grid grid-cols-[4.5rem_1fr] items-center gap-3">
               <span className="truncate text-xs font-medium text-gray-700 dark:text-gray-300">
-                {PORTFOLIO_CATEGORY_LABEL[entry.category]}
+                {t(PORTFOLIO_CATEGORY_LABEL[entry.category])}
               </span>
               <div className="flex items-center gap-2">
                 <div className="relative h-3 flex-1">

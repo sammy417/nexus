@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { MonthlyReturn } from "@/lib/services/analytics-service";
 import { formatPercent } from "@/lib/format";
+import { useT } from "@/lib/i18n/locale-context";
 
 const HEIGHT = 200;
 const MARGIN = { top: 16, right: 8, bottom: 24, left: 44 };
@@ -24,6 +25,7 @@ function percentTicks(min: number, max: number): number[] {
 
 /** Monthly valuation change columns; sign carries the rise/fall polarity color. */
 export default function MonthlyReturnsChart({ returns }: { returns: MonthlyReturn[] }) {
+  const t = useT();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [width, setWidth] = useState(0);
   const [hovered, setHovered] = useState<number | null>(null);
@@ -130,14 +132,14 @@ export default function MonthlyReturnsChart({ returns }: { returns: MonthlyRetur
 
   return (
     <section className="rounded-2xl bg-white p-6 shadow-sm dark:bg-card-dark">
-      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">월별 수익률</p>
+      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("월별 수익률")}</p>
       <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
-        각 월 말 평가 금액의 전월 대비 변화율
+        {t("각 월 말 평가 금액의 전월 대비 변화율")}
       </p>
       <div ref={containerRef} className="relative mt-3">
         {!hasData ? (
           <p className="py-14 text-center text-sm text-gray-400 dark:text-gray-500">
-            비교할 월별 데이터가 아직 부족합니다.
+            {t("비교할 월별 데이터가 아직 부족합니다.")}
           </p>
         ) : (
           <>

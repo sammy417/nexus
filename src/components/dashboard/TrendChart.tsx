@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { HistoryPoint } from "@/lib/services/owner-history";
 import { formatPercent } from "@/lib/format";
 import { useDisplayCurrency } from "@/lib/currency-context";
+import { useT } from "@/lib/i18n/locale-context";
 
 const DEFAULT_COLOR = "#3182F6";
 const MARGIN = { top: 12, right: 12, bottom: 28, left: 56 };
@@ -51,6 +52,7 @@ export default function TrendChart({
   color?: string;
 }) {
   const { money, signedMoney, compactMoney } = useDisplayCurrency();
+  const t = useT();
   const [range, setRange] = useState<RangeKey>("1M");
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -154,7 +156,7 @@ export default function TrendChart({
     <section className="rounded-2xl bg-white p-6 shadow-sm dark:bg-card-dark">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">총 자산 추이</p>
+          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("총 자산 추이")}</p>
           {rangeSummary && (
             <p
               className={`mt-1 text-xs font-medium ${
@@ -163,7 +165,7 @@ export default function TrendChart({
             >
               {signedMoney(rangeSummary.diff)} ({formatPercent(rangeSummary.rate)})
               <span className="ml-1 text-gray-400 dark:text-gray-500">
-                · {RANGES.find((r) => r.key === range)!.label}
+                · {t(RANGES.find((r) => r.key === range)!.label)}
               </span>
             </p>
           )}
@@ -183,7 +185,7 @@ export default function TrendChart({
                   : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
               }`}
             >
-              {label}
+              {t(label)}
             </button>
           ))}
         </div>
@@ -192,7 +194,7 @@ export default function TrendChart({
       <div ref={containerRef} className="relative mt-4">
         {!geometry ? (
           <p className="py-16 text-center text-sm text-gray-400 dark:text-gray-500">
-            추이를 표시할 데이터가 아직 부족합니다.
+            {t("추이를 표시할 데이터가 아직 부족합니다.")}
           </p>
         ) : (
           <>
@@ -299,7 +301,7 @@ export default function TrendChart({
                       hoveredDelta >= 0 ? "text-rise" : "text-fall"
                     }`}
                   >
-                    전일 대비 {signedMoney(hoveredDelta)}
+                    {t("전일 대비 {value}", { value: signedMoney(hoveredDelta) })}
                   </p>
                 )}
               </div>
@@ -311,15 +313,15 @@ export default function TrendChart({
       {points.length >= 2 && (
         <details className="mt-3">
           <summary className="cursor-pointer text-xs font-medium text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
-            표로 보기
+            {t("표로 보기")}
           </summary>
           <div className="mt-2 max-h-56 overflow-y-auto rounded-xl border border-border dark:border-border-dark">
             <table className="w-full text-xs [font-variant-numeric:tabular-nums]">
               <thead className="sticky top-0 bg-gray-50 dark:bg-[#1E242C]">
                 <tr className="text-left text-gray-400 dark:text-gray-500">
-                  <th className="px-3 py-2 font-medium">날짜</th>
-                  <th className="px-3 py-2 text-right font-medium">평가 금액</th>
-                  <th className="px-3 py-2 text-right font-medium">투자 원금</th>
+                  <th className="px-3 py-2 font-medium">{t("날짜")}</th>
+                  <th className="px-3 py-2 text-right font-medium">{t("평가 금액")}</th>
+                  <th className="px-3 py-2 text-right font-medium">{t("투자 원금")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-white/5">

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useDisplayCurrency } from "@/lib/currency-context";
+import { useT } from "@/lib/i18n/locale-context";
 
 export interface DonutEntry {
   id: string;
@@ -47,6 +48,7 @@ export default function DonutBreakdownCard({
   centerTitle?: string;
 }) {
   const { money } = useDisplayCurrency();
+  const t = useT();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   if (entries.length === 0) return null;
@@ -102,7 +104,7 @@ export default function DonutBreakdownCard({
         </svg>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
           <p className="text-[11px] text-gray-400 dark:text-gray-500">
-            {hovered ? hovered.label : centerTitle}
+            {hovered ? hovered.label : t(centerTitle)}
           </p>
           <p className="mt-0.5 max-w-[7.5rem] truncate text-sm font-bold text-gray-900 dark:text-gray-100">
             {money(hovered ? hovered.valuation : total)}

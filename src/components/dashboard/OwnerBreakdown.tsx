@@ -3,6 +3,7 @@
 import DonutBreakdownCard from "@/components/common/DonutBreakdownCard";
 import { OwnerAllocationEntry } from "@/lib/services/portfolio-service";
 import { useSettings } from "@/lib/settings-context";
+import { useT } from "@/lib/i18n/locale-context";
 
 export default function OwnerBreakdown({
   allocation,
@@ -10,11 +11,12 @@ export default function OwnerBreakdown({
   allocation: OwnerAllocationEntry[];
 }) {
   const { ownerName, ownerColor } = useSettings();
+  const t = useT();
 
   return (
     <DonutBreakdownCard
-      title="소유자별 구성"
-      subtitle="전체(합산) 자산 기준"
+      title={t("소유자별 구성")}
+      subtitle={t("전체(합산) 자산 기준")}
       ariaLabel="소유자별 자산 구성 비중 도넛 차트"
       entries={allocation.map((entry) => ({
         id: entry.owner,

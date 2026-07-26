@@ -7,6 +7,7 @@ import { DividendInput, DividendRecord } from "@/lib/models/dividend";
 import { hexWithAlpha } from "@/lib/models/asset-owner";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useSettings } from "@/lib/settings-context";
+import { useT } from "@/lib/i18n/locale-context";
 
 /**
  * Past ex-dividends from external data that aren't in the user's records
@@ -24,6 +25,7 @@ export default function DividendSuggestions({
 }) {
   const { money } = useDisplayCurrency();
   const { ownerName, ownerColor } = useSettings();
+  const t = useT();
   const [addingKey, setAddingKey] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
@@ -51,7 +53,7 @@ export default function DividendSuggestions({
         currency: suggestion.currency === "USD" ? "USD" : "KRW",
         owner: suggestion.owner,
         date: suggestion.date,
-        memo: "배당 이력에서 추가",
+        memo: t("배당 이력에서 추가"),
       });
       setDismissed((prev) => new Set(prev).add(key));
     } finally {
@@ -61,10 +63,11 @@ export default function DividendSuggestions({
 
   return (
     <section className="rounded-2xl border border-dashed border-border bg-white p-6 shadow-sm dark:border-border-dark dark:bg-card-dark">
-      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">받은 배당 기록 제안</p>
+      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("받은 배당 기록 제안")}</p>
       <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
-        외부 배당 이력에서 아직 기록하지 않은 지급 건입니다 (현재 보유 수량·세전 기준 추정) — 실제
-        수령한 건만 추가하세요.
+        {t(
+          "외부 배당 이력에서 아직 기록하지 않은 지급 건입니다 (현재 보유 수량·세전 기준 추정) — 실제 수령한 건만 추가하세요."
+        )}
       </p>
 
       <ul className="mt-4 flex flex-col divide-y divide-gray-50 dark:divide-white/5">
@@ -98,7 +101,7 @@ export default function DividendSuggestions({
                   className="flex items-center gap-1 rounded-lg bg-gray-900 px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-gray-800 disabled:opacity-60 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
                 >
                   <Plus size={13} strokeWidth={2.5} />
-                  기록
+                  {t("기록")}
                 </button>
               </div>
             </li>

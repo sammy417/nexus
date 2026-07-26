@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { MonthlyDividend } from "@/lib/services/dividend-service";
 import { useDisplayCurrency } from "@/lib/currency-context";
+import { useT } from "@/lib/i18n/locale-context";
 
 const BAR_COLOR = "#1baf7a";
 const HEIGHT = 200;
@@ -23,6 +24,7 @@ function niceTicks(max: number): number[] {
 /** Trailing 12 months of payouts as single-hue columns. */
 export default function MonthlyDividendChart({ months }: { months: MonthlyDividend[] }) {
   const { money, compactMoney } = useDisplayCurrency();
+  const t = useT();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [width, setWidth] = useState(0);
   const [hovered, setHovered] = useState<number | null>(null);
@@ -122,12 +124,12 @@ export default function MonthlyDividendChart({ months }: { months: MonthlyDivide
 
   return (
     <section className="rounded-2xl bg-white p-6 shadow-sm dark:bg-card-dark">
-      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">월별 배당</p>
-      <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">최근 12개월 수령액 합계</p>
+      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("월별 배당")}</p>
+      <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">{t("최근 12개월 수령액 합계")}</p>
       <div ref={containerRef} className="relative mt-3">
         {!hasData ? (
           <p className="py-14 text-center text-sm text-gray-400 dark:text-gray-500">
-            아직 기록된 배당이 없습니다.
+            {t("아직 기록된 배당이 없습니다.")}
           </p>
         ) : (
           <>

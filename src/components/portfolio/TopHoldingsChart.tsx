@@ -3,6 +3,7 @@
 import { getAssetMetrics } from "@/lib/services/portfolio-service";
 import { Asset } from "@/lib/models/asset";
 import { useDisplayCurrency } from "@/lib/currency-context";
+import { useT } from "@/lib/i18n/locale-context";
 
 /**
  * Top 5 holdings within one category as a horizontal bar list. Single
@@ -18,6 +19,7 @@ export default function TopHoldingsChart({
   color: string;
 }) {
   const { usdKrw, money } = useDisplayCurrency();
+  const t = useT();
 
   const withMetrics = assets.map((asset) => ({
     asset,
@@ -32,7 +34,7 @@ export default function TopHoldingsChart({
   return (
     <div className="rounded-2xl bg-white px-5 py-4 shadow-sm dark:bg-card-dark">
       <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-        비중 Top {top.length}
+        {t("비중 Top {n}", { n: top.length })}
       </p>
       <ul className="mt-3 flex flex-col gap-2.5">
         {top.map(({ asset, valuation }) => {

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { HistoryPoint } from "@/lib/services/owner-history";
 import { useDisplayCurrency } from "@/lib/currency-context";
+import { useT } from "@/lib/i18n/locale-context";
 
 const DEFAULT_VALUATION_COLOR = "#3182F6";
 const PRINCIPAL_COLOR = "#8b95a1";
@@ -36,6 +37,7 @@ export default function GrowthChart({
   color?: string;
 }) {
   const { money, compactMoney } = useDisplayCurrency();
+  const t = useT();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [width, setWidth] = useState(0);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
@@ -104,19 +106,19 @@ export default function GrowthChart({
     <section className="rounded-2xl bg-white p-6 shadow-sm dark:bg-card-dark">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">원금 대비 성장</p>
+          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("원금 대비 성장")}</p>
           <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
-            전체 기간의 평가 금액과 투자 원금 추이
+            {t("전체 기간의 평가 금액과 투자 원금 추이")}
           </p>
         </div>
         <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
           <span className="flex items-center gap-1.5">
             <span className="h-0.5 w-4 rounded-full" style={{ backgroundColor: color }} />
-            평가 금액
+            {t("평가 금액")}
           </span>
           <span className="flex items-center gap-1.5">
             <span className="h-0.5 w-4 rounded-full" style={{ backgroundColor: PRINCIPAL_COLOR }} />
-            투자 원금
+            {t("투자 원금")}
           </span>
         </div>
       </div>
@@ -124,7 +126,7 @@ export default function GrowthChart({
       <div ref={containerRef} className="relative mt-4">
         {!geometry ? (
           <p className="py-16 text-center text-sm text-gray-400 dark:text-gray-500">
-            추이를 표시할 데이터가 아직 부족합니다.
+            {t("추이를 표시할 데이터가 아직 부족합니다.")}
           </p>
         ) : (
           <>

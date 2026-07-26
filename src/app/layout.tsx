@@ -9,6 +9,7 @@ import { CurrencyProvider } from "@/lib/currency-context";
 import { OwnerFilterProvider } from "@/lib/owner-filter-context";
 import { SettingsProvider } from "@/lib/settings-context";
 import { PortfolioProvider } from "@/lib/portfolio-context";
+import { LocaleProvider } from "@/lib/i18n/locale-context";
 import { THEME_INIT_SCRIPT, ThemeProvider } from "@/lib/theme-provider";
 
 export const metadata: Metadata = {
@@ -28,6 +29,7 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased">
         <ThemeProvider>
+          <LocaleProvider>
           <SettingsProvider>
           <CurrencyProvider>
             <OwnerFilterProvider>
@@ -48,6 +50,7 @@ export default function RootLayout({
             </OwnerFilterProvider>
           </CurrencyProvider>
           </SettingsProvider>
+          </LocaleProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -7,6 +7,7 @@ import { ASSET_OWNERS } from "@/lib/models/asset-owner";
 import { DividendInput } from "@/lib/models/dividend";
 import { usePortfolio } from "@/lib/portfolio-context";
 import { useSettings } from "@/lib/settings-context";
+import { useT } from "@/lib/i18n/locale-context";
 import MoneyInput from "@/components/common/MoneyInput";
 
 const inputClass =
@@ -23,6 +24,7 @@ export default function DividendFormDialog({
 }) {
   const { assets } = usePortfolio();
   const { ownerName, ownerColor } = useSettings();
+  const t = useT();
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState<Currency>("KRW");
@@ -47,15 +49,15 @@ export default function DividendFormDialog({
     const trimmedName = name.trim();
     const value = Number(amount);
     if (!trimmedName) {
-      setError("종목/이름을 입력해 주세요.");
+      setError(t("종목/이름을 입력해 주세요."));
       return;
     }
     if (!Number.isFinite(value) || value <= 0) {
-      setError("금액을 올바르게 입력해 주세요.");
+      setError(t("금액을 올바르게 입력해 주세요."));
       return;
     }
     if (!date) {
-      setError("지급일을 선택해 주세요.");
+      setError(t("지급일을 선택해 주세요."));
       return;
     }
 
@@ -72,7 +74,7 @@ export default function DividendFormDialog({
       onClose();
     } catch (err) {
       const detail = err instanceof Error && err.message ? ` (${err.message})` : "";
-      setError(`저장에 실패했습니다. 잠시 후 다시 시도해 주세요.${detail}`);
+      setError(t("저장에 실패했습니다. 잠시 후 다시 시도해 주세요.") + detail);
     } finally {
       setIsSubmitting(false);
     }
@@ -80,13 +82,13 @@ export default function DividendFormDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-      <button type="button" aria-label="닫기" onClick={onClose} className="absolute inset-0 bg-black/40" />
+      <button type="button" aria-label={t("닫기")} onClick={onClose} className="absolute inset-0 bg-black/40" />
       <div className="relative w-full max-w-md rounded-2xl bg-white px-6 pb-6 pt-5 shadow-xl dark:bg-card-dark">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">배당 기록 추가</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t("배당 기록 추가")}</h2>
           <button
             type="button"
-            aria-label="닫기"
+            aria-label={t("닫기")}
             onClick={onClose}
             className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10"
           >
@@ -96,12 +98,12 @@ export default function DividendFormDialog({
 
         <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-4">
           <label className={labelClass}>
-            <span className={labelTextClass}>종목/이름</span>
+            <span className={labelTextClass}>{t("종목/이름")}</span>
             <input
               type="text"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="예: 삼성전자"
+              placeholder={t("예: 삼성전자")}
               list="dividend-name-suggestions"
               required
               className={inputClass}
@@ -115,7 +117,7 @@ export default function DividendFormDialog({
 
           <div className="grid grid-cols-[1fr_auto] items-end gap-3">
             <label className={labelClass}>
-              <span className={labelTextClass}>금액 (세후)</span>
+              <span className={labelTextClass}>{t("금액 (세후)")}</span>
               <MoneyInput
                 value={amount}
                 onChange={setAmount}
@@ -144,7 +146,7 @@ export default function DividendFormDialog({
           </div>
 
           <div className="flex items-center justify-between">
-            <span className={labelTextClass}>소유자</span>
+            <span className={labelTextClass}>{t("소유자")}</span>
             <div className="flex gap-1 rounded-lg bg-gray-50 p-0.5 dark:bg-white/5">
               {ASSET_OWNERS.map((o) => (
                 <button
@@ -170,7 +172,7 @@ export default function DividendFormDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <label className={labelClass}>
-              <span className={labelTextClass}>지급일</span>
+              <span className={labelTextClass}>{t("지급일")}</span>
               <input
                 type="date"
                 value={date}
@@ -180,12 +182,12 @@ export default function DividendFormDialog({
               />
             </label>
             <label className={labelClass}>
-              <span className={labelTextClass}>메모 (선택)</span>
+              <span className={labelTextClass}>{t("메모 (선택)")}</span>
               <input
                 type="text"
                 value={memo}
                 onChange={(event) => setMemo(event.target.value)}
-                placeholder="예: 분기 배당"
+                placeholder={t("예: 분기 배당")}
                 className={inputClass}
               />
             </label>
@@ -198,7 +200,7 @@ export default function DividendFormDialog({
             disabled={isSubmitting}
             className="rounded-xl bg-gray-900 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800 disabled:opacity-60 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
           >
-            추가하기
+            {t("추가하기")}
           </button>
         </form>
       </div>

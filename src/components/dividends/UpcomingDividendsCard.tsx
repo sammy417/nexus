@@ -5,20 +5,17 @@ import { CalendarClock, ChevronDown } from "lucide-react";
 import type { DividendForecast } from "@/lib/services/dividend-forecast-service";
 import { Skeleton } from "@/components/common/Skeleton";
 import { useDisplayCurrency } from "@/lib/currency-context";
+import { useT } from "@/lib/i18n/locale-context";
 
 /** Rows shown before the "더보기" toggle. */
 const DEFAULT_VISIBLE = 5;
 
-function frequencyLabel(perYear: number): string {
+/** Korean source label for the payout cadence (translated at render). */
+function frequencyKey(perYear: number): string {
   if (perYear >= 10) return "월배당";
   if (perYear >= 4) return "분기";
   if (perYear >= 2) return "반기";
   return "연간";
-}
-
-function formatEstimateDate(date: string): string {
-  const [, month, day] = date.split("-");
-  return `~${Number(month)}월 ${Number(day)}일`;
 }
 
 function daysUntil(date: string): number {
@@ -34,6 +31,7 @@ export default function UpcomingDividendsCard({
   isLoading: boolean;
 }) {
   const { money } = useDisplayCurrency();
+  const t = useT();
   const [expanded, setExpanded] = useState(false);
 
   const upcoming = (forecast?.holdings ?? [])
@@ -45,9 +43,9 @@ export default function UpcomingDividendsCard({
 
   return (
     <section className="rounded-2xl bg-white p-6 shadow-sm dark:bg-card-dark">
-      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">다가오는 배당</p>
+      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("다가오는 배당")}</p>
       <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
-        과거 지급 주기 기반 추정 — 확정 공시가 아닙니다
+        {t("과거 지급 주기 기반 추정 — 확정 공시가 아닙니다")}
       </p>
 
       {isLoading ? (
@@ -65,7 +63,7 @@ export default function UpcomingDividendsCard({
         </div>
       ) : upcoming.length === 0 ? (
         <p className="py-12 text-center text-sm text-gray-400 dark:text-gray-500">
-          추정할 배당 일정이 없습니다.
+          {t("추정할 배당 일정이 없습니다.")}
         </p>
       ) : (
         <ul className="mt-4 flex flex-col divide-y divide-gray-50 dark:divide-white/5">
@@ -82,8 +80,11 @@ export default function UpcomingDividendsCard({
                       {holding.name}
                     </p>
                     <p className="text-[11px] text-gray-400 dark:text-gray-500">
-                      {frequencyLabel(holding.frequencyPerYear)} ·{" "}
-                      {formatEstimateDate(holding.nextExDateEstimate!)} 예상
+                      {t(frequencyKey(holding.frequencyPerYear))} ·{" "}
+                      {t("~{month}월 {day}일 예상", {
+                        month: Number(holding.nextExDateEstimate!.split("-")[1]),
+                        day: Number(holding.nextExDateEstimate!.split("-")[2]),
+                      })}
                       {days > 0 && ` (D-${days})`}
                     </p>
                   </div>
@@ -101,7 +102,7 @@ export default function UpcomingDividendsCard({
                 onClick={() => setExpanded((prev) => !prev)}
                 className="flex w-full items-center justify-center gap-1 rounded-lg py-2.5 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200"
               >
-                {expanded ? "접기" : `더보기 (${hiddenCount}개 더)`}
+                {expanded ? t("접기") : t("더보기 ({count}개 더)", { count: hiddenCount })}
                 <ChevronDown
                   size={14}
                   className={`transition-transform ${expanded ? "rotate-180" : ""}`}

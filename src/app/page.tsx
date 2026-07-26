@@ -14,6 +14,7 @@ import { usePortfolio } from "@/lib/portfolio-context";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useOwnerFilter } from "@/lib/owner-filter-context";
 import { useSettings } from "@/lib/settings-context";
+import { useT } from "@/lib/i18n/locale-context";
 import {
   getAllocationByCategory,
   getAllocationByOwner,
@@ -26,6 +27,7 @@ export default function DashboardPage() {
   const { usdKrw } = useDisplayCurrency();
   const { ownerFilter } = useOwnerFilter();
   const { ownerColor } = useSettings();
+  const t = useT();
   const allocation = getAllocationByCategory(assets, usdKrw);
   // Household split stays ALL-based on purpose — it answers "whose share
   // of the whole", which a filtered view can't.
@@ -53,7 +55,7 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">대시보드</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t("대시보드")}</h1>
         <div className="flex items-center gap-3">
           <RefreshPricesButton />
           <OwnerFilterToggle />

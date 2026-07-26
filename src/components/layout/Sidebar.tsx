@@ -8,6 +8,7 @@ import {
   Eye,
   EyeOff,
   LayoutGrid,
+  Languages,
   Moon,
   Plus,
   RotateCcw,
@@ -18,6 +19,7 @@ import {
 import { useAssetModal } from "@/lib/asset-modal-context";
 import { usePortfolio } from "@/lib/portfolio-context";
 import { useDisplayCurrency } from "@/lib/currency-context";
+import { useLocale } from "@/lib/i18n/locale-context";
 import { useTheme } from "@/lib/theme-provider";
 
 const navItems = [
@@ -33,15 +35,14 @@ export default function Sidebar() {
   const { openAddModal, showToast } = useAssetModal();
   const { resetPortfolio } = usePortfolio();
   const { isAmountHidden, toggleAmountHidden } = useDisplayCurrency();
+  const { locale, toggleLocale, t } = useLocale();
   const { theme, toggleTheme } = useTheme();
 
   const handleReset = () => {
-    const confirmed = window.confirm(
-      "테스트를 위해 자산 현황을 초기 더미 데이터로 되돌릴까요?"
-    );
+    const confirmed = window.confirm(t("테스트를 위해 자산 현황을 초기 더미 데이터로 되돌릴까요?"));
     if (!confirmed) return;
     resetPortfolio();
-    showToast("초기 데이터로 재설정되었습니다.");
+    showToast(t("초기 데이터로 재설정되었습니다."));
   };
 
   return (
@@ -64,7 +65,7 @@ export default function Sidebar() {
               }`}
             >
               <Icon size={18} strokeWidth={2} />
-              {label}
+              {t(label)}
             </Link>
           );
         })}
@@ -76,15 +77,15 @@ export default function Sidebar() {
         className="mt-6 flex items-center justify-center gap-1.5 rounded-xl bg-gray-900 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
       >
         <Plus size={16} strokeWidth={2.5} />
-        자산 추가
+        {t("자산 추가")}
       </button>
 
       <div className="mt-auto flex items-center gap-1 px-1">
         <button
           type="button"
-          aria-label={isAmountHidden ? "금액 표시" : "금액 숨기기"}
+          aria-label={isAmountHidden ? t("금액 표시") : t("금액 숨기기")}
           aria-pressed={isAmountHidden}
-          title={isAmountHidden ? "금액 표시" : "금액 숨기기"}
+          title={isAmountHidden ? t("금액 표시") : t("금액 숨기기")}
           onClick={toggleAmountHidden}
           className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100 dark:hover:bg-white/10 ${
             isAmountHidden
@@ -96,7 +97,7 @@ export default function Sidebar() {
         </button>
         <button
           type="button"
-          aria-label={theme === "dark" ? "라이트 모드로 전환" : "다크 모드로 전환"}
+          aria-label={theme === "dark" ? t("라이트 모드로 전환") : t("다크 모드로 전환")}
           onClick={toggleTheme}
           className="flex h-9 w-9 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/10"
         >
@@ -104,7 +105,17 @@ export default function Sidebar() {
         </button>
         <button
           type="button"
-          aria-label="초기 데이터로 재설정 (테스트용)"
+          aria-label={t("언어 전환")}
+          title={locale === "ko" ? "English" : "한국어"}
+          onClick={toggleLocale}
+          className="flex h-9 items-center justify-center gap-1 rounded-full px-2 text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/10"
+        >
+          <Languages size={17} strokeWidth={2} />
+          <span className="text-[11px] font-semibold uppercase">{locale}</span>
+        </button>
+        <button
+          type="button"
+          aria-label={t("초기 데이터로 재설정 (테스트용)")}
           onClick={handleReset}
           className="flex h-9 w-9 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/10"
         >

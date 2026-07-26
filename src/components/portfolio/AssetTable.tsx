@@ -11,6 +11,7 @@ import { getAssetCategoryLabel } from "@/lib/models/portfolio-category";
 import { getAssetOwner, hexWithAlpha } from "@/lib/models/asset-owner";
 import { DisplayHolding } from "@/lib/services/merge-holdings";
 import { useSettings } from "@/lib/settings-context";
+import { useT, TFn } from "@/lib/i18n/locale-context";
 import { Asset } from "@/lib/models/asset";
 
 const headerCellClass =
@@ -40,17 +41,18 @@ function SortableHeader({
   align?: "left" | "right";
 }) {
   const active = sort?.key === sortKey;
+  const t = useT();
   return (
     <th className={`${headerCellClass} ${align === "right" ? "text-right" : ""}`}>
       <button
         type="button"
         onClick={() => onToggle(sortKey)}
-        aria-label={`${label} 기준 정렬`}
+        aria-label={t("{label} 기준 정렬", { label: t(label) })}
         className={`group/sort inline-flex items-center gap-0.5 transition-colors hover:text-gray-600 dark:hover:text-gray-300 ${
           active ? "text-gray-700 dark:text-gray-200" : ""
         }`}
       >
-        {label}
+        {t(label)}
         {active ? (
           sort!.direction === "desc" ? (
             <ArrowDown size={12} />
@@ -65,15 +67,15 @@ function SortableHeader({
   );
 }
 
-function subLine(asset: Asset): string | null {
+function subLine(asset: Asset, t: TFn): string | null {
   if (asset.type === "STOCK") {
     const parts = [asset.market, asset.ticker].filter(Boolean);
     return parts.length > 0 ? parts.join(" · ") : null;
   }
   if (asset.type === "BOND") {
     const parts = [
-      asset.couponRate !== undefined ? `표면 ${asset.couponRate}%` : null,
-      asset.maturityDate ? `만기 ${asset.maturityDate}` : null,
+      asset.couponRate !== undefined ? t("표면 {rate}%", { rate: asset.couponRate }) : null,
+      asset.maturityDate ? t("만기 {date}", { date: asset.maturityDate }) : null,
     ].filter(Boolean);
     return parts.length > 0 ? parts.join(" · ") : null;
   }
@@ -88,17 +90,18 @@ export default function AssetTable({ holdings }: { holdings: DisplayHolding[] })
   const { deleteAsset } = usePortfolio();
   const { usdKrw, money, signedMoney } = useDisplayCurrency();
   const { ownerName, ownerColor } = useSettings();
+  const t = useT();
   const [sort, setSort] = useState<SortState | null>(null);
   const [expanded, setExpanded] = useState(false);
 
   async function handleDelete(asset: Asset) {
-    const confirmed = window.confirm(`${asset.name} 자산을 삭제할까요?`);
+    const confirmed = window.confirm(t("{name} 자산을 삭제할까요?", { name: asset.name }));
     if (!confirmed) return;
     try {
       await deleteAsset(asset.id);
-      showToast(`${asset.name} 자산이 삭제되었습니다.`);
+      showToast(t("{name} 자산이 삭제되었습니다.", { name: asset.name }));
     } catch {
-      showToast("삭제에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+      showToast(t("삭제에 실패했습니다. 잠시 후 다시 시도해 주세요."));
     }
   }
 
@@ -151,14 +154,14 @@ export default function AssetTable({ holdings }: { holdings: DisplayHolding[] })
         <thead>
           <tr className="border-b border-border text-left dark:border-border-dark">
             <SortableHeader label="자산" sortKey="name" align="left" sort={sort} onToggle={toggleSort} />
-            <th className={headerCellClass}>종류</th>
-            <th className={`${headerCellClass} text-right`}>보유 수량</th>
+            <th className={headerCellClass}>{t("종류")}</th>
+            <th className={`${headerCellClass} text-right`}>{t("보유 수량")}</th>
             <SortableHeader label="투자 원금" sortKey="principal" sort={sort} onToggle={toggleSort} />
             <SortableHeader label="평가 금액" sortKey="valuation" sort={sort} onToggle={toggleSort} />
             <SortableHeader label="비중" sortKey="weight" sort={sort} onToggle={toggleSort} />
             <SortableHeader label="평가 손익" sortKey="profit" sort={sort} onToggle={toggleSort} />
             <th className={headerCellClass}>
-              <span className="sr-only">수정/삭제</span>
+              <span className="sr-only">{t("수정/삭제")}</span>
             </th>
           </tr>
         </thead>
@@ -166,7 +169,7 @@ export default function AssetTable({ holdings }: { holdings: DisplayHolding[] })
           {visibleHoldings.map(({ asset, merged }) => {
             const { principal, valuation, profit, profitRate } = getAssetMetrics(asset, usdKrw);
             const isProfit = profit >= 0;
-            const sub = subLine(asset);
+            const sub = subLine(asset, t);
             const weight = groupTotal === 0 ? 0 : (valuation / groupTotal) * 100;
             const badgeOwners = merged
               ? [...new Set(merged.parts.map((part) => part.owner))]
@@ -207,7 +210,7 @@ export default function AssetTable({ holdings }: { holdings: DisplayHolding[] })
                       {sub && merged && " · "}
                       {merged && (
                         <>
-                          {merged.count}건 합산:{" "}
+                          {t("{count}건 합산", { count: merged.count })}:{" "}
                           {merged.parts.map((part, index) => (
                             <span key={`${part.owner}-${index}`}>
                               {index > 0 && " · "}
@@ -217,7 +220,7 @@ export default function AssetTable({ holdings }: { holdings: DisplayHolding[] })
                               >
                                 {ownerName(part.owner)}
                               </span>{" "}
-                              {part.quantity.toLocaleString("ko-KR")}주
+                              {t("{n}주", { n: part.quantity.toLocaleString("ko-KR") })}
                             </span>
                           ))}
                         </>
@@ -226,10 +229,12 @@ export default function AssetTable({ holdings }: { holdings: DisplayHolding[] })
                   )}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3.5 text-gray-500 dark:text-gray-400">
-                  {getAssetCategoryLabel(asset)}
+                  {t(getAssetCategoryLabel(asset))}
                 </td>
                 <td className="px-4 py-3.5 text-right text-gray-700 dark:text-gray-300">
-                  {asset.type === "STOCK" ? `${asset.quantity.toLocaleString("ko-KR")}주` : "-"}
+                  {asset.type === "STOCK"
+                    ? t("{n}주", { n: asset.quantity.toLocaleString("ko-KR") })
+                    : "-"}
                 </td>
                 <td className="px-4 py-3.5 text-right text-gray-700 dark:text-gray-300">
                   {money(principal)}
@@ -252,13 +257,13 @@ export default function AssetTable({ holdings }: { holdings: DisplayHolding[] })
                 <td className="w-20 px-2 py-3.5">
                   {merged ? (
                     <p className="text-center text-[10px] text-gray-300 dark:text-gray-600">
-                      합산
+                      {t("합산")}
                     </p>
                   ) : (
                     <div className="flex items-center justify-center gap-0.5">
                       <button
                         type="button"
-                        aria-label={`${asset.name} 수정`}
+                        aria-label={t("{name} 수정", { name: asset.name })}
                         onClick={(event) => {
                           event.stopPropagation();
                           openEditModal(asset);
@@ -269,7 +274,7 @@ export default function AssetTable({ holdings }: { holdings: DisplayHolding[] })
                       </button>
                       <button
                         type="button"
-                        aria-label={`${asset.name} 삭제`}
+                        aria-label={t("{name} 삭제", { name: asset.name })}
                         onClick={(event) => {
                           event.stopPropagation();
                           handleDelete(asset);
@@ -294,7 +299,7 @@ export default function AssetTable({ holdings }: { holdings: DisplayHolding[] })
                   onClick={() => setExpanded((prev) => !prev)}
                   className="flex w-full items-center justify-center gap-1 py-3 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200"
                 >
-                  {expanded ? "접기" : `전체보기 (${hiddenCount}개 더)`}
+                  {expanded ? t("접기") : t("전체보기 ({count}개 더)", { count: hiddenCount })}
                   <ChevronDown
                     size={14}
                     className={`transition-transform ${expanded ? "rotate-180" : ""}`}

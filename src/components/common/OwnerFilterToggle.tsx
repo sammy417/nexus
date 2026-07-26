@@ -3,14 +3,16 @@
 import { ASSET_OWNERS, OwnerFilter } from "@/lib/models/asset-owner";
 import { useOwnerFilter } from "@/lib/owner-filter-context";
 import { useSettings } from "@/lib/settings-context";
+import { useT } from "@/lib/i18n/locale-context";
 
 /** Segmented control scoping the views to one household member (or all). */
 export default function OwnerFilterToggle() {
   const { ownerFilter, setOwnerFilter } = useOwnerFilter();
   const { ownerName, ownerColor } = useSettings();
+  const t = useT();
 
   const options: { value: OwnerFilter; label: string; color: string | null }[] = [
-    { value: "ALL", label: "전체", color: null },
+    { value: "ALL", label: t("전체"), color: null },
     ...ASSET_OWNERS.map((owner) => ({
       value: owner as OwnerFilter,
       label: ownerName(owner),

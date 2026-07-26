@@ -7,6 +7,7 @@ import { AssetInput, usePortfolio } from "@/lib/portfolio-context";
 import { ASSET_TYPE_LABEL, ASSET_TYPES } from "@/lib/models/asset-types";
 import { ASSET_OWNERS } from "@/lib/models/asset-owner";
 import { useSettings } from "@/lib/settings-context";
+import { useT } from "@/lib/i18n/locale-context";
 import { Asset, AssetOwner, AssetType, Currency } from "@/lib/models/asset";
 import { formatKRW } from "@/lib/format";
 import MoneyInput from "@/components/common/MoneyInput";
@@ -73,6 +74,7 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
   const { closeModal, showToast } = useAssetModal();
   const { ownerName, ownerColor } = useSettings();
   const { addAsset, updateAsset, deleteAsset } = usePortfolio();
+  const t = useT();
   const isEditing = editingAsset !== null;
 
   const [type, setType] = useState<AssetType>(editingAsset?.type ?? "STOCK");
@@ -135,13 +137,13 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
    */
   async function resolveInput(): Promise<AssetInput | string> {
     const trimmedName = name.trim();
-    if (!trimmedName) return "이름을 입력해 주세요.";
+    if (!trimmedName) return t("이름을 입력해 주세요.");
 
     if (type === "STOCK") {
       const q = parseOptionalPositive(quantity);
-      if (q === undefined || q === null) return "보유 수량을 올바르게 입력해 주세요.";
+      if (q === undefined || q === null) return t("보유 수량을 올바르게 입력해 주세요.");
       const avg = parseOptionalPositive(avgPrice);
-      if (avg === null) return "평단가를 올바르게 입력해 주세요.";
+      if (avg === null) return t("평단가를 올바르게 입력해 주세요.");
 
       const trimmedTicker = ticker.trim();
       let quoted: number | undefined;
@@ -161,11 +163,11 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
       const current = quoted ?? avg ?? storedPrice;
       if (current === undefined) {
         return trimmedTicker
-          ? "현재가 조회에 실패했습니다. 티커를 확인하거나 평단가를 입력해 주세요."
-          : "티커(현재가 자동 조회) 또는 평단가 중 하나는 입력해 주세요.";
+          ? t("현재가 조회에 실패했습니다. 티커를 확인하거나 평단가를 입력해 주세요.")
+          : t("티커(현재가 자동 조회) 또는 평단가 중 하나는 입력해 주세요.");
       }
       if (quoteFailed && (avg !== undefined || storedPrice !== undefined)) {
-        showToast("현재가 조회에 실패해 입력된 값으로 대신 계산했습니다.");
+        showToast(t("현재가 조회에 실패해 입력된 값으로 대신 계산했습니다."));
       }
 
       return {
@@ -182,12 +184,12 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
 
     if (type === "BOND") {
       const pp = parseOptionalPositive(purchasePrice);
-      if (pp === undefined || pp === null) return "매입 금액을 올바르게 입력해 주세요.";
+      if (pp === undefined || pp === null) return t("매입 금액을 올바르게 입력해 주세요.");
       const cv = parseOptionalPositive(currentValue);
-      if (cv === null) return "현재 평가 금액을 올바르게 입력해 주세요.";
+      if (cv === null) return t("현재 평가 금액을 올바르게 입력해 주세요.");
       const rate = couponRate.trim() === "" ? undefined : Number(couponRate);
       if (rate !== undefined && (Number.isNaN(rate) || rate < 0))
-        return "표면금리를 올바르게 입력해 주세요.";
+        return t("표면금리를 올바르게 입력해 주세요.");
       return {
         type: "BOND",
         name: trimmedName,
@@ -201,9 +203,9 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
 
     if (type === "PENSION") {
       const pp = parseOptionalPositive(purchasePrice);
-      if (pp === undefined || pp === null) return "납입 원금을 올바르게 입력해 주세요.";
+      if (pp === undefined || pp === null) return t("납입 원금을 올바르게 입력해 주세요.");
       const cv = parseOptionalPositive(currentValue);
-      if (cv === null) return "현재 평가 금액을 올바르게 입력해 주세요.";
+      if (cv === null) return t("현재 평가 금액을 올바르게 입력해 주세요.");
       return {
         type: "PENSION",
         name: trimmedName,
@@ -216,9 +218,9 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
 
     if (type === "CUSTOM") {
       const pp = parseOptionalPositive(purchasePrice);
-      if (pp === undefined || pp === null) return "매입 금액을 올바르게 입력해 주세요.";
+      if (pp === undefined || pp === null) return t("매입 금액을 올바르게 입력해 주세요.");
       const cv = parseOptionalPositive(currentValue);
-      if (cv === null) return "현재 평가 금액을 올바르게 입력해 주세요.";
+      if (cv === null) return t("현재 평가 금액을 올바르게 입력해 주세요.");
       return {
         type: "CUSTOM",
         name: trimmedName,
@@ -230,7 +232,7 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
     }
 
     const amt = parseOptionalPositive(balance);
-    if (amt === undefined || amt === null) return "금액을 올바르게 입력해 주세요.";
+    if (amt === undefined || amt === null) return t("금액을 올바르게 입력해 주세요.");
     return { type: "CASH", name: trimmedName, currency, balance: amt };
   }
 
@@ -249,15 +251,15 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
       const withOwner = { ...resolved, owner };
       if (isEditing && editingAsset) {
         await updateAsset(editingAsset.id, withOwner);
-        showToast(`${withOwner.name} 정보가 수정되었습니다.`);
+        showToast(t("{name} 정보가 수정되었습니다.", { name: withOwner.name }));
       } else {
         await addAsset(withOwner);
-        showToast(`${withOwner.name} 자산이 추가되었습니다.`);
+        showToast(t("{name} 자산이 추가되었습니다.", { name: withOwner.name }));
       }
       closeModal();
     } catch (err) {
       const detail = err instanceof Error && err.message ? ` (${err.message})` : "";
-      setError(`저장에 실패했습니다. 잠시 후 다시 시도해 주세요.${detail}`);
+      setError(t("저장에 실패했습니다. 잠시 후 다시 시도해 주세요.") + detail);
     } finally {
       setIsSubmitting(false);
     }
@@ -265,10 +267,10 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
 
   async function handleDelete() {
     if (!editingAsset) return;
-    const confirmed = window.confirm(`${editingAsset.name} 자산을 삭제할까요?`);
+    const confirmed = window.confirm(t("{name} 자산을 삭제할까요?", { name: editingAsset.name }));
     if (!confirmed) return;
     await deleteAsset(editingAsset.id);
-    showToast(`${editingAsset.name} 자산이 삭제되었습니다.`);
+    showToast(t("{name} 자산이 삭제되었습니다.", { name: editingAsset.name }));
     closeModal();
   }
 
@@ -276,11 +278,11 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
     <div className="relative w-full max-w-lg rounded-2xl bg-white px-6 pb-6 pt-5 shadow-xl dark:bg-card-dark">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
-          {isEditing ? "자산 수정" : "자산 추가"}
+          {isEditing ? t("자산 수정") : t("자산 추가")}
         </h2>
         <button
           type="button"
-          aria-label="닫기"
+          aria-label={t("닫기")}
           onClick={closeModal}
           className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10"
         >
@@ -290,25 +292,25 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
 
       <form onSubmit={handleSubmit} className="mt-5 flex max-h-[70vh] flex-col gap-4 overflow-y-auto">
         <div className="grid grid-cols-5 gap-2">
-          {ASSET_TYPES.map((t) => (
+          {ASSET_TYPES.map((at) => (
             <button
-              key={t}
+              key={at}
               type="button"
               disabled={isEditing}
-              onClick={() => setType(t)}
+              onClick={() => setType(at)}
               className={`rounded-xl py-2.5 text-sm font-semibold transition-colors ${
-                type === t
+                type === at
                   ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
                   : "bg-gray-50 text-gray-400 dark:bg-white/5 dark:text-gray-500"
               } ${isEditing ? "cursor-not-allowed opacity-50" : ""}`}
             >
-              {ASSET_TYPE_LABEL[t]}
+              {t(ASSET_TYPE_LABEL[at])}
             </button>
           ))}
         </div>
 
         <div className="flex items-center justify-between">
-          <span className={labelTextClass}>표시 금액 통화</span>
+          <span className={labelTextClass}>{t("표시 금액 통화")}</span>
           <div className="flex gap-1 rounded-lg bg-gray-50 p-0.5 dark:bg-white/5">
             {(["KRW", "USD"] as Currency[]).map((c) => (
               <button
@@ -321,14 +323,14 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
                     : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                 }`}
               >
-                {c === "KRW" ? "₩ 원화" : "$ 달러"}
+                {c === "KRW" ? t("₩ 원화") : t("$ 달러")}
               </button>
             ))}
           </div>
         </div>
 
         <div className="flex items-center justify-between">
-          <span className={labelTextClass}>소유자</span>
+          <span className={labelTextClass}>{t("소유자")}</span>
           <div className="flex gap-1 rounded-lg bg-gray-50 p-0.5 dark:bg-white/5">
             {ASSET_OWNERS.map((o) => (
               <button
@@ -353,21 +355,21 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
         </div>
 
         <label className={labelClass}>
-          <span className={labelTextClass}>{type === "STOCK" ? "종목명" : "자산명"}</span>
+          <span className={labelTextClass}>{type === "STOCK" ? t("종목명") : t("자산명")}</span>
           <input
             type="text"
             value={name}
             onChange={(event) => setName(event.target.value)}
             placeholder={
               type === "STOCK"
-                ? "예: 삼성전자"
+                ? t("예: 삼성전자")
                 : type === "BOND"
-                  ? "예: 국고채 3년"
+                  ? t("예: 국고채 3년")
                   : type === "PENSION"
-                    ? "예: IRP 계좌 (미래에셋)"
+                    ? t("예: IRP 계좌 (미래에셋)")
                     : type === "CUSTOM"
-                      ? "예: 자가 아파트, 금 현물"
-                      : "예: 입출금 통장"
+                      ? t("예: 자가 아파트, 금 현물")
+                      : t("예: 입출금 통장")
             }
             required
             className={inputClass}
@@ -376,12 +378,12 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
 
         {type === "CUSTOM" && (
           <label className={labelClass}>
-            <span className={labelTextClass}>카테고리 (선택)</span>
+            <span className={labelTextClass}>{t("카테고리 (선택)")}</span>
             <input
               type="text"
               value={category}
               onChange={(event) => setCategory(event.target.value)}
-              placeholder="예: 부동산, 금, 암호화폐"
+              placeholder={t("예: 부동산, 금, 암호화폐")}
               className={inputClass}
             />
           </label>
@@ -390,18 +392,18 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
         {type === "PENSION" && (
           <>
             <label className={labelClass}>
-              <span className={labelTextClass}>계좌 유형 (선택)</span>
+              <span className={labelTextClass}>{t("계좌 유형 (선택)")}</span>
               <input
                 type="text"
                 value={accountType}
                 onChange={(event) => setAccountType(event.target.value)}
-                placeholder="예: DC, IRP, 연금저축"
+                placeholder={t("예: DC, IRP, 연금저축")}
                 className={inputClass}
               />
             </label>
             <div className="grid grid-cols-2 gap-3">
               <label className={labelClass}>
-                <span className={labelTextClass}>납입 원금</span>
+                <span className={labelTextClass}>{t("납입 원금")}</span>
                 <MoneyInput
                   value={purchasePrice}
                   onChange={setPurchasePrice}
@@ -412,12 +414,12 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
                 />
               </label>
               <label className={labelClass}>
-                <span className={labelTextClass}>현재 평가 금액 (선택)</span>
+                <span className={labelTextClass}>{t("현재 평가 금액 (선택)")}</span>
                 <MoneyInput
                   value={currentValue}
                   onChange={setCurrentValue}
                   currency={currency}
-                  placeholder="미입력 시 납입 원금과 동일"
+                  placeholder={t("미입력 시 납입 원금과 동일")}
                   className={inputClass}
                 />
               </label>
@@ -429,7 +431,7 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
           <>
             <div className="grid grid-cols-2 gap-3">
               <label className={labelClass}>
-                <span className={labelTextClass}>보유 수량</span>
+                <span className={labelTextClass}>{t("보유 수량")}</span>
                 <input
                   type="number"
                   inputMode="numeric"
@@ -442,29 +444,29 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
                 />
               </label>
               <label className={labelClass}>
-                <span className={labelTextClass}>티커 (선택)</span>
+                <span className={labelTextClass}>{t("티커 (선택)")}</span>
                 <input
                   type="text"
                   value={ticker}
                   onChange={(event) => setTicker(event.target.value)}
-                  placeholder="예: 005930, AAPL"
+                  placeholder={t("예: 005930, AAPL")}
                   className={inputClass}
                 />
               </label>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <label className={labelClass}>
-                <span className={labelTextClass}>시장 (선택)</span>
+                <span className={labelTextClass}>{t("시장 (선택)")}</span>
                 <input
                   type="text"
                   value={market}
                   onChange={(event) => setMarket(event.target.value)}
-                  placeholder="예: KOSPI, KOSDAQ, NASDAQ"
+                  placeholder={t("예: KOSPI, KOSDAQ, NASDAQ")}
                   className={inputClass}
                 />
               </label>
               <label className={labelClass}>
-                <span className={labelTextClass}>평단가 (선택)</span>
+                <span className={labelTextClass}>{t("평단가 (선택)")}</span>
                 <MoneyInput
                   value={avgPrice}
                   onChange={setAvgPrice}
@@ -475,12 +477,13 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
               </label>
             </div>
             <p className={hintTextClass}>
-              현재가는 입력하지 않습니다 — 저장 시 티커로 자동 조회해 선택한 통화로 저장합니다
-              (국내 6자리 코드·미국 티커 지원). 티커가 없거나 조회에 실패하면 평단가
-              {isEditing ? "·기존 현재가" : ""}로 대신 계산합니다.
+              {t(
+                "현재가는 입력하지 않습니다 — 저장 시 티커로 자동 조회해 선택한 통화로 저장합니다 (국내 6자리 코드·미국 티커 지원). 티커가 없거나 조회에 실패하면 평단가로 대신 계산합니다."
+              )}
               {isEditing && editingAsset?.type === "STOCK" && (
                 <>
-                  {" "}현재 저장된 현재가:{" "}
+                  {" "}
+                  {t("현재 저장된 현재가:")}{" "}
                   {(editingAsset.currency ?? "KRW") === "USD"
                     ? `$${editingAsset.currentPrice.toLocaleString("en-US")}`
                     : formatKRW(editingAsset.currentPrice)}
@@ -493,7 +496,7 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
         {(type === "BOND" || type === "CUSTOM") && (
           <div className="grid grid-cols-2 gap-3">
             <label className={labelClass}>
-              <span className={labelTextClass}>매입 금액</span>
+              <span className={labelTextClass}>{t("매입 금액")}</span>
               <MoneyInput
                 value={purchasePrice}
                 onChange={setPurchasePrice}
@@ -509,7 +512,7 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
                 value={currentValue}
                 onChange={setCurrentValue}
                 currency={currency}
-                placeholder="미입력 시 매입 금액과 동일"
+                placeholder={t("미입력 시 매입 금액과 동일")}
                 className={inputClass}
               />
             </label>
@@ -520,7 +523,7 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
           <>
             <div className="grid grid-cols-2 gap-3">
               <label className={labelClass}>
-                <span className={labelTextClass}>표면금리 % (선택)</span>
+                <span className={labelTextClass}>{t("표면금리 % (선택)")}</span>
                 <input
                   type="number"
                   inputMode="decimal"
@@ -528,12 +531,12 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
                   step="0.01"
                   value={couponRate}
                   onChange={(event) => setCouponRate(event.target.value)}
-                  placeholder="예: 3.25"
+                  placeholder={t("예: 3.25")}
                   className={inputClass}
                 />
               </label>
               <label className={labelClass}>
-                <span className={labelTextClass}>만기일 (선택)</span>
+                <span className={labelTextClass}>{t("만기일 (선택)")}</span>
                 <input
                   type="date"
                   value={maturityDate}
@@ -547,7 +550,7 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
 
         {type === "CASH" && (
           <label className={labelClass}>
-            <span className={labelTextClass}>금액</span>
+            <span className={labelTextClass}>{t("금액")}</span>
             <MoneyInput
               value={balance}
               onChange={setBalance}
@@ -566,7 +569,7 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
             <button
               type="button"
               onClick={handleDelete}
-              aria-label="삭제"
+              aria-label={t("삭제")}
               className="flex items-center justify-center rounded-xl bg-fall/10 px-4 py-3.5 text-fall transition-colors hover:bg-fall/20"
             >
               <Trash2 size={18} />
@@ -579,11 +582,11 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
           >
             {isSubmitting
               ? type === "STOCK"
-                ? "현재가 조회 중..."
-                : "저장 중..."
+                ? t("현재가 조회 중...")
+                : t("저장 중...")
               : isEditing
-                ? "수정하기"
-                : "추가하기"}
+                ? t("수정하기")
+                : t("추가하기")}
           </button>
         </div>
       </form>

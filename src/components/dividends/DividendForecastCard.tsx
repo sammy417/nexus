@@ -10,6 +10,7 @@ import { DIVIDEND_TAX_RATE } from "@/lib/models/dividend";
 import { Skeleton } from "@/components/common/Skeleton";
 import AnimatedNumber from "@/components/common/AnimatedNumber";
 import { useDisplayCurrency } from "@/lib/currency-context";
+import { useT } from "@/lib/i18n/locale-context";
 
 /** Rows shown before the "더보기" toggle. */
 const DEFAULT_VISIBLE = 5;
@@ -34,6 +35,7 @@ export default function DividendForecastCard({
   isLoading: boolean;
 }) {
   const { money } = useDisplayCurrency();
+  const t = useT();
   const [expanded, setExpanded] = useState(false);
 
   // Biggest estimated payout first, so the collapsed view is the real Top 5.
@@ -52,9 +54,9 @@ export default function DividendForecastCard({
 
   return (
     <section className="rounded-2xl bg-white p-6 shadow-sm dark:bg-card-dark">
-      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">예상 연간 배당</p>
+      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("예상 연간 배당")}</p>
       <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
-        보유 종목의 최근 12개월 배당 이력 × 현재 보유 수량 · 세전 추정
+        {t("보유 종목의 최근 12개월 배당 이력 × 현재 보유 수량 · 세전 추정")}
       </p>
 
       {isLoading ? (
@@ -72,7 +74,7 @@ export default function DividendForecastCard({
         </div>
       ) : !forecast || paying.length === 0 ? (
         <p className="py-12 text-center text-sm text-gray-400 dark:text-gray-500">
-          배당 이력이 조회된 보유 종목이 없습니다.
+          {t("배당 이력이 조회된 보유 종목이 없습니다.")}
         </p>
       ) : (
         <>
@@ -82,23 +84,25 @@ export default function DividendForecastCard({
             </p>
             {yieldPct !== null && (
               <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">
-                배당수익률 {yieldPct.toFixed(2)}%
+                {t("배당수익률 {pct}", { pct: `${yieldPct.toFixed(2)}%` })}
               </p>
             )}
           </div>
           <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-            세후 약 {money(afterTaxKrw)}
-            <span className="ml-1">(원천징수 {(DIVIDEND_TAX_RATE * 100).toFixed(1)}% 가정)</span>
+            {t("세후 약 {amount}", { amount: money(afterTaxKrw) })}
+            <span className="ml-1">
+              {t("(원천징수 {pct} 가정)", { pct: `${(DIVIDEND_TAX_RATE * 100).toFixed(1)}%` })}
+            </span>
           </p>
 
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[430px] text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-xs font-medium text-gray-400 dark:border-border-dark dark:text-gray-500">
-                  <th className="py-2 pr-3">종목</th>
-                  <th className="py-2 pr-3 text-right">주당 배당 (12개월)</th>
-                  <th className="py-2 pr-3 text-right">예상 연간 수령액</th>
-                  <th className="py-2 text-right">시가 배당률</th>
+                  <th className="py-2 pr-3">{t("종목")}</th>
+                  <th className="py-2 pr-3 text-right">{t("주당 배당 (12개월)")}</th>
+                  <th className="py-2 pr-3 text-right">{t("예상 연간 수령액")}</th>
+                  <th className="py-2 text-right">{t("시가 배당률")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-white/5">
@@ -107,7 +111,7 @@ export default function DividendForecastCard({
                     <td className="py-2.5 pr-3">
                       <p className="font-medium text-gray-900 dark:text-gray-100">{holding.name}</p>
                       <p className="text-[11px] text-gray-400 dark:text-gray-500">
-                        {holding.ticker} · {holding.quantity.toLocaleString("ko-KR")}주
+                        {holding.ticker} · {t("{n}주", { n: holding.quantity.toLocaleString("ko-KR") })}
                       </p>
                     </td>
                     <td className="py-2.5 pr-3 text-right text-gray-700 [font-variant-numeric:tabular-nums] dark:text-gray-300">
@@ -131,7 +135,7 @@ export default function DividendForecastCard({
               onClick={() => setExpanded((prev) => !prev)}
               className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg py-2 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200"
             >
-              {expanded ? "접기" : `더보기 (${hiddenCount}개 더)`}
+              {expanded ? t("접기") : t("더보기 ({count}개 더)", { count: hiddenCount })}
               <ChevronDown
                 size={14}
                 className={`transition-transform ${expanded ? "rotate-180" : ""}`}
@@ -141,10 +145,9 @@ export default function DividendForecastCard({
 
           {(nonPaying > 0 || forecast.failedTickers.length > 0) && (
             <p className="mt-3 text-[11px] leading-relaxed text-gray-400 dark:text-gray-500">
-              {nonPaying > 0 && <>배당 이력이 없는 종목 {nonPaying}개는 제외했습니다. </>}
-              {forecast.failedTickers.length > 0 && (
-                <>조회 실패: {forecast.failedTickers.join(", ")}</>
-              )}
+              {nonPaying > 0 && t("배당 이력이 없는 종목 {count}개는 제외했습니다. ", { count: nonPaying })}
+              {forecast.failedTickers.length > 0 &&
+                t("조회 실패: {tickers}", { tickers: forecast.failedTickers.join(", ") })}
             </p>
           )}
         </>

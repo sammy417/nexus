@@ -7,9 +7,11 @@ import { formatPercent } from "@/lib/format";
 import { getAssetCategoryLabel } from "@/lib/models/portfolio-category";
 import { Asset } from "@/lib/models/asset";
 import { useDisplayCurrency } from "@/lib/currency-context";
+import { useT } from "@/lib/i18n/locale-context";
 
 export default function AssetsPreview({ assets }: { assets: Asset[] }) {
   const { usdKrw, money } = useDisplayCurrency();
+  const t = useT();
   const topAssets = [...assets]
     .sort((a, b) => getAssetMetrics(b, usdKrw).valuation - getAssetMetrics(a, usdKrw).valuation)
     .slice(0, 5);
@@ -17,19 +19,19 @@ export default function AssetsPreview({ assets }: { assets: Asset[] }) {
   return (
     <section className="rounded-2xl bg-white p-6 shadow-sm dark:bg-card-dark">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">보유 자산</p>
+        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("보유 자산")}</p>
         <Link
           href="/portfolio"
           className="flex items-center gap-0.5 text-xs font-medium text-gray-400 dark:text-gray-500"
         >
-          전체보기
+          {t("전체보기")}
           <ChevronRight size={14} />
         </Link>
       </div>
 
       {topAssets.length === 0 ? (
         <p className="py-8 text-center text-sm text-gray-400 dark:text-gray-500">
-          보유 자산이 없습니다.
+          {t("보유 자산이 없어요")}
         </p>
       ) : (
         <ul className="mt-4 divide-y divide-gray-50 dark:divide-white/5">
@@ -42,7 +44,7 @@ export default function AssetsPreview({ assets }: { assets: Asset[] }) {
                 <div>
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{asset.name}</p>
                   <p className="text-xs text-gray-400 dark:text-gray-500">
-                    {getAssetCategoryLabel(asset)}
+                    {t(getAssetCategoryLabel(asset))}
                   </p>
                 </div>
                 <div className="text-right">

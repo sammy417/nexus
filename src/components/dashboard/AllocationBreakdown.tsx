@@ -6,19 +6,21 @@ import {
   PORTFOLIO_CATEGORY_COLOR,
   PORTFOLIO_CATEGORY_LABEL,
 } from "@/lib/models/portfolio-category";
+import { useT } from "@/lib/i18n/locale-context";
 
 export default function AllocationBreakdown({
   allocation,
 }: {
   allocation: CategoryAllocationEntry[];
 }) {
+  const t = useT();
   return (
     <DonutBreakdownCard
-      title="자산 구성"
+      title={t("자산 구성")}
       ariaLabel="자산 카테고리별 구성 비중 도넛 차트"
       entries={allocation.map((entry) => ({
         id: entry.category,
-        label: PORTFOLIO_CATEGORY_LABEL[entry.category],
+        label: t(PORTFOLIO_CATEGORY_LABEL[entry.category]),
         color: PORTFOLIO_CATEGORY_COLOR[entry.category],
         valuation: entry.valuation,
         ratio: entry.ratio,

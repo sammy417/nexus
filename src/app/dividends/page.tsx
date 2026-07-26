@@ -26,6 +26,7 @@ import { DividendRecord } from "@/lib/models/dividend";
 import { hexWithAlpha, OwnerFilter } from "@/lib/models/asset-owner";
 import { AssetOwner } from "@/lib/models/asset";
 import { useSettings } from "@/lib/settings-context";
+import { useLocale } from "@/lib/i18n/locale-context";
 
 function recordOwner(record: DividendRecord): AssetOwner {
   return record.owner ?? "JOINT";
@@ -35,11 +36,6 @@ function matchesOwner(owner: AssetOwner, filter: OwnerFilter): boolean {
   return filter === "ALL" || owner === filter;
 }
 
-function formatMonthHeading(month: string): string {
-  const [year, m] = month.split("-");
-  return `${year}년 ${Number(m)}월`;
-}
-
 export default function DividendsPage() {
   const { dividends: allDividends, isLoading, addDividend, deleteDividend } = useDividends();
   const { forecast, isLoading: isForecastLoading } = useDividendForecast();
@@ -47,6 +43,7 @@ export default function DividendsPage() {
   const { ownerFilter } = useOwnerFilter();
   const { ownerName, ownerColor } = useSettings();
   const { showToast } = useAssetModal();
+  const { t } = useLocale();
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   // Every card below is scoped by the shared household owner filter.
@@ -77,14 +74,14 @@ export default function DividendsPage() {
 
   async function handleDelete(record: DividendRecord) {
     const confirmed = window.confirm(
-      `${record.date} ${record.name} 배당 기록을 삭제할까요?`
+      t("{date} {name} 배당 기록을 삭제할까요?", { date: record.date, name: record.name })
     );
     if (!confirmed) return;
     try {
       await deleteDividend(record.id);
-      showToast("배당 기록이 삭제되었습니다.");
+      showToast(t("배당 기록이 삭제되었습니다."));
     } catch {
-      showToast("삭제에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+      showToast(t("삭제에 실패했습니다. 잠시 후 다시 시도해 주세요."));
     }
   }
 
@@ -93,16 +90,16 @@ export default function DividendsPage() {
   }
 
   const tiles = [
-    { label: "올해 누적 배당", valueKrw: summary.thisYearKrw },
-    { label: "최근 12개월", valueKrw: summary.trailing12mKrw },
-    { label: "월 평균 (최근 12개월)", valueKrw: summary.monthlyAverageKrw },
-    { label: "이번 달", valueKrw: summary.thisMonthKrw },
+    { label: t("올해 누적 배당"), valueKrw: summary.thisYearKrw },
+    { label: t("최근 12개월"), valueKrw: summary.trailing12mKrw },
+    { label: t("월 평균 (최근 12개월)"), valueKrw: summary.monthlyAverageKrw },
+    { label: t("이번 달"), valueKrw: summary.thisMonthKrw },
   ];
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">배당</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t("배당")}</h1>
         <div className="flex flex-wrap items-center gap-3">
           <OwnerFilterToggle />
           <CurrencyToggle />
@@ -112,7 +109,7 @@ export default function DividendsPage() {
             className="flex items-center gap-1.5 rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
           >
             <Plus size={15} strokeWidth={2.5} />
-            배당 추가
+            {t("배당 추가")}
           </button>
         </div>
       </div>
@@ -139,7 +136,7 @@ export default function DividendsPage() {
           existing={allDividends}
           onAdd={async (input) => {
             await addDividend(input);
-            showToast(`${input.name} 배당이 기록되었습니다.`);
+            showToast(t("{name} 배당이 기록되었습니다.", { name: input.name }));
           }}
         />
       )}
@@ -150,10 +147,12 @@ export default function DividendsPage() {
         allDividends.length === 0 ? (
           <EmptyState
             icon={Coins}
-            title="아직 기록된 배당이 없어요"
-            description="받은 배당을 추가하면 월별 추이와 통계가 채워집니다. 보유 종목의 배당 이력은 위 '받은 배당 기록 제안'에서 한 번에 추가할 수도 있어요."
+            title={t("아직 기록된 배당이 없어요")}
+            description={t(
+              "받은 배당을 추가하면 월별 추이와 통계가 채워집니다. 보유 종목의 배당 이력은 위 '받은 배당 기록 제안'에서 한 번에 추가할 수도 있어요."
+            )}
             action={{
-              label: "배당 추가",
+              label: t("배당 추가"),
               onClick: () => setIsFormOpen(true),
               icon: <Plus size={16} strokeWidth={2.5} />,
             }}
@@ -161,10 +160,14 @@ export default function DividendsPage() {
         ) : (
           <EmptyState
             icon={Coins}
-            title={`${ownerFilter === "ALL" ? "" : ownerName(ownerFilter) + " "}배당 기록이 없어요`}
-            description="상단의 소유자 필터를 바꾸거나 새 배당을 추가해 보세요."
+            title={
+              ownerFilter === "ALL"
+                ? t("배당 기록이 없어요")
+                : t("{owner} 배당 기록이 없어요", { owner: ownerName(ownerFilter) })
+            }
+            description={t("상단의 소유자 필터를 바꾸거나 새 배당을 추가해 보세요.")}
             action={{
-              label: "배당 추가",
+              label: t("배당 추가"),
               onClick: () => setIsFormOpen(true),
               icon: <Plus size={16} strokeWidth={2.5} />,
             }}
@@ -177,7 +180,11 @@ export default function DividendsPage() {
             <section key={month} className="flex flex-col gap-3">
               <div className="flex items-baseline justify-between px-1">
                 <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400">
-                  {formatMonthHeading(month)} {records.length}건
+                  {t("{year}년 {month}월 {count}건", {
+                    year: month.split("-")[0],
+                    month: Number(month.split("-")[1]),
+                    count: records.length,
+                  })}
                 </h2>
                 <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                   {money(monthTotal)}
@@ -215,7 +222,7 @@ export default function DividendsPage() {
                       </p>
                       <button
                         type="button"
-                        aria-label={`${record.name} 배당 기록 삭제`}
+                        aria-label={t("{name} 배당 기록 삭제", { name: record.name })}
                         onClick={() => handleDelete(record)}
                         className="rounded-lg p-2 text-gray-300 opacity-70 transition-colors hover:bg-fall/10 hover:text-fall group-hover:opacity-100 dark:text-gray-600 dark:hover:bg-fall/15 dark:hover:text-fall"
                       >
@@ -234,7 +241,7 @@ export default function DividendsPage() {
         <DividendFormDialog
           onSubmit={async (input) => {
             await addDividend(input);
-            showToast(`${input.name} 배당 기록이 추가되었습니다.`);
+            showToast(t("{name} 배당 기록이 추가되었습니다.", { name: input.name }));
           }}
           onClose={() => setIsFormOpen(false)}
         />

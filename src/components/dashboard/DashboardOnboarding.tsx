@@ -2,6 +2,7 @@
 
 import { BarChart3, Coins, Plus, Users, WalletCards } from "lucide-react";
 import { useAssetModal } from "@/lib/asset-modal-context";
+import { useT } from "@/lib/i18n/locale-context";
 
 const FEATURES = [
   {
@@ -29,6 +30,7 @@ const FEATURES = [
 /** First-run welcome shown when the household has no assets yet. */
 export default function DashboardOnboarding() {
   const { openAddModal } = useAssetModal();
+  const t = useT();
 
   return (
     <div className="flex flex-col gap-6">
@@ -37,11 +39,12 @@ export default function DashboardOnboarding() {
           <WalletCards size={26} strokeWidth={2} />
         </span>
         <h1 className="mt-5 text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-          NEXUS에 오신 걸 환영해요
+          {t("NEXUS에 오신 걸 환영해요")}
         </h1>
         <p className="mt-2 max-w-md text-sm leading-relaxed text-gray-400 dark:text-gray-500">
-          우리 집 자산을 한 곳에 모아 관리하는 첫걸음이에요. 첫 자산을 추가하면 대시보드·분석·배당
-          화면이 자동으로 채워집니다.
+          {t(
+            "우리 집 자산을 한 곳에 모아 관리하는 첫걸음이에요. 첫 자산을 추가하면 대시보드·분석·배당 화면이 자동으로 채워집니다."
+          )}
         </p>
         <button
           type="button"
@@ -49,7 +52,7 @@ export default function DashboardOnboarding() {
           className="mt-6 flex items-center gap-1.5 rounded-xl bg-gray-900 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
         >
           <Plus size={16} strokeWidth={2.5} />
-          첫 자산 추가하기
+          {t("첫 자산 추가하기")}
         </button>
       </section>
 
@@ -59,9 +62,9 @@ export default function DashboardOnboarding() {
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-50 text-gray-500 dark:bg-white/5 dark:text-gray-400">
               <Icon size={18} strokeWidth={2} />
             </span>
-            <p className="mt-3 text-sm font-semibold text-gray-900 dark:text-gray-100">{title}</p>
+            <p className="mt-3 text-sm font-semibold text-gray-900 dark:text-gray-100">{t(title)}</p>
             <p className="mt-1 text-xs leading-relaxed text-gray-400 dark:text-gray-500">
-              {description}
+              {t(description)}
             </p>
           </div>
         ))}

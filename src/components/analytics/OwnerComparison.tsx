@@ -6,11 +6,13 @@ import { getPortfolioSummary } from "@/lib/services/portfolio-service";
 import { formatPercent } from "@/lib/format";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useSettings } from "@/lib/settings-context";
+import { useT } from "@/lib/i18n/locale-context";
 
 /** Current valuation / P&L per household owner, side by side. */
 export default function OwnerComparison({ assets }: { assets: Asset[] }) {
   const { usdKrw, money, signedMoney } = useDisplayCurrency();
   const { ownerName, ownerColor } = useSettings();
+  const t = useT();
 
   const rows = ASSET_OWNERS.map((owner) => {
     const summary = getPortfolioSummary(
@@ -24,9 +26,9 @@ export default function OwnerComparison({ assets }: { assets: Asset[] }) {
 
   return (
     <section className="rounded-2xl bg-white p-6 shadow-sm dark:bg-card-dark">
-      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">소유자별 성과</p>
+      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("소유자별 성과")}</p>
       <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
-        현재 보유 자산 기준 · 소유자별 평가금액과 원금 대비 손익
+        {t("현재 보유 자산 기준 · 소유자별 평가금액과 원금 대비 손익")}
       </p>
 
       <div

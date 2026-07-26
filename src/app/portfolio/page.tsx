@@ -14,6 +14,7 @@ import { useDisplayCurrency } from "@/lib/currency-context";
 import { useOwnerFilter } from "@/lib/owner-filter-context";
 import { useAssetModal } from "@/lib/asset-modal-context";
 import { useSettings } from "@/lib/settings-context";
+import { useT } from "@/lib/i18n/locale-context";
 import { getAssetMetrics } from "@/lib/services/portfolio-service";
 import { mergeHoldings, toDisplayHoldings } from "@/lib/services/merge-holdings";
 import {
@@ -31,6 +32,7 @@ export default function PortfolioPage() {
   const { ownerFilter } = useOwnerFilter();
   const { ownerName } = useSettings();
   const { openAddModal } = useAssetModal();
+  const t = useT();
   const [mergeSame, setMergeSame] = useState(false);
 
   useEffect(() => {
@@ -62,9 +64,9 @@ export default function PortfolioPage() {
     <div className="flex flex-col gap-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-baseline gap-3">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">포트폴리오</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t("포트폴리오")}</h1>
           <p className="text-sm font-medium text-gray-400 dark:text-gray-500">
-            보유 자산 {assets.length}개
+            {t("보유 자산 {count}개", { count: assets.length })}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -79,7 +81,7 @@ export default function PortfolioPage() {
                 : "bg-gray-50 text-gray-400 hover:text-gray-600 dark:bg-white/5 dark:text-gray-500 dark:hover:text-gray-300"
             }`}
           >
-            같은 종목 합산
+            {t("같은 종목 합산")}
           </button>
           <OwnerFilterToggle />
           <CurrencyToggle />
@@ -88,8 +90,9 @@ export default function PortfolioPage() {
 
       {mergeSame && (
         <p className="-mt-4 px-1 text-[11px] text-gray-400 dark:text-gray-500">
-          같은 티커의 주식을 하나로 합쳐 표시합니다 (수량 합산, 평단가는 가중평균). 합산 행은
-          수정/삭제할 수 없으며, 개별 수정은 합산을 해제한 뒤 진행하세요.
+          {t(
+            "같은 티커의 주식을 하나로 합쳐 표시합니다 (수량 합산, 평단가는 가중평균). 합산 행은 수정/삭제할 수 없으며, 개별 수정은 합산을 해제한 뒤 진행하세요."
+          )}
         </p>
       )}
 
@@ -97,10 +100,12 @@ export default function PortfolioPage() {
         allAssets.length === 0 ? (
           <EmptyState
             icon={WalletCards}
-            title="아직 등록한 자산이 없어요"
-            description="첫 자산을 추가하면 카테고리별로 정리된 보유 현황과 비중 차트가 여기에 표시됩니다."
+            title={t("아직 등록한 자산이 없어요")}
+            description={t(
+              "첫 자산을 추가하면 카테고리별로 정리된 보유 현황과 비중 차트가 여기에 표시됩니다."
+            )}
             action={{
-              label: "첫 자산 추가하기",
+              label: t("첫 자산 추가하기"),
               onClick: openAddModal,
               icon: <Plus size={16} strokeWidth={2.5} />,
             }}
@@ -108,10 +113,14 @@ export default function PortfolioPage() {
         ) : (
           <EmptyState
             icon={WalletCards}
-            title={`${ownerFilter === "ALL" ? "" : ownerName(ownerFilter) + " 명의의 "}자산이 없어요`}
-            description="상단의 소유자 필터를 바꾸거나 새 자산을 추가해 보세요."
+            title={
+              ownerFilter === "ALL"
+                ? t("자산이 없어요")
+                : t("{owner} 명의의 자산이 없어요", { owner: ownerName(ownerFilter) })
+            }
+            description={t("상단의 소유자 필터를 바꾸거나 새 자산을 추가해 보세요.")}
             action={{
-              label: "자산 추가",
+              label: t("자산 추가"),
               onClick: openAddModal,
               icon: <Plus size={16} strokeWidth={2.5} />,
             }}
@@ -143,7 +152,7 @@ export default function PortfolioPage() {
                     className="h-2 w-2 rounded-full"
                     style={{ backgroundColor: PORTFOLIO_CATEGORY_COLOR[category] }}
                   />
-                  {PORTFOLIO_CATEGORY_LABEL[category]} {holdings.length}
+                  {t(PORTFOLIO_CATEGORY_LABEL[category])} {holdings.length}
                 </h2>
                 <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                   {money(groupTotal)}
