@@ -110,6 +110,17 @@ export const EN: Record<string, string> = {
   "전체보기 ({count}개 더)": "Show all ({count} more)",
   "더보기 ({count}개 더)": "Show more ({count} more)",
 
+  // --- News ---
+  뉴스: "News",
+  "최근 24시간 · 국내 경제·투자 주요 뉴스": "Last 24h · top Korean economy & investing news",
+  "표시할 뉴스가 없어요": "No news to show",
+  "최근 24시간 이내의 국내 경제·투자 뉴스를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.":
+    "Couldn't load Korean economy/investing news from the last 24 hours. Please try again shortly.",
+  "일부 출처를 불러오지 못했습니다: {sources}": "Some sources couldn't be loaded: {sources}",
+  "방금 전": "just now",
+  "{n}분 전": "{n}m ago",
+  "{n}시간 전": "{n}h ago",
+
   // --- Analytics ---
   "{scope} 수익률 (원금 대비)": "{scope} return (vs. principal)",
   "최근 1개월": "Last 1 month",
