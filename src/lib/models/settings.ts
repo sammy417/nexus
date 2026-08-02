@@ -1,5 +1,10 @@
 import { AssetOwner } from "./asset";
 import { ASSET_OWNER_LABEL, ASSET_OWNERS, OWNER_COLOR } from "./asset-owner";
+import {
+  DEFAULT_TARGET_ALLOCATION,
+  normalizeTargetAllocation,
+  TargetAllocationSettings,
+} from "./target-allocation";
 
 /** Household-level preferences (one shared dataset, so not per-user). */
 export interface AppSettings {
@@ -7,11 +12,17 @@ export interface AppSettings {
   ownerNames: Record<AssetOwner, string>;
   /** Custom hex colors (badge text/dot/donut) for each owner tag. */
   ownerColors: Record<AssetOwner, string>;
+  /** Target asset allocation + drift band driving the rebalancing card. */
+  targetAllocation: TargetAllocationSettings;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
   ownerNames: { ...ASSET_OWNER_LABEL },
   ownerColors: { ...OWNER_COLOR },
+  targetAllocation: {
+    ...DEFAULT_TARGET_ALLOCATION,
+    weights: { ...DEFAULT_TARGET_ALLOCATION.weights },
+  },
 };
 
 const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
@@ -45,5 +56,10 @@ export function normalizeSettings(value: unknown): AppSettings {
       }
     }
   }
-  return { ownerNames, ownerColors };
+  const targetAllocation = normalizeTargetAllocation(
+    value && typeof value === "object"
+      ? (value as { targetAllocation?: unknown }).targetAllocation
+      : undefined
+  );
+  return { ownerNames, ownerColors, targetAllocation };
 }

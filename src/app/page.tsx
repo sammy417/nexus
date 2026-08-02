@@ -4,6 +4,7 @@ import AssetSummary from "@/components/dashboard/AssetSummary";
 import AssetsPreview from "@/components/dashboard/AssetsPreview";
 import AllocationBreakdown from "@/components/dashboard/AllocationBreakdown";
 import OwnerBreakdown from "@/components/dashboard/OwnerBreakdown";
+import RebalanceCard from "@/components/dashboard/RebalanceCard";
 import TrendChart from "@/components/dashboard/TrendChart";
 import DashboardOnboarding from "@/components/dashboard/DashboardOnboarding";
 import CurrencyToggle from "@/components/common/CurrencyToggle";
@@ -67,6 +68,7 @@ export default function DashboardPage() {
           <AssetSummary summary={summary} />
         </div>
         <AllocationBreakdown allocation={allocation} />
+        <RebalanceCard assets={assets} className="lg:col-span-3" />
         <div className="lg:col-span-3">
           <TrendChart
             snapshots={trendSeries}

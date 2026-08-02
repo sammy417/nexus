@@ -205,6 +205,45 @@ export const EN: Record<string, string> = {
   "기기 설정을 따라요": "Follows your device",
   "밝은 화면": "Bright screen",
   "눈이 편한 어두운 화면": "Dark, easy on the eyes",
+  // Target allocation & rebalancing
+  "목표 자산배분": "Target allocation",
+  "대시보드의 리밸런싱 카드가 이 목표와 현재 비중을 비교합니다. 아래 프리셋은 일반적인 포트폴리오 구성을 참고한 출발점일 뿐이니, 투자 기간·위험 성향에 맞게 직접 조정하세요.":
+    "The dashboard's rebalancing card compares your current weights against this target. The presets below are starting points based on common portfolio construction — adjust them to your own horizon and risk tolerance.",
+  "목표 배분 사용": "Use target allocation",
+  안정형: "Conservative",
+  중립형: "Balanced",
+  성장형: "Growth",
+  공격형: "Aggressive",
+  "주식 30 · 채권 40 — 원금 보존과 변동성 억제를 우선합니다.":
+    "30 stocks · 40 bonds — prioritizes capital preservation and low volatility.",
+  "주식 60 · 채권 25 — 고전적인 60/40 균형 포트폴리오에 가깝습니다.":
+    "60 stocks · 25 bonds — close to the classic 60/40 balanced portfolio.",
+  "주식 75 · 채권 10 — 장기 투자 기간을 전제로 수익을 우선합니다.":
+    "75 stocks · 10 bonds — favors return, assuming a long horizon.",
+  "주식 85 — 큰 하락을 감내할 수 있을 때만 선택하세요.":
+    "85 stocks — only if you can stomach deep drawdowns.",
+  "직접 설정한 배분입니다.": "Custom allocation.",
+  "{category} 목표 비중": "{category} target weight",
+  합계: "Total",
+  "100%가 되도록 {delta}%p 조정하세요": "Adjust by {delta}%p to reach 100%",
+  "허용 범위": "Tolerance",
+  "목표에서 이만큼 벗어나면 리밸런싱을 제안합니다. 비중이 작은 자산은 목표의 {relative}%(5/25 규칙)를 함께 적용해 더 엄격하게 판단합니다.":
+    "Drift beyond this triggers a rebalancing suggestion. Small sleeves also use {relative}% of their own target (the 5/25 rule), so they're judged more strictly.",
+  "기본값으로 되돌리기": "Reset to defaults",
+  "목표 배분이 저장되었습니다.": "Target allocation saved.",
+  "목표 배분 · 리밸런싱": "Target allocation · rebalancing",
+  "최대 이탈 {drift} · 허용 ±{band}%p": "Max drift {drift} · tolerance ±{band}%p",
+  "리밸런싱 필요 {count}개": "{count} to rebalance",
+  "목표 범위 내": "Within target",
+  "목표를 맞추려면": "To reach the target",
+  매수: "Buy",
+  매도: "Sell",
+  "새 자금으로만 맞추기": "Rebalance with new money only",
+  "매도 없이 추가 투자금만으로 비중을 조정하는 방법입니다 (세금·거래비용 절약).":
+    "Shifts weights using new contributions instead of selling — saving taxes and trading costs.",
+  "추가 투자금 입력": "Enter contribution",
+  "{category} 현재 {current}%, 목표 {target}%": "{category}: {current}% now, {target}% target",
+
   "소유자 태그": "Owner tags",
   "자산·배당에 표시되는 소유자의 이름과 색상입니다. 부부·자녀의 실제 이름과 원하는 색으로 바꿀 수 있으며, 색은 배지·도넛·범례에 함께 반영됩니다. 기본색은 라이트·다크 모드 모두에서 잘 보이도록 고른 값입니다.":
     "Names and colors for the owner tags shown on assets and dividends. Use real names and any colors you like — the colors apply to badges, donuts, and legends. The defaults are chosen to read well in both light and dark mode.",

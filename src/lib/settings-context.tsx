@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { AssetOwner } from "@/lib/models/asset";
 import { AppSettings, DEFAULT_SETTINGS } from "@/lib/models/settings";
+import type { TargetAllocationSettings } from "@/lib/models/target-allocation";
 
 interface SettingsContextValue {
   settings: AppSettings;
@@ -10,6 +11,8 @@ interface SettingsContextValue {
   ownerName: (owner: AssetOwner) => string;
   /** Custom (or default) hex color for an owner tag. */
   ownerColor: (owner: AssetOwner) => string;
+  /** Target allocation + drift band (falls back to the default set). */
+  targetAllocation: TargetAllocationSettings;
   /** Persist new settings to the server and update local state. */
   save: (settings: AppSettings) => Promise<void>;
 }
@@ -54,9 +57,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     [settings]
   );
 
+  const targetAllocation = settings.targetAllocation ?? DEFAULT_SETTINGS.targetAllocation;
+
   const value = useMemo(
-    () => ({ settings, ownerName, ownerColor, save }),
-    [settings, ownerName, ownerColor, save]
+    () => ({ settings, ownerName, ownerColor, targetAllocation, save }),
+    [settings, ownerName, ownerColor, targetAllocation, save]
   );
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
