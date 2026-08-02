@@ -112,8 +112,13 @@ export const EN: Record<string, string> = {
 
   // --- Tax ---
   세금: "Tax",
-  "보유 현황 기준의 세금 시뮬레이션 — 실제 세액이 아닌 추정치입니다":
-    "Tax simulations based on your current holdings — estimates, not actual tax liability",
+  "보유 현황 기준의 세금 시뮬레이션 — 실제 세액이 아닌 추정치입니다. 공제·기준금액이 개인별로 적용돼 소유자별로 나누어 계산합니다.":
+    "Tax simulations based on your current holdings — estimates, not actual tax liability. Exemptions and thresholds apply per individual, so results are broken down by owner.",
+  "계산할 자산·배당이 없어요": "Nothing to calculate yet",
+  "주식이나 배당 기록을 추가하면 소유자별 세금 시뮬레이션이 여기에 표시됩니다.":
+    "Add a stock or dividend record to see per-owner tax simulations here.",
+  "공동 명의 자산은 실제로는 한 사람 명의 계좌일 가능성이 높습니다 — 실제 신고 시 해당 명의자 기준으로 다시 확인하세요.":
+    "Assets marked \"joint\" are likely registered under one person's name in reality — double-check against the actual account holder when filing.",
   "해외주식 양도소득세 시뮬레이터": "Overseas stock capital gains simulator",
   "보유한 해외주식이 없어 시뮬레이션할 수 없습니다.": "No foreign stock holdings to simulate.",
   "선택한 종목을 오늘 전량 매도한다면 — 현재 평가손익 기준의 가상 시나리오이며 확정 세액이 아닙니다. 연 {exemption} 기본공제는 해당 연도 실현손익에 적용되고 이월되지 않습니다.":
