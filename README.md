@@ -33,6 +33,28 @@ NEXUS_SEED=1 npm run dev
 
 > Node 22.13 미만에서 실행하면 SQLite 대신 인메모리 데이터 계층으로 자동 폴백됩니다 — 앱은 동작하지만 **서버 재시작 시 데이터가 사라집니다** (서버 콘솔에 경고 출력). 영속 저장이 필요하면 Node를 업그레이드하세요.
 
+## 자동 테스트 (vitest)
+
+```bash
+npm test          # 1회 실행
+npm run test:watch # 변경 감지 모드
+```
+
+이 앱은 **돈을 계산합니다** — 세액, 목표 비중 대비 괴리, 배당 예상액이 화면 그대로 판단 근거가 되므로, 계산 계층은 눈으로 확인하는 대신 테스트로 고정해 둡니다. 테스트 대상은 `src/lib/services`의 **순수 함수**뿐이며, 파일은 대상 모듈 옆에 `*.test.ts`로 둡니다.
+
+| 파일 | 고정해 둔 것 |
+| --- | --- |
+| `tax-service.test.ts` | 양도세 기본공제는 **연간 합산액에 한 번만** 적용 · 기실현 손실이 이후 이익을 상계 · 이미 확정된 세금과 추가 매도의 한계 세금 분리 · 금융소득 2천만원 기준(현재/연말 예상 각각) · 연금저축 600만 → 합산 900만 순서로 한도 적용 |
+| `rebalance-service.test.ts` | 5/25 룰(절대 밴드와 목표의 25% 중 **더 좁은 쪽**) · 목표 0% 구간은 절대 밴드 · `excludeHome`이 실거주 주택만 제외 · 추가 납입 배분이 **정확히 납입액만큼** 나뉨 |
+| `portfolio-service.test.ts` | 자산 타입별 원금/평가금액 · USD 환산(수익률은 환율에 불변) · 원금 0일 때 NaN 대신 0% · 비중 합계 100% |
+| `stock-analysis-service.test.ts` | 세부 섹터별 분리 집계(`기술 (반도체)` vs `기술 (AI SW)`)와 기본 섹터 유지 · 시장 기준 국내/해외 판정 · 집중도(HHI·유효 종목수) · 손익 기여도의 부호 |
+| `dividend-service.test.ts` | 최근 12개월 버킷(빈 달 0으로 채움) · 창 밖 기록 제외 · **올해 누계와 최근 12개월은 다른 값** |
+| `action-center-service.test.ts` | 리밸런싱 항목 최대 3개 상한 · 심각도 → 카테고리(세금·연금 우선) 정렬 · 세금은 소유자별 개별 판정(JOINT 제외) · 연말 전용 항목과 14일 배당 알림의 날짜 경계 |
+
+날짜에 의존하는 로직(연말 세무 점검, 배당 D-day, 월별 버킷)은 `vi.setSystemTime`으로 시계를 고정해 실행 시점과 무관하게 같은 결과가 나오도록 했습니다.
+
+외부 데이터에 의존하는 모듈(`quote-service`, `news-service`, `dividend-forecast-service`, `backup-service`)은 `server-only`이고 네트워크·DB I/O가 본질이라 이 스위트에서 제외했습니다 — 목 서버를 띄운 수동 검증으로 다룹니다.
+
 ## 폴더 구조
 
 ```
@@ -67,6 +89,7 @@ src/
       validate-asset-input.ts    # API 요청 바디 검증
     services/
       portfolio-service.ts      # 손익/평가금액/자산배분 계산 (순수 함수, DB 무관)
+      *.test.ts                 # 계산 계층 단위 테스트 (vitest, 대상 모듈과 같은 폴더)
       snapshot-service.ts       # 스냅샷 계산 + 데모 히스토리 생성 (순수 함수)
       quote-service.ts          # 외부 시세 조회 (야후 파이낸스, USD→KRW 환산, 5분 캐시)
     repositories/               # 데이터 접근 계층 (교체 가능)
