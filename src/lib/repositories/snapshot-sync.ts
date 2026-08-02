@@ -7,6 +7,7 @@ import {
 } from "@/lib/services/snapshot-service";
 import { DEFAULT_USD_KRW } from "@/lib/services/portfolio-service";
 import { fetchUsdKrwRate } from "@/lib/services/quote-service";
+import { shouldSeedDemoData } from "@/lib/db/seed-policy";
 import { getAssetRepository, getSnapshotRepository } from "./index";
 
 const SEED_HISTORY_DAYS = 90;
@@ -22,10 +23,12 @@ async function getUsdKrwSafe(): Promise<number> {
 
 /**
  * Record (or overwrite) today's snapshot from the current asset state.
- * On a completely empty history store this seeds the full demo history
- * instead (which also ends at today's live value) — the check lives here,
- * not in the list path, so it holds no matter whether the first-ever
- * request is a read or an asset mutation.
+ *
+ * With demo seeding opted in (`NEXUS_SEED=1`), a completely empty history
+ * store gets the full back-dated demo series instead so the trend chart has
+ * something to draw. Without it, history simply starts accumulating from
+ * today — fabricating 90 days of past values for a real portfolio would be
+ * inventing data the user never had.
  */
 export async function captureTodaySnapshot(): Promise<void> {
   const snapshotRepo = getSnapshotRepository();
@@ -33,7 +36,7 @@ export async function captureTodaySnapshot(): Promise<void> {
   const usdKrw = await getUsdKrwSafe();
 
   const existing = await snapshotRepo.list();
-  if (existing.length === 0) {
+  if (existing.length === 0 && shouldSeedDemoData()) {
     await snapshotRepo.replaceAll(generateSeedHistory(assets, SEED_HISTORY_DAYS, usdKrw));
     return;
   }

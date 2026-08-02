@@ -1,6 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { getDb } from "@/lib/db/client";
+import { shouldSeedDemoData } from "@/lib/db/seed-policy";
 import { Asset, AssetInput } from "@/lib/models/asset";
 import { SEED_ASSETS } from "@/lib/models/seed-data";
 import type { AssetRepository } from "./asset-repository";
@@ -35,17 +36,29 @@ function toPayload(input: AssetInput): string {
 export class SqliteAssetRepository implements AssetRepository {
   private seeded = false;
 
+  /** Write the demo set. Callers decide whether seeding is appropriate. */
+  private seedDemoData(): void {
+    for (const input of SEED_ASSETS) {
+      this.insert(input);
+    }
+  }
+
+  /**
+   * Fill an empty database with demo assets — only when explicitly opted in
+   * (`NEXUS_SEED=1`). An empty table otherwise means "no assets yet", not
+   * "please invent some": auto-seeding a database the app failed to find is
+   * indistinguishable from wiping the real one.
+   */
   private ensureSeeded(): void {
     if (this.seeded) return;
     this.seeded = true;
+    if (!shouldSeedDemoData()) return;
     const db = getDb();
     const { count } = db.prepare("SELECT COUNT(*) as count FROM assets").get() as {
       count: number;
     };
     if (count > 0) return;
-    for (const input of SEED_ASSETS) {
-      this.insert(input);
-    }
+    this.seedDemoData();
   }
 
   private insert(input: AssetInput): Asset {
@@ -104,10 +117,11 @@ export class SqliteAssetRepository implements AssetRepository {
     return result.changes > 0;
   }
 
+  /** Explicit user action, so it restores demo data regardless of `NEXUS_SEED`. */
   async reset(): Promise<Asset[]> {
     getDb().exec("DELETE FROM assets");
-    this.seeded = false;
-    this.ensureSeeded();
+    this.seeded = true;
+    this.seedDemoData();
     return this.list();
   }
 

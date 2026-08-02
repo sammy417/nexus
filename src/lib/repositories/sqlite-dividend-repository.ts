@@ -1,6 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { getDb } from "@/lib/db/client";
+import { shouldSeedDemoData } from "@/lib/db/seed-policy";
 import { AssetOwner } from "@/lib/models/asset";
 import { DividendInput, DividendRecord } from "@/lib/models/dividend";
 import { getSeedDividends } from "@/lib/models/seed-dividends";
@@ -39,16 +40,23 @@ function rowToRecord(row: DividendRow): DividendRecord {
 export class SqliteDividendRepository implements DividendRepository {
   private seeded = false;
 
+  /** Write the demo set. Callers decide whether seeding is appropriate. */
+  private seedDemoData(): void {
+    for (const input of getSeedDividends()) {
+      this.insert(input);
+    }
+  }
+
+  /** Demo dividends only when explicitly opted in — see `seed-policy.ts`. */
   private ensureSeeded(): void {
     if (this.seeded) return;
     this.seeded = true;
+    if (!shouldSeedDemoData()) return;
     const { count } = getDb()
       .prepare("SELECT COUNT(*) as count FROM dividends")
       .get() as { count: number };
     if (count > 0) return;
-    for (const input of getSeedDividends()) {
-      this.insert(input);
-    }
+    this.seedDemoData();
   }
 
   private insert(input: DividendInput): DividendRecord {
@@ -91,10 +99,11 @@ export class SqliteDividendRepository implements DividendRepository {
     return result.changes > 0;
   }
 
+  /** Explicit user action, so it restores demo data regardless of `NEXUS_SEED`. */
   async reset(): Promise<DividendRecord[]> {
     getDb().exec("DELETE FROM dividends");
-    this.seeded = false;
-    this.ensureSeeded();
+    this.seeded = true;
+    this.seedDemoData();
     return this.list();
   }
 

@@ -15,9 +15,24 @@ import type { DatabaseSync } from "node:sqlite";
  * static import would crash the whole server at module-load time on older
  * runtimes. `isSqliteSupported()` lets the repository factory fall back to
  * the in-memory data layer instead.
+ *
+ * `NEXUS_DB_PATH` overrides the database file. Without it the path is
+ * derived from `process.cwd()`, which means starting the server from a
+ * different directory silently opens a *different* (empty) database —
+ * indistinguishable from "my data disappeared". Point tests and throwaway
+ * runs at their own file instead of sharing the real one.
  */
 
-const DB_PATH = path.join(process.cwd(), "data", "nexus.db");
+function resolveDbPath(): string {
+  const override = process.env.NEXUS_DB_PATH?.trim();
+  if (override) return path.resolve(override);
+  return path.join(process.cwd(), "data", "nexus.db");
+}
+
+/** Absolute path of the database file this process is using. */
+export function getDbPath(): string {
+  return resolveDbPath();
+}
 
 const globalForDb = globalThis as unknown as { __nexusDb?: DatabaseSync };
 
@@ -42,8 +57,9 @@ function createDb(): DatabaseSync {
       `node:sqlite is not available on this Node.js runtime (${process.version}); Node >= 22.13 is required for the SQLite data layer`
     );
   }
-  fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
-  const db = new sqlite.DatabaseSync(DB_PATH);
+  const dbPath = resolveDbPath();
+  fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+  const db = new sqlite.DatabaseSync(dbPath);
   db.exec(`
     CREATE TABLE IF NOT EXISTS assets (
       id TEXT PRIMARY KEY,
