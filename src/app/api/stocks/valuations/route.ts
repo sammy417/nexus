@@ -9,8 +9,11 @@ interface TickerRef {
 
 /**
  * Best-effort valuation lookup for a batch of tickers. Each is fetched
- * independently — one failing ticker never fails the whole request; it's
- * simply omitted from the result. Keyed by the (uppercased) ticker.
+ * independently — one failing ticker never fails the whole request.
+ * Successful lookups are keyed by the (uppercased) ticker; the ones that
+ * failed are listed in `failed` so the UI can tell "no data came back"
+ * apart from "the provider is unreachable" instead of silently rendering
+ * an empty comparison.
  */
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
@@ -19,19 +22,21 @@ export async function POST(request: NextRequest) {
   const entries = await Promise.all(
     refs
       .filter((r) => typeof r?.ticker === "string" && r.ticker.trim())
-      .map(async (r): Promise<[string, StockValuation] | null> => {
+      .map(async (r): Promise<[string, StockValuation | null]> => {
+        const key = r.ticker.trim().toUpperCase();
         try {
-          const value = await fetchStockValuation(r.ticker.trim(), r.market);
-          return [r.ticker.trim().toUpperCase(), value];
+          return [key, await fetchStockValuation(r.ticker.trim(), r.market)];
         } catch {
-          return null;
+          return [key, null];
         }
       })
   );
 
   const valuations: Record<string, StockValuation> = {};
-  for (const entry of entries) {
-    if (entry) valuations[entry[0]] = entry[1];
+  const failed: string[] = [];
+  for (const [key, value] of entries) {
+    if (value) valuations[key] = value;
+    else failed.push(key);
   }
-  return NextResponse.json({ valuations });
+  return NextResponse.json({ valuations, failed });
 }

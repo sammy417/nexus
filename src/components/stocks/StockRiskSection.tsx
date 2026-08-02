@@ -8,6 +8,7 @@ import { hexWithAlpha } from "@/lib/models/asset-owner";
 import { useStockHistory } from "@/lib/hooks/use-stock-history";
 import { useT } from "@/lib/i18n/locale-context";
 import { Skeleton } from "@/components/common/Skeleton";
+import DataErrorNotice from "@/components/common/DataErrorNotice";
 import {
   getCorrelationMatrix,
   getRiskRows,
@@ -31,7 +32,7 @@ function label(asset: StockAsset): string {
 
 /** Volatility/return/drawdown table + return-correlation heatmap. */
 export default function StockRiskSection({ stocks }: { stocks: StockAsset[] }) {
-  const { history, isLoading } = useStockHistory(stocks);
+  const { history, isLoading, hasError } = useStockHistory(stocks);
   const t = useT();
   const { sort, toggle: toggleSort } = useSort<SortKey>(["name"]);
 
@@ -66,9 +67,16 @@ export default function StockRiskSection({ stocks }: { stocks: StockAsset[] }) {
     return (
       <section className="rounded-2xl bg-white p-6 shadow-sm dark:bg-card-dark">
         <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("리스크 분석")}</p>
-        <p className="py-8 text-center text-sm text-gray-400 dark:text-gray-500">
-          {t("시세 이력을 불러오지 못했습니다 (티커 필요).")}
-        </p>
+        {hasError ? (
+          <DataErrorNotice
+            className="mt-4"
+            message="시세 이력 조회에 실패했습니다 — 네트워크나 시세 제공사 상태를 확인한 뒤 새로고침해 주세요."
+          />
+        ) : (
+          <p className="py-8 text-center text-sm text-gray-400 dark:text-gray-500">
+            {t("조회된 시세 이력이 없습니다 (티커를 확인해 주세요).")}
+          </p>
+        )}
       </section>
     );
   }

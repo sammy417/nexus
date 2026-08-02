@@ -6,6 +6,7 @@ import { getFinancialIncomeSummary, getYearEndDividendProjection } from "@/lib/s
 import type { HoldingDividendForecast } from "@/lib/services/dividend-forecast-service";
 import MoneyInput from "@/components/common/MoneyInput";
 import { Skeleton } from "@/components/common/Skeleton";
+import DataErrorNotice from "@/components/common/DataErrorNotice";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useT } from "@/lib/i18n/locale-context";
 
@@ -71,10 +72,13 @@ export default function FinancialIncomeCard({
   records,
   forecastHoldings,
   isForecastLoading,
+  forecastHasError = false,
 }: {
   records: DividendRecord[];
   forecastHoldings: HoldingDividendForecast[];
   isForecastLoading: boolean;
+  /** Forecast lookup failed — the year-end projection is understated. */
+  forecastHasError?: boolean;
 }) {
   const { usdKrw, money } = useDisplayCurrency();
   const t = useT();
@@ -132,17 +136,25 @@ export default function FinancialIncomeCard({
           {isForecastLoading ? (
             <Skeleton className="h-14 w-full rounded-xl" />
           ) : (
-            <Gauge
-              label={t("연말까지 예상 (배당률·보유 수량 유지 가정)")}
-              amountKrw={summary.projectedYearEndKrw}
-              thresholdKrw={summary.thresholdKrw}
-              overThreshold={summary.projectedOverThreshold}
-              excessKrw={summary.projectedExcessKrw}
-              overNote="이대로면 연말까지 기준금액을 {excess} 초과할 것으로 예상됩니다."
-              remainingNote="이대로면 연말까지 기준금액에 {remaining} 못 미칠 것으로 예상됩니다."
-              money={money}
-              t={t}
-            />
+            <>
+              <Gauge
+                label={t("연말까지 예상 (배당률·보유 수량 유지 가정)")}
+                amountKrw={summary.projectedYearEndKrw}
+                thresholdKrw={summary.thresholdKrw}
+                overThreshold={summary.projectedOverThreshold}
+                excessKrw={summary.projectedExcessKrw}
+                overNote="이대로면 연말까지 기준금액을 {excess} 초과할 것으로 예상됩니다."
+                remainingNote="이대로면 연말까지 기준금액에 {remaining} 못 미칠 것으로 예상됩니다."
+                money={money}
+                t={t}
+              />
+              {forecastHasError && (
+                <DataErrorNotice
+                  className="mt-2.5"
+                  message="배당 예측을 불러오지 못해 연말 예상에 추가 배당이 반영되지 않았습니다 — 실제 금액은 이보다 클 수 있습니다."
+                />
+              )}
+            </>
           )}
         </div>
       </div>

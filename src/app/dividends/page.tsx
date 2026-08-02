@@ -38,7 +38,11 @@ function matchesOwner(owner: AssetOwner, filter: OwnerFilter): boolean {
 
 export default function DividendsPage() {
   const { dividends: allDividends, isLoading, addDividend, deleteDividend } = useDividends();
-  const { forecast, isLoading: isForecastLoading } = useDividendForecast();
+  const {
+    forecast,
+    isLoading: isForecastLoading,
+    hasError: forecastHasError,
+  } = useDividendForecast();
   const { usdKrw, money } = useDisplayCurrency();
   const { ownerFilter } = useOwnerFilter();
   const { ownerName, ownerColor } = useSettings();
@@ -139,8 +143,16 @@ export default function DividendsPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[3fr_2fr]">
-        <DividendForecastCard forecast={scopedForecast ?? null} isLoading={isForecastLoading} />
-        <UpcomingDividendsCard forecast={scopedForecast ?? null} isLoading={isForecastLoading} />
+        <DividendForecastCard
+          forecast={scopedForecast ?? null}
+          isLoading={isForecastLoading}
+          hasError={forecastHasError}
+        />
+        <UpcomingDividendsCard
+          forecast={scopedForecast ?? null}
+          isLoading={isForecastLoading}
+          hasError={forecastHasError}
+        />
       </div>
 
       {scopedForecast && (

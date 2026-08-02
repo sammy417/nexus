@@ -7,6 +7,7 @@ import { formatMarketCap } from "@/lib/models/stock-valuation";
 import { useStockValuations } from "@/lib/hooks/use-stock-valuations";
 import { useT } from "@/lib/i18n/locale-context";
 import { Skeleton } from "@/components/common/Skeleton";
+import DataErrorNotice from "@/components/common/DataErrorNotice";
 
 const numCellClass =
   "px-4 py-3.5 text-right text-gray-700 [font-variant-numeric:tabular-nums] dark:text-gray-300";
@@ -36,7 +37,7 @@ function RangeBar({ position }: { position: number }) {
 
 /** PER/PBR/market-cap/yield/52-week comparison across the held stocks. */
 export default function StockValuationTable({ stocks }: { stocks: StockAsset[] }) {
-  const { valuations, isLoading } = useStockValuations(stocks);
+  const { valuations, isLoading, hasError } = useStockValuations(stocks);
   const t = useT();
   const { sort, toggle: toggleSort } = useSort<SortKey>(["name"]);
 
@@ -86,9 +87,14 @@ export default function StockValuationTable({ stocks }: { stocks: StockAsset[] }
         <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">
           {t("티커가 입력된 주식이 없어 조회할 수 없습니다.")}
         </p>
+      ) : hasError ? (
+        <DataErrorNotice
+          className="mt-4"
+          message="밸류에이션 조회에 실패했습니다 — 네트워크나 시세 제공사 상태를 확인한 뒤 새로고침해 주세요."
+        />
       ) : !hasAny ? (
         <p className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">
-          {t("밸류에이션 데이터를 불러오지 못했습니다.")}
+          {t("조회된 밸류에이션 데이터가 없습니다 (티커를 확인해 주세요).")}
         </p>
       ) : (
         <div className="mt-4 overflow-x-auto">

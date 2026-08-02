@@ -8,10 +8,14 @@ import { StockValuation } from "@/lib/models/stock-valuation";
  * Fetches valuation metrics (P/E, P/B, market cap, …) for the given stocks'
  * tickers in one batch. Keyed by uppercased ticker, so two lots of the same
  * ticker share one lookup. Best-effort — missing tickers are just absent.
+ *
+ * `hasError` marks a failed request so the table can say "couldn't load"
+ * rather than showing an empty comparison that looks like real data.
  */
 export function useStockValuations(stocks: StockAsset[]) {
   const [valuations, setValuations] = useState<Record<string, StockValuation>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   // Unique {ticker, market} for stocks that actually have a ticker.
   const refs = useMemo(() => {
@@ -31,6 +35,7 @@ export function useStockValuations(stocks: StockAsset[]) {
     if (refs.length === 0) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setValuations({});
+      setHasError(false);
       setIsLoading(false);
       return;
     }
@@ -41,12 +46,21 @@ export function useStockValuations(stocks: StockAsset[]) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ tickers: refs }),
     })
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => {
+        if (!r.ok) throw new Error(`Valuation request failed: ${r.status}`);
+        return r.json();
+      })
       .then((data) => {
-        if (!cancelled) setValuations(data?.valuations ?? {});
+        if (cancelled) return;
+        setValuations(data?.valuations ?? {});
+        // The route answers 200 even when every upstream lookup failed, so
+        // the real signal is the per-ticker `failed` list, not the status.
+        setHasError((data?.failed?.length ?? 0) > 0);
       })
       .catch(() => {
-        if (!cancelled) setValuations({});
+        if (cancelled) return;
+        setValuations({});
+        setHasError(true);
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -58,5 +72,5 @@ export function useStockValuations(stocks: StockAsset[]) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refsKey]);
 
-  return { valuations, isLoading };
+  return { valuations, isLoading, hasError };
 }

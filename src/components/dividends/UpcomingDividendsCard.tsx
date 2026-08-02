@@ -4,6 +4,7 @@ import { useState } from "react";
 import { CalendarClock, ChevronDown } from "lucide-react";
 import type { DividendForecast } from "@/lib/services/dividend-forecast-service";
 import { Skeleton } from "@/components/common/Skeleton";
+import DataErrorNotice from "@/components/common/DataErrorNotice";
 import { hexWithAlpha } from "@/lib/models/asset-owner";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useT } from "@/lib/i18n/locale-context";
@@ -29,9 +30,12 @@ function daysUntil(date: string): number {
 export default function UpcomingDividendsCard({
   forecast,
   isLoading,
+  hasError = false,
 }: {
   forecast: DividendForecast | null;
   isLoading: boolean;
+  /** The lookup itself failed — distinct from "no upcoming payouts". */
+  hasError?: boolean;
 }) {
   const { money } = useDisplayCurrency();
   const t = useT();
@@ -64,6 +68,11 @@ export default function UpcomingDividendsCard({
             </div>
           ))}
         </div>
+      ) : hasError ? (
+        <DataErrorNotice
+          className="mt-4"
+          message="배당 예측을 불러오지 못했습니다 — 네트워크나 시세 제공사 상태를 확인한 뒤 새로고침해 주세요."
+        />
       ) : upcoming.length === 0 ? (
         <p className="py-12 text-center text-sm text-gray-400 dark:text-gray-500">
           {t("추정할 배당 일정이 없습니다.")}

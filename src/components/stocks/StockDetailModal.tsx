@@ -18,6 +18,7 @@ import { useT } from "@/lib/i18n/locale-context";
 import { useStockValuations } from "@/lib/hooks/use-stock-valuations";
 import { useStockHistory } from "@/lib/hooks/use-stock-history";
 import { Skeleton } from "@/components/common/Skeleton";
+import DataErrorNotice from "@/components/common/DataErrorNotice";
 
 const RANGES = [
   { key: "1M", label: "1개월", days: 30 },
@@ -146,8 +147,8 @@ export default function StockDetailModal({ asset, onClose }: { asset: StockAsset
   const { ownerName, ownerColor } = useSettings();
   const { openEditModal } = useAssetModal();
   const t = useT();
-  const { valuations, isLoading: vLoading } = useStockValuations([asset]);
-  const { history, isLoading: hLoading } = useStockHistory([asset]);
+  const { valuations, isLoading: vLoading, hasError: vError } = useStockValuations([asset]);
+  const { history, isLoading: hLoading, hasError: hError } = useStockHistory([asset]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -297,6 +298,12 @@ export default function StockDetailModal({ asset, onClose }: { asset: StockAsset
                 value={val?.dividendYield != null ? `${val.dividendYield.toFixed(2)}%` : "-"}
               />
             </div>
+          )}
+          {!vLoading && !hLoading && (vError || hError) && (
+            <DataErrorNotice
+              className="mt-3"
+              message="일부 지표를 불러오지 못해 '-'로 표시됩니다 — 네트워크나 시세 제공사 상태를 확인해 주세요."
+            />
           )}
         </div>
       </div>

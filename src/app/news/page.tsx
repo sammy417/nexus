@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronDown, ExternalLink, Newspaper } from "lucide-react";
 import EmptyState from "@/components/common/EmptyState";
+import DataErrorNotice from "@/components/common/DataErrorNotice";
 import NewsSkeleton from "@/components/skeletons/NewsSkeleton";
 import { useNews } from "@/lib/hooks/use-news";
 import { useT, type TFn } from "@/lib/i18n/locale-context";
@@ -61,7 +62,7 @@ function NewsRow({ item, t }: { item: NewsItem; t: TFn }) {
 }
 
 export default function NewsPage() {
-  const { news, isLoading } = useNews();
+  const { news, isLoading, hasError } = useNews();
   const t = useT();
   const [visible, setVisible] = useState(STEP);
 
@@ -83,13 +84,17 @@ export default function NewsPage() {
     return (
       <div className="flex flex-col gap-6">
         {header}
-        <EmptyState
-          icon={Newspaper}
-          title={t("표시할 뉴스가 없어요")}
-          description={t(
-            "최근 24시간 이내에 반도체·AI 등 비중 큰 섹터나 보유 종목과 관련된 뉴스를 찾지 못했습니다. 잠시 후 다시 시도해 주세요."
-          )}
-        />
+        {hasError ? (
+          <DataErrorNotice message="뉴스를 불러오지 못했습니다 — 네트워크나 언론사 RSS 상태를 확인한 뒤 새로고침해 주세요." />
+        ) : (
+          <EmptyState
+            icon={Newspaper}
+            title={t("표시할 뉴스가 없어요")}
+            description={t(
+              "최근 24시간 이내에 반도체·AI 등 비중 큰 섹터나 보유 종목과 관련된 뉴스를 찾지 못했습니다. 잠시 후 다시 시도해 주세요."
+            )}
+          />
+        )}
       </div>
     );
   }

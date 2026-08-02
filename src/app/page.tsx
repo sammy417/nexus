@@ -29,7 +29,11 @@ import { selectOwnerHistory } from "@/lib/services/owner-history";
 export default function DashboardPage() {
   const { assets, allAssets, snapshots, summary, isLoading } = usePortfolio();
   const { dividends, isLoading: isDividendsLoading } = useDividends();
-  const { forecast, isLoading: isForecastLoading } = useDividendForecast();
+  const {
+    forecast,
+    isLoading: isForecastLoading,
+    hasError: forecastHasError,
+  } = useDividendForecast();
   const { usdKrw } = useDisplayCurrency();
   const { ownerFilter } = useOwnerFilter();
   const { ownerColor } = useSettings();
@@ -79,6 +83,7 @@ export default function DashboardPage() {
           dividends={dividends}
           forecastHoldings={forecast?.holdings ?? []}
           isLoading={isDividendsLoading || isForecastLoading}
+          forecastHasError={forecastHasError}
           className="lg:col-span-3"
         />
         <RebalanceCard assets={assets} className="lg:col-span-3" />

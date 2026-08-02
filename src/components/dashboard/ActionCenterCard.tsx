@@ -7,6 +7,7 @@ import { Asset } from "@/lib/models/asset";
 import { DividendRecord } from "@/lib/models/dividend";
 import { hexWithAlpha } from "@/lib/models/asset-owner";
 import { Skeleton } from "@/components/common/Skeleton";
+import DataErrorNotice from "@/components/common/DataErrorNotice";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useSettings } from "@/lib/settings-context";
 import { useT } from "@/lib/i18n/locale-context";
@@ -47,6 +48,7 @@ export default function ActionCenterCard({
   dividends,
   forecastHoldings,
   isLoading,
+  forecastHasError = false,
   className = "",
 }: {
   scopedAssets: Asset[];
@@ -54,6 +56,8 @@ export default function ActionCenterCard({
   dividends: DividendRecord[];
   forecastHoldings: HoldingDividendForecast[];
   isLoading: boolean;
+  /** Forecast lookup failed — dividend/tax items may be missing. */
+  forecastHasError?: boolean;
   className?: string;
 }) {
   const { usdKrw, money } = useDisplayCurrency();
@@ -172,6 +176,13 @@ export default function ActionCenterCard({
             </button>
           )}
         </>
+      )}
+
+      {!isLoading && forecastHasError && (
+        <DataErrorNotice
+          className="mt-4"
+          message="배당 예측을 불러오지 못해 배당·금융소득 관련 항목이 빠져 있을 수 있습니다."
+        />
       )}
     </section>
   );

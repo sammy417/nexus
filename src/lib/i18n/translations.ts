@@ -110,6 +110,16 @@ export const EN: Record<string, string> = {
   "전체보기 ({count}개 더)": "Show all ({count} more)",
   "더보기 ({count}개 더)": "Show more ({count} more)",
 
+  // --- External data failures ---
+  "배당 예측을 불러오지 못했습니다 — 네트워크나 시세 제공사 상태를 확인한 뒤 새로고침해 주세요.":
+    "Couldn't load the dividend forecast — check your network or the data provider, then refresh.",
+  "배당 예측을 불러오지 못해 연말 예상에 추가 배당이 반영되지 않았습니다 — 실제 금액은 이보다 클 수 있습니다.":
+    "The dividend forecast failed to load, so the year-end projection excludes upcoming payouts — the real figure may be higher.",
+  "배당 예측을 불러오지 못해 배당·금융소득 관련 항목이 빠져 있을 수 있습니다.":
+    "The dividend forecast failed to load, so dividend and financial-income items may be missing.",
+  "뉴스를 불러오지 못했습니다 — 네트워크나 언론사 RSS 상태를 확인한 뒤 새로고침해 주세요.":
+    "Couldn't load the news — check your network or the outlets' RSS feeds, then refresh.",
+
   // --- Action center ---
   "오늘 챙길 것": "What to handle today",
   "{count}건": "{count} items",
@@ -518,15 +528,22 @@ export const EN: Record<string, string> = {
   배당수익률: "Dividend yield",
   "52주 위치": "52-week position",
   "티커가 입력된 주식이 없어 조회할 수 없습니다.": "No stocks with a ticker to look up.",
-  "밸류에이션 데이터를 불러오지 못했습니다.": "Couldn't load valuation data.",
+  "조회된 밸류에이션 데이터가 없습니다 (티커를 확인해 주세요).":
+    "No valuation data was returned (check the tickers).",
+  "밸류에이션 조회에 실패했습니다 — 네트워크나 시세 제공사 상태를 확인한 뒤 새로고침해 주세요.":
+    "Valuation lookup failed — check your network or the data provider, then refresh.",
   "리스크 분석": "Risk analysis",
   "최근 1년 일간 시세 기준 · 변동성은 연율화":
     "Based on the last year of daily prices · volatility annualized",
   "변동성 (연율)": "Volatility (ann.)",
   "1년 수익률": "1-yr return",
   "최대 낙폭": "Max drawdown",
-  "시세 이력을 불러오지 못했습니다 (티커 필요).":
-    "Couldn't load price history (ticker required).",
+  "조회된 시세 이력이 없습니다 (티커를 확인해 주세요).":
+    "No price history was returned (check the tickers).",
+  "시세 이력 조회에 실패했습니다 — 네트워크나 시세 제공사 상태를 확인한 뒤 새로고침해 주세요.":
+    "Price history lookup failed — check your network or the data provider, then refresh.",
+  "일부 지표를 불러오지 못해 '-'로 표시됩니다 — 네트워크나 시세 제공사 상태를 확인해 주세요.":
+    "Some metrics couldn't be loaded and show as \"-\" — check your network or the data provider.",
   상관관계: "Correlation",
   "일간 수익률 상관계수 · 빨강=동조, 파랑=역행 (공통 {days}일)":
     "Daily-return correlation · red = move together, blue = inverse ({days} common days)",

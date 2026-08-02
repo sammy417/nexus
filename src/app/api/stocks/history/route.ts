@@ -9,7 +9,12 @@ interface TickerRef {
 
 /**
  * Batch ~1y daily-close history for a set of tickers. Best-effort — a failing
- * ticker is simply omitted. Keyed by the (uppercased) ticker.
+ * ticker never fails the whole request. Keyed by the (uppercased) ticker;
+ * tickers whose lookup threw are listed in `failed` so the UI can say
+ * "couldn't load" rather than implying the holding has no price history.
+ *
+ * A ticker that returns too few points to analyse is *not* a failure — it's
+ * simply absent from `series` (and from `failed`).
  */
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
@@ -18,19 +23,22 @@ export async function POST(request: NextRequest) {
   const entries = await Promise.all(
     refs
       .filter((r) => typeof r?.ticker === "string" && r.ticker.trim())
-      .map(async (r): Promise<[string, ClosePoint[]] | null> => {
+      .map(async (r): Promise<[string, ClosePoint[] | null]> => {
+        const key = r.ticker.trim().toUpperCase();
         try {
           const closes = await fetchPriceHistory(r.ticker.trim(), r.market);
-          return closes.length > 1 ? [r.ticker.trim().toUpperCase(), closes] : null;
+          return [key, closes.length > 1 ? closes : []];
         } catch {
-          return null;
+          return [key, null];
         }
       })
   );
 
   const series: Record<string, ClosePoint[]> = {};
-  for (const entry of entries) {
-    if (entry) series[entry[0]] = entry[1];
+  const failed: string[] = [];
+  for (const [key, closes] of entries) {
+    if (closes === null) failed.push(key);
+    else if (closes.length > 0) series[key] = closes;
   }
-  return NextResponse.json({ series });
+  return NextResponse.json({ series, failed });
 }

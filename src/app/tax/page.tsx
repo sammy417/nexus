@@ -34,7 +34,11 @@ const TAXABLE_OWNERS = ASSET_OWNERS.filter((owner) => owner !== "JOINT");
 export default function TaxPage() {
   const { allAssets, isLoading: isPortfolioLoading } = usePortfolio();
   const { dividends, isLoading: isDividendsLoading } = useDividends();
-  const { forecast, isLoading: isForecastLoading } = useDividendForecast();
+  const {
+    forecast,
+    isLoading: isForecastLoading,
+    hasError: forecastHasError,
+  } = useDividendForecast();
   const { ownerName, ownerColor } = useSettings();
   const t = useT();
 
@@ -102,6 +106,7 @@ export default function TaxPage() {
                 records={ownerDividends}
                 forecastHoldings={ownerForecastHoldings}
                 isForecastLoading={isForecastLoading}
+                forecastHasError={forecastHasError}
               />
               <PensionCreditCard
                 pensionAssets={ownerAssets.filter((a) => a.type === "PENSION")}
