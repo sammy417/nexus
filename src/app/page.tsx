@@ -1,5 +1,6 @@
 "use client";
 
+import ActionCenterCard from "@/components/dashboard/ActionCenterCard";
 import AssetSummary from "@/components/dashboard/AssetSummary";
 import AssetsPreview from "@/components/dashboard/AssetsPreview";
 import AllocationBreakdown from "@/components/dashboard/AllocationBreakdown";
@@ -12,6 +13,8 @@ import OwnerFilterToggle from "@/components/common/OwnerFilterToggle";
 import RefreshPricesButton from "@/components/common/RefreshPricesButton";
 import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
 import { usePortfolio } from "@/lib/portfolio-context";
+import { useDividends } from "@/lib/hooks/use-dividends";
+import { useDividendForecast } from "@/lib/hooks/use-dividend-forecast";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useOwnerFilter } from "@/lib/owner-filter-context";
 import { useSettings } from "@/lib/settings-context";
@@ -25,6 +28,8 @@ import { selectOwnerHistory } from "@/lib/services/owner-history";
 
 export default function DashboardPage() {
   const { assets, allAssets, snapshots, summary, isLoading } = usePortfolio();
+  const { dividends, isLoading: isDividendsLoading } = useDividends();
+  const { forecast, isLoading: isForecastLoading } = useDividendForecast();
   const { usdKrw } = useDisplayCurrency();
   const { ownerFilter } = useOwnerFilter();
   const { ownerColor } = useSettings();
@@ -68,6 +73,14 @@ export default function DashboardPage() {
           <AssetSummary summary={summary} />
         </div>
         <AllocationBreakdown allocation={allocation} />
+        <ActionCenterCard
+          scopedAssets={assets}
+          allAssets={allAssets}
+          dividends={dividends}
+          forecastHoldings={forecast?.holdings ?? []}
+          isLoading={isDividendsLoading || isForecastLoading}
+          className="lg:col-span-3"
+        />
         <RebalanceCard assets={assets} className="lg:col-span-3" />
         <div className="lg:col-span-3">
           <TrendChart

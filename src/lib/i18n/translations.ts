@@ -110,6 +110,30 @@ export const EN: Record<string, string> = {
   "전체보기 ({count}개 더)": "Show all ({count} more)",
   "더보기 ({count}개 더)": "Show more ({count} more)",
 
+  // --- Action center ---
+  "오늘 챙길 것": "What to handle today",
+  "{count}건": "{count} items",
+  "지금 조치할 일이 없어요": "Nothing needs action right now",
+  "목표 배분·세금 기준·배당 일정 모두 여유가 있습니다.":
+    "Target allocation, tax thresholds, and dividend timing all have room.",
+  "{category} 비중이 목표보다 {drift}%p 높아요 — {amount} 매도 검토":
+    "{category} is {drift}%p above target — consider selling {amount}",
+  "{category} 비중이 목표보다 {drift}%p 낮아요 — {amount} 매수 검토":
+    "{category} is {drift}%p below target — consider buying {amount}",
+  "{owner} 금융소득이 기준금액을 {excess} 초과했어요 — 종합과세 대상":
+    "{owner}'s financial income exceeds the threshold by {excess} — subject to comprehensive taxation",
+  "{owner} 금융소득이 기준금액까지 {remaining} 남았어요":
+    "{owner}'s financial income is {remaining} from the threshold",
+  "{owner} 금융소득이 이대로면 연말에 기준금액을 넘길 것으로 보여요":
+    "{owner}'s financial income is on track to pass the threshold by year-end",
+  "{owner} 해외주식 양도세 기본공제 {exemption}가 아직 남아 있어요 — 연내 이익 실현 검토":
+    "{owner} still has the {exemption} overseas capital-gains exemption unused — consider realizing gains this year",
+  "{owner} 평가손실 종목 {count}개 — 연내 손실 확정으로 양도세를 줄일 수 있어요":
+    "{owner} has {count} holdings at a loss — realizing them this year could cut capital-gains tax",
+  "{owner} 연금 세액공제 한도 {limit}까지 연내 납입하면 환급받을 수 있어요":
+    "{owner} can still contribute up to {limit} this year for a pension tax credit",
+  "{name} 배당 {amount} 예상 (D-{days})": "{name} dividend of {amount} expected (D-{days})",
+
   // --- Tax ---
   세금: "Tax",
   "보유 현황 기준의 세금 시뮬레이션 — 실제 세액이 아닌 추정치입니다. 공제·기준금액이 개인별로 적용돼 소유자별로 나누어 계산합니다.":
@@ -117,8 +141,8 @@ export const EN: Record<string, string> = {
   "계산할 자산·배당이 없어요": "Nothing to calculate yet",
   "주식이나 배당 기록을 추가하면 소유자별 세금 시뮬레이션이 여기에 표시됩니다.":
     "Add a stock or dividend record to see per-owner tax simulations here.",
-  "공동 명의 자산은 실제로는 한 사람 명의 계좌일 가능성이 높습니다 — 실제 신고 시 해당 명의자 기준으로 다시 확인하세요.":
-    "Assets marked \"joint\" are likely registered under one person's name in reality — double-check against the actual account holder when filing.",
+  "공동 명의로 태그된 자산·배당은 제외했습니다 — 세법상 '공동' 귀속은 없고 실제로는 어느 한 사람 명의의 계좌이므로, 실제 명의자로 소유자를 바꾸면 그 사람 계산에 반영됩니다.":
+    "Assets and dividends tagged \"joint\" are excluded — tax law has no \"joint\" attribution, and in reality the account belongs to one person. Re-tag them to the actual holder and they'll be included in that person's calculation.",
   "해외주식 양도소득세 시뮬레이터": "Overseas stock capital gains simulator",
   "보유한 해외주식이 없어 추가 매도를 시뮬레이션할 수 없습니다.":
     "No foreign stock holdings to simulate an additional sale with.",
@@ -432,6 +456,17 @@ export const EN: Record<string, string> = {
 
   // --- Dividend form ---
   "배당 기록 추가": "Add dividend record",
+  "배당 합계 기록": "Record dividend total",
+  "종목별 입력": "One security",
+  "전체 한번에": "Lump sum",
+  "종목을 하나씩 찾아 넣는 대신, 받은 배당을 모두 더한 금액을 한 건으로 기록합니다. 통계·차트·세금 계산에는 똑같이 반영되고, 종목별 상세만 남지 않습니다.":
+    "Instead of hunting down each security, record the total of all dividends received as a single entry. It counts the same in stats, charts, and tax calculations — you just won't have the per-security breakdown.",
+  "기간 표시 (선택)": "Period label (optional)",
+  "예: 2026, 2026 상반기": "e.g. 2026, H1 2026",
+  "배당 합계 (일괄 입력)": "Dividend total (lump sum)",
+  "여러 종목 합산": "Multiple securities combined",
+  "합계 금액 (세후)": "Total amount (after tax)",
+  기준일: "As-of date",
   "종목/이름": "Security / name",
   "금액 (세후)": "Amount (after tax)",
   지급일: "Pay date",

@@ -25,7 +25,12 @@ function recordOwner(record: DividendRecord): AssetOwner {
  * 공제, 금융소득종합과세의 2천만원 기준, 연금 세액공제 한도 모두 각자
  * 별도로 적용된다. 그래서 이 페이지는 "전체 합산" 뷰 대신 소유자별로 완전히
  * 분리된 섹션을 보여준다 — 자산·배당이 없는 소유자는 섹션 자체를 생략한다.
+ *
+ * 공동(JOINT)은 세법상 존재하지 않는 귀속이라(실제로는 어느 한 사람 명의의
+ * 계좌다) 세금 화면에서는 아예 제외한다 — 공동 명의로 묶인 자산·배당은
+ * 실제 명의자로 태그를 바꾼 뒤 그 사람 섹션에서 계산하면 된다.
  */
+const TAXABLE_OWNERS = ASSET_OWNERS.filter((owner) => owner !== "JOINT");
 export default function TaxPage() {
   const { allAssets, isLoading: isPortfolioLoading } = usePortfolio();
   const { dividends, isLoading: isDividendsLoading } = useDividends();
@@ -37,12 +42,17 @@ export default function TaxPage() {
     return <TaxSkeleton />;
   }
 
-  const sections = ASSET_OWNERS.map((owner) => {
+  const sections = TAXABLE_OWNERS.map((owner) => {
     const ownerAssets = allAssets.filter((a) => getAssetOwner(a) === owner);
     const ownerDividends = dividends.filter((r) => recordOwner(r) === owner);
     const ownerForecastHoldings = (forecast?.holdings ?? []).filter((h) => h.owner === owner);
     return { owner, ownerAssets, ownerDividends, ownerForecastHoldings };
   }).filter(({ ownerAssets, ownerDividends }) => ownerAssets.length > 0 || ownerDividends.length > 0);
+
+  // Joint-tagged items are silently absent from every section above, so say so.
+  const hasJointItems =
+    allAssets.some((a) => getAssetOwner(a) === "JOINT") ||
+    dividends.some((r) => recordOwner(r) === "JOINT");
 
   return (
     <div className="flex flex-col gap-6">
@@ -57,6 +67,14 @@ export default function TaxPage() {
         </div>
         <CurrencyToggle />
       </div>
+
+      {hasJointItems && (
+        <p className="-mt-2 px-1 text-[11px] leading-relaxed text-gray-400 dark:text-gray-500">
+          {t(
+            "공동 명의로 태그된 자산·배당은 제외했습니다 — 세법상 '공동' 귀속은 없고 실제로는 어느 한 사람 명의의 계좌이므로, 실제 명의자로 소유자를 바꾸면 그 사람 계산에 반영됩니다."
+          )}
+        </p>
+      )}
 
       {sections.length === 0 ? (
         <EmptyState
@@ -77,14 +95,6 @@ export default function TaxPage() {
                 {ownerName(owner)}
               </h2>
             </div>
-            {owner === "JOINT" && (
-              <p className="-mt-2 px-1 text-[11px] text-gray-400 dark:text-gray-500">
-                {t(
-                  "공동 명의 자산은 실제로는 한 사람 명의 계좌일 가능성이 높습니다 — 실제 신고 시 해당 명의자 기준으로 다시 확인하세요."
-                )}
-              </p>
-            )}
-
             <CapitalGainsCard assets={ownerAssets} />
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

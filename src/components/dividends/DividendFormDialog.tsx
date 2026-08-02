@@ -15,6 +15,11 @@ const inputClass =
 const labelClass = "flex flex-col gap-1.5";
 const labelTextClass = "text-xs font-medium text-gray-500 dark:text-gray-400";
 
+/** Default name for a lump-sum entry (identifies it in the list/README). */
+const LUMP_SUM_NAME = "배당 합계 (일괄 입력)";
+
+type Mode = "SINGLE" | "LUMP";
+
 export default function DividendFormDialog({
   onSubmit,
   onClose,
@@ -25,6 +30,7 @@ export default function DividendFormDialog({
   const { assets } = usePortfolio();
   const { ownerName, ownerColor } = useSettings();
   const t = useT();
+  const [mode, setMode] = useState<Mode>("SINGLE");
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState<Currency>("KRW");
@@ -33,6 +39,8 @@ export default function DividendFormDialog({
   const [memo, setMemo] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Lump-sum mode: one record covering a whole period, no specific security.
+  const [periodLabel, setPeriodLabel] = useState(String(new Date().getUTCFullYear()));
 
   const nameSuggestions = [
     ...new Set(
@@ -46,9 +54,13 @@ export default function DividendFormDialog({
     event.preventDefault();
     setError(null);
 
-    const trimmedName = name.trim();
+    const isLump = mode === "LUMP";
+    // Lump-sum entries don't name a security; the period label identifies them.
+    const trimmedName = isLump
+      ? `${t(LUMP_SUM_NAME)}${periodLabel.trim() ? ` · ${periodLabel.trim()}` : ""}`
+      : name.trim();
     const value = Number(amount);
-    if (!trimmedName) {
+    if (!isLump && !trimmedName) {
       setError(t("종목/이름을 입력해 주세요."));
       return;
     }
@@ -69,7 +81,7 @@ export default function DividendFormDialog({
         currency,
         owner,
         date,
-        memo: memo.trim() || undefined,
+        memo: memo.trim() || (isLump ? t("여러 종목 합산") : undefined),
       });
       onClose();
     } catch (err) {
@@ -85,7 +97,9 @@ export default function DividendFormDialog({
       <button type="button" aria-label={t("닫기")} onClick={onClose} className="absolute inset-0 bg-black/40" />
       <div className="relative w-full max-w-md rounded-2xl bg-white px-6 pb-6 pt-5 shadow-xl dark:bg-card-dark">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t("배당 기록 추가")}</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+            {mode === "LUMP" ? t("배당 합계 기록") : t("배당 기록 추가")}
+          </h2>
           <button
             type="button"
             aria-label={t("닫기")}
@@ -97,27 +111,72 @@ export default function DividendFormDialog({
         </div>
 
         <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-4">
-          <label className={labelClass}>
-            <span className={labelTextClass}>{t("종목/이름")}</span>
-            <input
-              type="text"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder={t("예: 삼성전자")}
-              list="dividend-name-suggestions"
-              required
-              className={inputClass}
-            />
-            <datalist id="dividend-name-suggestions">
-              {nameSuggestions.map((suggestion) => (
-                <option key={suggestion} value={suggestion} />
-              ))}
-            </datalist>
-          </label>
+          {/* Mode: one security at a time, or one lump sum for many */}
+          <div className="grid grid-cols-2 gap-1 rounded-lg bg-gray-50 p-0.5 dark:bg-white/5">
+            {(
+              [
+                { value: "SINGLE" as const, label: "종목별 입력" },
+                { value: "LUMP" as const, label: "전체 한번에" },
+              ]
+            ).map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setMode(option.value)}
+                className={`rounded-md px-3 py-2 text-xs font-semibold transition-colors ${
+                  mode === option.value
+                    ? "bg-white text-gray-900 shadow-sm dark:bg-white/15 dark:text-gray-100"
+                    : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                }`}
+              >
+                {t(option.label)}
+              </button>
+            ))}
+          </div>
+
+          {mode === "SINGLE" ? (
+            <label className={labelClass}>
+              <span className={labelTextClass}>{t("종목/이름")}</span>
+              <input
+                type="text"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder={t("예: 삼성전자")}
+                list="dividend-name-suggestions"
+                required
+                className={inputClass}
+              />
+              <datalist id="dividend-name-suggestions">
+                {nameSuggestions.map((suggestion) => (
+                  <option key={suggestion} value={suggestion} />
+                ))}
+              </datalist>
+            </label>
+          ) : (
+            <>
+              <p className="rounded-xl bg-gray-50 px-4 py-3 text-[11px] leading-relaxed text-gray-500 dark:bg-white/5 dark:text-gray-400">
+                {t(
+                  "종목을 하나씩 찾아 넣는 대신, 받은 배당을 모두 더한 금액을 한 건으로 기록합니다. 통계·차트·세금 계산에는 똑같이 반영되고, 종목별 상세만 남지 않습니다."
+                )}
+              </p>
+              <label className={labelClass}>
+                <span className={labelTextClass}>{t("기간 표시 (선택)")}</span>
+                <input
+                  type="text"
+                  value={periodLabel}
+                  onChange={(event) => setPeriodLabel(event.target.value)}
+                  placeholder={t("예: 2026, 2026 상반기")}
+                  className={inputClass}
+                />
+              </label>
+            </>
+          )}
 
           <div className="grid grid-cols-[1fr_auto] items-end gap-3">
             <label className={labelClass}>
-              <span className={labelTextClass}>{t("금액 (세후)")}</span>
+              <span className={labelTextClass}>
+                {mode === "LUMP" ? t("합계 금액 (세후)") : t("금액 (세후)")}
+              </span>
               <MoneyInput
                 value={amount}
                 onChange={setAmount}
@@ -172,7 +231,9 @@ export default function DividendFormDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <label className={labelClass}>
-              <span className={labelTextClass}>{t("지급일")}</span>
+              <span className={labelTextClass}>
+                {mode === "LUMP" ? t("기준일") : t("지급일")}
+              </span>
               <input
                 type="date"
                 value={date}
