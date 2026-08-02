@@ -112,10 +112,10 @@ export const EN: Record<string, string> = {
 
   // --- News ---
   뉴스: "News",
-  "최근 24시간 · 국내 경제·투자 주요 뉴스": "Last 24h · top Korean economy & investing news",
+  "최근 24시간 · 반도체·AI 등 비중 큰 섹터와 보유 종목 중심": "Last 24h · focused on heavy sectors (semiconductors, AI) & your holdings",
   "표시할 뉴스가 없어요": "No news to show",
-  "최근 24시간 이내의 국내 경제·투자 뉴스를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.":
-    "Couldn't load Korean economy/investing news from the last 24 hours. Please try again shortly.",
+  "최근 24시간 이내에 반도체·AI 등 비중 큰 섹터나 보유 종목과 관련된 뉴스를 찾지 못했습니다. 잠시 후 다시 시도해 주세요.":
+    "Couldn't find news from the last 24 hours about your heavy sectors (semiconductors, AI, etc.) or holdings. Please try again shortly.",
   "일부 출처를 불러오지 못했습니다: {sources}": "Some sources couldn't be loaded: {sources}",
   "방금 전": "just now",
   "{n}분 전": "{n}m ago",

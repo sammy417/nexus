@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Coins, Plus, Trash2 } from "lucide-react";
+import { CalendarCheck, CalendarRange, Coins, PiggyBank, Plus, TrendingUp, Trash2 } from "lucide-react";
 import EmptyState from "@/components/common/EmptyState";
 import AnimatedNumber from "@/components/common/AnimatedNumber";
 import MonthlyDividendChart from "@/components/dividends/MonthlyDividendChart";
@@ -90,10 +90,15 @@ export default function DividendsPage() {
   }
 
   const tiles = [
-    { label: t("올해 누적 배당"), valueKrw: summary.thisYearKrw },
-    { label: t("최근 12개월"), valueKrw: summary.trailing12mKrw },
-    { label: t("월 평균 (최근 12개월)"), valueKrw: summary.monthlyAverageKrw },
-    { label: t("이번 달"), valueKrw: summary.thisMonthKrw },
+    { label: t("올해 누적 배당"), valueKrw: summary.thisYearKrw, icon: PiggyBank, color: "#3182F6" },
+    { label: t("최근 12개월"), valueKrw: summary.trailing12mKrw, icon: CalendarRange, color: "#1baf7a" },
+    {
+      label: t("월 평균 (최근 12개월)"),
+      valueKrw: summary.monthlyAverageKrw,
+      icon: TrendingUp,
+      color: "#c98500",
+    },
+    { label: t("이번 달"), valueKrw: summary.thisMonthKrw, icon: CalendarCheck, color: "#8a63d2" },
   ];
 
   return (
@@ -117,8 +122,16 @@ export default function DividendsPage() {
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
         {tiles.map((tile) => (
           <div key={tile.label} className="rounded-2xl bg-white p-5 shadow-sm dark:bg-card-dark">
-            <p className="text-xs font-medium text-gray-400 dark:text-gray-500">{tile.label}</p>
-            <p className="mt-1.5 truncate text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+            <div className="flex items-center gap-2">
+              <span
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+                style={{ color: tile.color, backgroundColor: hexWithAlpha(tile.color, 0.12) }}
+              >
+                <tile.icon size={14} strokeWidth={2.25} />
+              </span>
+              <p className="text-xs font-medium text-gray-400 dark:text-gray-500">{tile.label}</p>
+            </div>
+            <p className="mt-2 truncate text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
               <AnimatedNumber value={tile.valueKrw} format={money} />
             </p>
           </div>

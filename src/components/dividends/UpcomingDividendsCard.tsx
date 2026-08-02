@@ -4,11 +4,14 @@ import { useState } from "react";
 import { CalendarClock, ChevronDown } from "lucide-react";
 import type { DividendForecast } from "@/lib/services/dividend-forecast-service";
 import { Skeleton } from "@/components/common/Skeleton";
+import { hexWithAlpha } from "@/lib/models/asset-owner";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useT } from "@/lib/i18n/locale-context";
 
 /** Rows shown before the "더보기" toggle. */
 const DEFAULT_VISIBLE = 5;
+/** Accent for the upcoming-payout icon badge. */
+const UPCOMING_COLOR = "#c98500";
 
 /** Korean source label for the payout cadence (translated at render). */
 function frequencyKey(perYear: number): string {
@@ -72,7 +75,13 @@ export default function UpcomingDividendsCard({
             return (
               <li key={holding.assetId} className="flex items-center justify-between gap-3 py-3">
                 <div className="flex min-w-0 items-center gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-50 text-gray-400 dark:bg-white/5 dark:text-gray-500">
+                  <span
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                    style={{
+                      color: UPCOMING_COLOR,
+                      backgroundColor: hexWithAlpha(UPCOMING_COLOR, 0.12),
+                    }}
+                  >
                     <CalendarClock size={16} />
                   </span>
                   <div className="min-w-0">

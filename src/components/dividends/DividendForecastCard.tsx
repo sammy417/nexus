@@ -10,11 +10,14 @@ import type {
 import { DIVIDEND_TAX_RATE } from "@/lib/models/dividend";
 import { Skeleton } from "@/components/common/Skeleton";
 import AnimatedNumber from "@/components/common/AnimatedNumber";
+import { hexWithAlpha } from "@/lib/models/asset-owner";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useT } from "@/lib/i18n/locale-context";
 
 /** Rows shown before the "더보기" toggle. */
 const DEFAULT_VISIBLE = 5;
+/** Accent for the portfolio dividend-yield pill. */
+const YIELD_COLOR = "#1baf7a";
 
 type SortKey = "name" | "perShare" | "annual" | "yield";
 
@@ -99,7 +102,10 @@ export default function DividendForecastCard({
               <AnimatedNumber value={totalAnnualKrw} format={money} />
             </p>
             {yieldPct !== null && (
-              <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">
+              <p
+                className="rounded-full px-2.5 py-1 text-xs font-semibold"
+                style={{ color: YIELD_COLOR, backgroundColor: hexWithAlpha(YIELD_COLOR, 0.12) }}
+              >
                 {t("배당수익률 {pct}", { pct: `${yieldPct.toFixed(2)}%` })}
               </p>
             )}

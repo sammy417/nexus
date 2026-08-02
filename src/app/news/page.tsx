@@ -6,7 +6,8 @@ import EmptyState from "@/components/common/EmptyState";
 import NewsSkeleton from "@/components/skeletons/NewsSkeleton";
 import { useNews } from "@/lib/hooks/use-news";
 import { useT, type TFn } from "@/lib/i18n/locale-context";
-import type { NewsItem } from "@/lib/models/news";
+import { newsSourceColor, type NewsItem } from "@/lib/models/news";
+import { hexWithAlpha } from "@/lib/models/asset-owner";
 
 /** Headlines shown initially, and how many each 더보기 reveals. */
 const STEP = 10;
@@ -19,17 +20,22 @@ function relativeTime(iso: string, t: TFn): string {
 }
 
 function NewsRow({ item, t }: { item: NewsItem; t: TFn }) {
+  const color = newsSourceColor(item.source);
   return (
     <li>
       <a
         href={item.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="group flex items-start justify-between gap-4 px-5 py-4 transition-colors hover:bg-gray-50 dark:hover:bg-white/5"
+        className="group flex items-start justify-between gap-4 border-l-2 px-5 py-4 transition-colors hover:bg-gray-50 dark:hover:bg-white/5"
+        style={{ borderLeftColor: hexWithAlpha(color, 0.5) }}
       >
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[11px] font-semibold text-gray-500 dark:bg-white/10 dark:text-gray-400">
+            <span
+              className="rounded px-1.5 py-0.5 text-[11px] font-semibold"
+              style={{ color, backgroundColor: hexWithAlpha(color, 0.12) }}
+            >
               {item.source}
             </span>
             <span className="text-[11px] text-gray-400 dark:text-gray-500">
@@ -68,7 +74,7 @@ export default function NewsPage() {
     <div>
       <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t("뉴스")}</h1>
       <p className="mt-1 text-sm font-medium text-gray-400 dark:text-gray-500">
-        {t("최근 24시간 · 국내 경제·투자 주요 뉴스")}
+        {t("최근 24시간 · 반도체·AI 등 비중 큰 섹터와 보유 종목 중심")}
       </p>
     </div>
   );
@@ -81,7 +87,7 @@ export default function NewsPage() {
           icon={Newspaper}
           title={t("표시할 뉴스가 없어요")}
           description={t(
-            "최근 24시간 이내의 국내 경제·투자 뉴스를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요."
+            "최근 24시간 이내에 반도체·AI 등 비중 큰 섹터나 보유 종목과 관련된 뉴스를 찾지 못했습니다. 잠시 후 다시 시도해 주세요."
           )}
         />
       </div>
