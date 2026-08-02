@@ -11,6 +11,8 @@ import {
 } from "@/lib/models/tax";
 import { getStockHoldings, isStock } from "./stock-analysis-service";
 import { dividendToKrw } from "./dividend-service";
+// type-only: the service module itself is server-only
+import type { HoldingDividendForecast } from "./dividend-forecast-service";
 
 /**
  * Three lightweight tax simulators, all computed client-side from data the
@@ -95,33 +97,85 @@ export function getCapitalGainsSummary(
 
 // ---------------------------------------------------------------------------
 // 2) 금융소득종합과세 트래커 — 올해 배당·이자(원천징수 대상) 합계 vs 기준금액.
+//    배당 메뉴에 기록된 금액에 (a) 앱에 기록하지 않은 배당·이자를 보정하는
+//    수동 입력, (b) 연말까지 예상되는 추가 배당(배당률·보유 수량이 그대로
+//    유지된다는 가정의 프로젝션)을 더해 "지금까지"와 "연말 예상" 두 시점을
+//    함께 보여준다.
 // ---------------------------------------------------------------------------
 
 export interface FinancialIncomeSummary {
-  thisYearIncomeKrw: number;
+  /** Sum of dividend-menu records dated this year. */
+  recordedThisYearKrw: number;
+  /** User-entered top-up for dividends/interest not logged in the app. */
+  manualAdjustmentKrw: number;
+  /** recordedThisYearKrw + manualAdjustmentKrw — everything known as of today. */
+  currentIncomeKrw: number;
+  /** Additional dividends the forecast projects between now and Dec 31. */
+  projectedRemainingKrw: number;
+  /** currentIncomeKrw + projectedRemainingKrw, assuming no rate change or new purchases. */
+  projectedYearEndKrw: number;
   thresholdKrw: number;
-  /** Portion of the threshold used, percent (can exceed 100). */
-  ratio: number;
-  overThreshold: boolean;
-  excessKrw: number;
+  currentOverThreshold: boolean;
+  currentExcessKrw: number;
+  projectedOverThreshold: boolean;
+  projectedExcessKrw: number;
 }
 
 export function getFinancialIncomeSummary(
   records: DividendRecord[],
-  usdKrw: number
+  usdKrw: number,
+  manualAdjustmentKrw = 0,
+  projectedRemainingKrw = 0
 ): FinancialIncomeSummary {
   const thisYear = String(new Date().getUTCFullYear());
-  const thisYearIncomeKrw = records
+  const recordedThisYearKrw = records
     .filter((r) => r.date.startsWith(thisYear))
     .reduce((sum, r) => sum + dividendToKrw(r, usdKrw), 0);
-  const overThreshold = thisYearIncomeKrw > FINANCIAL_INCOME_THRESHOLD_KRW;
+  const adjustment = Math.max(0, manualAdjustmentKrw);
+  const remaining = Math.max(0, projectedRemainingKrw);
+  const currentIncomeKrw = recordedThisYearKrw + adjustment;
+  const projectedYearEndKrw = currentIncomeKrw + remaining;
+  const currentOverThreshold = currentIncomeKrw > FINANCIAL_INCOME_THRESHOLD_KRW;
+  const projectedOverThreshold = projectedYearEndKrw > FINANCIAL_INCOME_THRESHOLD_KRW;
   return {
-    thisYearIncomeKrw,
+    recordedThisYearKrw,
+    manualAdjustmentKrw: adjustment,
+    currentIncomeKrw,
+    projectedRemainingKrw: remaining,
+    projectedYearEndKrw,
     thresholdKrw: FINANCIAL_INCOME_THRESHOLD_KRW,
-    ratio: (thisYearIncomeKrw / FINANCIAL_INCOME_THRESHOLD_KRW) * 100,
-    overThreshold,
-    excessKrw: overThreshold ? thisYearIncomeKrw - FINANCIAL_INCOME_THRESHOLD_KRW : 0,
+    currentOverThreshold,
+    currentExcessKrw: currentOverThreshold ? currentIncomeKrw - FINANCIAL_INCOME_THRESHOLD_KRW : 0,
+    projectedOverThreshold,
+    projectedExcessKrw: projectedOverThreshold
+      ? projectedYearEndKrw - FINANCIAL_INCOME_THRESHOLD_KRW
+      : 0,
   };
+}
+
+/**
+ * 연말까지 추가로 받을 것으로 예상되는 배당 총합 — 배당률이 바뀌거나 신규
+ * 종목을 취득하는 경우는 제외하고, 현재 예측된 지급 주기·금액이 그대로
+ * 유지된다고 가정한다. 각 보유 종목의 다음 지급 예정일부터 추정 주기
+ * 간격으로 연말까지 몇 번 더 지급되는지 세어, 마지막 지급액(주당 최근
+ * 배당 × 현재 수량)이 매번 반복된다고 본다.
+ */
+export function getYearEndDividendProjection(holdings: HoldingDividendForecast[]): number {
+  const yearEnd = Date.UTC(new Date().getUTCFullYear(), 11, 31);
+  let total = 0;
+  for (const holding of holdings) {
+    if (!holding.nextExDateEstimate || holding.nextAmountKrw === null || holding.frequencyPerYear <= 0) {
+      continue;
+    }
+    const intervalDays = Math.max(1, Math.round(365 / holding.frequencyPerYear));
+    let cursor = Date.parse(holding.nextExDateEstimate);
+    // Cap iterations generously — a monthly payer maxes out at 12 hits/year.
+    for (let i = 0; i < 12 && cursor <= yearEnd; i++) {
+      total += holding.nextAmountKrw;
+      cursor += intervalDays * 86400000;
+    }
+  }
+  return total;
 }
 
 // ---------------------------------------------------------------------------

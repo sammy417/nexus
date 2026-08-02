@@ -8,6 +8,7 @@ import EmptyState from "@/components/common/EmptyState";
 import TaxSkeleton from "@/components/skeletons/TaxSkeleton";
 import { usePortfolio } from "@/lib/portfolio-context";
 import { useDividends } from "@/lib/hooks/use-dividends";
+import { useDividendForecast } from "@/lib/hooks/use-dividend-forecast";
 import { useSettings } from "@/lib/settings-context";
 import { useT } from "@/lib/i18n/locale-context";
 import { ASSET_OWNERS, getAssetOwner } from "@/lib/models/asset-owner";
@@ -28,6 +29,7 @@ function recordOwner(record: DividendRecord): AssetOwner {
 export default function TaxPage() {
   const { allAssets, isLoading: isPortfolioLoading } = usePortfolio();
   const { dividends, isLoading: isDividendsLoading } = useDividends();
+  const { forecast, isLoading: isForecastLoading } = useDividendForecast();
   const { ownerName, ownerColor } = useSettings();
   const t = useT();
 
@@ -38,7 +40,8 @@ export default function TaxPage() {
   const sections = ASSET_OWNERS.map((owner) => {
     const ownerAssets = allAssets.filter((a) => getAssetOwner(a) === owner);
     const ownerDividends = dividends.filter((r) => recordOwner(r) === owner);
-    return { owner, ownerAssets, ownerDividends };
+    const ownerForecastHoldings = (forecast?.holdings ?? []).filter((h) => h.owner === owner);
+    return { owner, ownerAssets, ownerDividends, ownerForecastHoldings };
   }).filter(({ ownerAssets, ownerDividends }) => ownerAssets.length > 0 || ownerDividends.length > 0);
 
   return (
@@ -62,7 +65,7 @@ export default function TaxPage() {
           description={t("주식이나 배당 기록을 추가하면 소유자별 세금 시뮬레이션이 여기에 표시됩니다.")}
         />
       ) : (
-        sections.map(({ owner, ownerAssets, ownerDividends }) => (
+        sections.map(({ owner, ownerAssets, ownerDividends, ownerForecastHoldings }) => (
           <section key={owner} className="flex flex-col gap-4">
             <div className="flex items-center gap-2 px-1">
               <span
@@ -85,7 +88,11 @@ export default function TaxPage() {
             <CapitalGainsCard assets={ownerAssets} />
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <FinancialIncomeCard records={ownerDividends} />
+              <FinancialIncomeCard
+                records={ownerDividends}
+                forecastHoldings={ownerForecastHoldings}
+                isForecastLoading={isForecastLoading}
+              />
               <PensionCreditCard
                 pensionAssets={ownerAssets.filter((a) => a.type === "PENSION")}
               />

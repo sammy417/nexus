@@ -140,12 +140,18 @@ export const EN: Record<string, string> = {
   "{name} 시뮬레이션에 포함": "Include {name} in the simulation",
   "손실 확정 후보": "Loss-harvest candidate",
   "금융소득종합과세 트래커": "Comprehensive financial income tracker",
-  "올해 기록된 배당·이자 합계가 기준금액을 넘으면 초과분이 다른 소득과 합산되어 종합과세됩니다(기준 이하는 {rate}% 원천징수로 종결).":
-    "If this year's recorded dividend/interest income exceeds the threshold, the excess is combined with other income and taxed at your marginal rate (below the threshold, {rate}% withholding is final).",
-  "기준 {threshold}": "Threshold {threshold}",
+  "배당·이자 합계가 기준금액을 넘으면 초과분이 다른 소득과 합산되어 종합과세됩니다(기준 이하는 {rate}% 원천징수로 종결). 기준 {threshold}":
+    "If your combined dividend/interest income exceeds the threshold, the excess is combined with other income and taxed at your marginal rate (below the threshold, {rate}% withholding is final). Threshold {threshold}",
+  "기록되지 않은 배당·이자 (선택, 세전)": "Dividends/interest not recorded (optional, pre-tax)",
+  "지금까지 (기록 + 위 보정액)": "So far (recorded + adjustment above)",
+  "연말까지 예상 (배당률·보유 수량 유지 가정)": "Projected by year-end (assuming rate & holdings unchanged)",
   "기준금액을 {excess} 초과했습니다 — 초과분은 다음 해 5월 종합소득세 신고 대상입니다.":
     "You've exceeded the threshold by {excess} — the excess is subject to comprehensive income tax filing next May.",
   "기준금액까지 {remaining} 남았습니다.": "{remaining} left before the threshold.",
+  "이대로면 연말까지 기준금액을 {excess} 초과할 것으로 예상됩니다.":
+    "At this pace, you're projected to exceed the threshold by {excess} by year-end.",
+  "이대로면 연말까지 기준금액에 {remaining} 못 미칠 것으로 예상됩니다.":
+    "At this pace, you're projected to stay {remaining} under the threshold by year-end.",
   "연금 세액공제 계산기": "Pension tax credit calculator",
   "연금저축은 연 {savingsLimit}, IRP 합산 시 연 {combinedLimit}까지 세액공제 대상입니다. 올해 납입(예정) 금액을 입력해 예상 공제액을 확인하세요.":
     "Pension savings (연금저축) alone counts up to {savingsLimit}/year; combined with IRP, up to {combinedLimit}/year. Enter this year's (planned) contributions to estimate your credit.",
