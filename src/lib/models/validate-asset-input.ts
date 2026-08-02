@@ -63,6 +63,7 @@ export function isValidAssetInput(value: unknown): value is AssetInput {
 
   if (input.type === "CUSTOM") {
     if (input.category !== undefined && typeof input.category !== "string") return false;
+    if (input.isHome !== undefined && typeof input.isHome !== "boolean") return false;
     return (
       typeof input.purchasePrice === "number" &&
       typeof input.currentValue === "number" &&

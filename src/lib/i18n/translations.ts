@@ -231,6 +231,13 @@ export const EN: Record<string, string> = {
     "Drift beyond this triggers a rebalancing suggestion. Small sleeves also use {relative}% of their own target (the 5/25 rule), so they're judged more strictly.",
   "기본값으로 되돌리기": "Reset to defaults",
   "목표 배분이 저장되었습니다.": "Target allocation saved.",
+  "실거주 주택(집) 제외": "Exclude primary residence (home)",
+  "— 자산 폼에서 '집'으로 표시한 항목을 목표 배분 계산에서 빼고, 나머지 비중을 다시 계산합니다.":
+    "— leaves items marked \"home\" in the asset form out of the target-allocation math and recomputes the remaining weights.",
+  "실거주 주택(집)이에요": "This is my primary residence (home)",
+  "— 설정에서 목표 배분 계산 시 제외할 수 있어요": "— can be excluded from the target-allocation math in settings",
+  "실거주 주택(집) {amount}은(는) 계산에서 제외했습니다.":
+    "Excluded your primary residence ({amount}) from this calculation.",
   "목표 배분 · 리밸런싱": "Target allocation · rebalancing",
   "최대 이탈 {drift} · 허용 ±{band}%p": "Max drift {drift} · tolerance ±{band}%p",
   "리밸런싱 필요 {count}개": "{count} to rebalance",

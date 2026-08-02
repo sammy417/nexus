@@ -41,6 +41,7 @@ export default function TargetAllocationPanel() {
   const [enabled, setEnabled] = useState(targetAllocation.enabled);
   const [weights, setWeights] = useState<TargetWeights>(targetAllocation.weights);
   const [bandPct, setBandPct] = useState(targetAllocation.bandPct);
+  const [excludeHome, setExcludeHome] = useState(targetAllocation.excludeHome);
   const [isSaving, setIsSaving] = useState(false);
 
   // Sync when settings load in after mount.
@@ -49,6 +50,7 @@ export default function TargetAllocationPanel() {
     setEnabled(targetAllocation.enabled);
     setWeights(targetAllocation.weights);
     setBandPct(targetAllocation.bandPct);
+    setExcludeHome(targetAllocation.excludeHome);
   }, [targetAllocation]);
 
   const total = sumWeights(weights);
@@ -59,7 +61,7 @@ export default function TargetAllocationPanel() {
     if (!isBalanced) return;
     setIsSaving(true);
     try {
-      await save({ ...settings, targetAllocation: { enabled, weights, bandPct } });
+      await save({ ...settings, targetAllocation: { enabled, weights, bandPct, excludeHome } });
       showToast(t("목표 배분이 저장되었습니다."));
     } catch {
       showToast(t("저장에 실패했습니다. 잠시 후 다시 시도해 주세요."));
@@ -216,6 +218,22 @@ export default function TargetAllocationPanel() {
             { relative: (RELATIVE_BAND * 100).toFixed(0) }
           )}
         </p>
+
+        {/* Exclude the primary residence */}
+        <label className="mt-4 flex items-center gap-2.5 rounded-xl bg-gray-50 px-4 py-3 dark:bg-white/5">
+          <input
+            type="checkbox"
+            checked={excludeHome}
+            onChange={(event) => setExcludeHome(event.target.checked)}
+            className="h-4 w-4 shrink-0 cursor-pointer rounded border-gray-300 text-gray-900 focus:ring-gray-900/20 dark:border-gray-600 dark:text-white"
+          />
+          <span className="text-xs text-gray-700 dark:text-gray-300">
+            {t("실거주 주택(집) 제외")}
+            <span className="ml-1 text-gray-400 dark:text-gray-500">
+              {t("— 자산 폼에서 '집'으로 표시한 항목을 목표 배분 계산에서 빼고, 나머지 비중을 다시 계산합니다.")}
+            </span>
+          </span>
+        </label>
       </div>
 
       <div className="mt-5 flex items-center gap-2">
@@ -234,6 +252,7 @@ export default function TargetAllocationPanel() {
           onClick={() => {
             setWeights({ ...DEFAULT_TARGET_ALLOCATION.weights });
             setBandPct(DEFAULT_TARGET_ALLOCATION.bandPct);
+            setExcludeHome(DEFAULT_TARGET_ALLOCATION.excludeHome);
           }}
           className="flex h-10 w-10 items-center justify-center rounded-xl text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-white/10"
         >

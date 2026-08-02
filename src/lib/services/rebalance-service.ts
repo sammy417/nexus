@@ -42,12 +42,18 @@ export interface RebalancePlan {
   /** Largest absolute drift across sleeves, in percentage points. */
   maxAbsDrift: number;
   needsRebalancing: boolean;
+  /** Valuation of home-flagged assets left out of the math (0 unless `excludeHome` is on). */
+  excludedHomeValuation: number;
 }
 
 /** Tolerance for one sleeve under the 5/25 rule, in percentage points. */
 function toleranceFor(targetRatio: number, bandPct: number): number {
   if (targetRatio <= 0) return bandPct;
   return Math.min(bandPct, targetRatio * RELATIVE_BAND);
+}
+
+function isHomeAsset(asset: Asset): boolean {
+  return asset.type === "CUSTOM" && asset.isHome === true;
 }
 
 export function getRebalancePlan(
@@ -57,8 +63,13 @@ export function getRebalancePlan(
 ): RebalancePlan {
   const valuations = new Map<PortfolioCategory, number>();
   let totalValuation = 0;
+  let excludedHomeValuation = 0;
   for (const asset of assets) {
     const { valuation } = getAssetMetrics(asset, usdKrw);
+    if (target.excludeHome && isHomeAsset(asset)) {
+      excludedHomeValuation += valuation;
+      continue;
+    }
     const category = getPortfolioCategory(asset);
     valuations.set(category, (valuations.get(category) ?? 0) + valuation);
     totalValuation += valuation;
@@ -92,6 +103,7 @@ export function getRebalancePlan(
     totalValuation,
     maxAbsDrift,
     needsRebalancing: rows.some((row) => row.outOfBand),
+    excludedHomeValuation,
   };
 }
 

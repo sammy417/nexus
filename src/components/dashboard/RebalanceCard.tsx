@@ -157,6 +157,14 @@ export default function RebalanceCard({
           </ul>
         )}
       </div>
+
+      {plan.excludedHomeValuation > 0 && (
+        <p className="mt-4 text-[11px] text-gray-400 dark:text-gray-500">
+          {t("실거주 주택(집) {amount}은(는) 계산에서 제외했습니다.", {
+            amount: money(plan.excludedHomeValuation),
+          })}
+        </p>
+      )}
     </section>
   );
 }

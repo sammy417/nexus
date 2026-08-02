@@ -110,6 +110,13 @@ export interface CustomAsset extends BaseAsset {
   category?: string;
   purchasePrice: number;
   currentValue: number;
+  /**
+   * Marks this as the household's primary residence, so the target
+   * allocation's "집 제외" option can leave it out of rebalancing math (a
+   * home isn't a liquid, reallocatable position). Optional, so pre-existing
+   * data needs no migration.
+   */
+  isHome?: boolean;
 }
 
 export type Asset = CashAsset | StockAsset | BondAsset | PensionAsset | CustomAsset;

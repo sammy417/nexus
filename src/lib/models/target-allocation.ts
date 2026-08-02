@@ -18,6 +18,12 @@ export interface TargetAllocationSettings {
   weights: TargetWeights;
   /** Absolute drift tolerance in percentage points (the 5/25 rule's absolute leg). */
   bandPct: number;
+  /**
+   * Leave assets flagged `isHome` (CustomAsset) out of the rebalancing math
+   * entirely — a primary residence isn't a liquid, reallocatable position,
+   * and including it would badly skew every other sleeve's ratio.
+   */
+  excludeHome: boolean;
 }
 
 /**
@@ -80,6 +86,7 @@ export const DEFAULT_TARGET_ALLOCATION: TargetAllocationSettings = {
   enabled: true,
   weights: { ...ALLOCATION_PRESETS.find((p) => p.id === DEFAULT_PRESET_ID)!.weights },
   bandPct: DEFAULT_BAND_PCT,
+  excludeHome: false,
 };
 
 export function sumWeights(weights: TargetWeights): number {
@@ -105,10 +112,12 @@ export function normalizeTargetAllocation(value: unknown): TargetAllocationSetti
   const weights: TargetWeights = { ...DEFAULT_TARGET_ALLOCATION.weights };
   let enabled = DEFAULT_TARGET_ALLOCATION.enabled;
   let bandPct = DEFAULT_TARGET_ALLOCATION.bandPct;
+  let excludeHome = DEFAULT_TARGET_ALLOCATION.excludeHome;
 
   if (value && typeof value === "object") {
     const raw = value as Record<string, unknown>;
     if (typeof raw.enabled === "boolean") enabled = raw.enabled;
+    if (typeof raw.excludeHome === "boolean") excludeHome = raw.excludeHome;
 
     const rawBand = typeof raw.bandPct === "number" ? raw.bandPct : Number(raw.bandPct);
     if (Number.isFinite(rawBand)) {
@@ -130,5 +139,5 @@ export function normalizeTargetAllocation(value: unknown): TargetAllocationSetti
     }
   }
 
-  return { enabled, weights, bandPct };
+  return { enabled, weights, bandPct, excludeHome };
 }

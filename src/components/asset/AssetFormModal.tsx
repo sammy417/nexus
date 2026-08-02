@@ -94,6 +94,9 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
   const [category, setCategory] = useState(
     editingAsset?.type === "CUSTOM" ? editingAsset.category ?? "" : ""
   );
+  const [isHome, setIsHome] = useState(
+    editingAsset?.type === "CUSTOM" ? editingAsset.isHome ?? false : false
+  );
   const [accountType, setAccountType] = useState(
     editingAsset?.type === "PENSION" ? editingAsset.accountType ?? "" : ""
   );
@@ -259,6 +262,7 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
         category: category.trim() || undefined,
         purchasePrice: pp,
         currentValue: cv ?? pp,
+        isHome: isHome || undefined,
       };
     }
 
@@ -408,16 +412,32 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
         </label>
 
         {type === "CUSTOM" && (
-          <label className={labelClass}>
-            <span className={labelTextClass}>{t("카테고리 (선택)")}</span>
-            <input
-              type="text"
-              value={category}
-              onChange={(event) => setCategory(event.target.value)}
-              placeholder={t("예: 부동산, 금, 암호화폐")}
-              className={inputClass}
-            />
-          </label>
+          <>
+            <label className={labelClass}>
+              <span className={labelTextClass}>{t("카테고리 (선택)")}</span>
+              <input
+                type="text"
+                value={category}
+                onChange={(event) => setCategory(event.target.value)}
+                placeholder={t("예: 부동산, 금, 암호화폐")}
+                className={inputClass}
+              />
+            </label>
+            <label className="flex items-center gap-2.5 rounded-xl bg-gray-50 px-4 py-3 dark:bg-white/5">
+              <input
+                type="checkbox"
+                checked={isHome}
+                onChange={(event) => setIsHome(event.target.checked)}
+                className="h-4 w-4 shrink-0 cursor-pointer rounded border-gray-300 text-gray-900 focus:ring-gray-900/20 dark:border-gray-600 dark:text-white"
+              />
+              <span className="text-xs text-gray-600 dark:text-gray-300">
+                {t("실거주 주택(집)이에요")}
+                <span className="ml-1 text-gray-400 dark:text-gray-500">
+                  {t("— 설정에서 목표 배분 계산 시 제외할 수 있어요")}
+                </span>
+              </span>
+            </label>
+          </>
         )}
 
         {type === "PENSION" && (
