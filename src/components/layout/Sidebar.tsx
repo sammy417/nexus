@@ -14,13 +14,11 @@ import {
   Newspaper,
   Plus,
   Receipt,
-  RotateCcw,
   Settings,
   Sun,
   WalletCards,
 } from "lucide-react";
 import { useAssetModal } from "@/lib/asset-modal-context";
-import { usePortfolio } from "@/lib/portfolio-context";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useLocale } from "@/lib/i18n/locale-context";
 import { useTheme } from "@/lib/theme-provider";
@@ -38,18 +36,10 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { openAddModal, showToast } = useAssetModal();
-  const { resetPortfolio } = usePortfolio();
+  const { openAddModal } = useAssetModal();
   const { isAmountHidden, toggleAmountHidden } = useDisplayCurrency();
   const { locale, toggleLocale, t } = useLocale();
   const { theme, toggleTheme } = useTheme();
-
-  const handleReset = () => {
-    const confirmed = window.confirm(t("테스트를 위해 자산 현황을 초기 더미 데이터로 되돌릴까요?"));
-    if (!confirmed) return;
-    resetPortfolio();
-    showToast(t("초기 데이터로 재설정되었습니다."));
-  };
 
   return (
     <aside className="sticky top-0 flex h-dvh w-60 shrink-0 flex-col border-r border-border bg-white px-4 py-6 dark:border-border-dark dark:bg-card-dark">
@@ -118,14 +108,6 @@ export default function Sidebar() {
         >
           <Languages size={17} strokeWidth={2} />
           <span className="text-[11px] font-semibold uppercase">{locale}</span>
-        </button>
-        <button
-          type="button"
-          aria-label={t("초기 데이터로 재설정 (테스트용)")}
-          onClick={handleReset}
-          className="flex h-9 w-9 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/10"
-        >
-          <RotateCcw size={17} strokeWidth={2} />
         </button>
       </div>
     </aside>
