@@ -120,13 +120,23 @@ export const EN: Record<string, string> = {
   "공동 명의 자산은 실제로는 한 사람 명의 계좌일 가능성이 높습니다 — 실제 신고 시 해당 명의자 기준으로 다시 확인하세요.":
     "Assets marked \"joint\" are likely registered under one person's name in reality — double-check against the actual account holder when filing.",
   "해외주식 양도소득세 시뮬레이터": "Overseas stock capital gains simulator",
-  "보유한 해외주식이 없어 시뮬레이션할 수 없습니다.": "No foreign stock holdings to simulate.",
-  "선택한 종목을 오늘 전량 매도한다면 — 현재 평가손익 기준의 가상 시나리오이며 확정 세액이 아닙니다. 연 {exemption} 기본공제는 해당 연도 실현손익에 적용되고 이월되지 않습니다.":
-    "If you sold the selected positions in full today — a hypothetical based on current unrealized P&L, not a final tax amount. The annual {exemption} basic exemption applies to gains realized within the calendar year and doesn't carry over.",
-  "순매매차익 (선택)": "Net gain (selected)",
+  "보유한 해외주식이 없어 추가 매도를 시뮬레이션할 수 없습니다.":
+    "No foreign stock holdings to simulate an additional sale with.",
+  "연 {exemption} 기본공제는 올해 실현손익 전체 합계에 적용되고 이월되지 않습니다. 이미 매도해서 확정된 손익을 입력하고, 보유 종목을 선택해 '추가로 더 판다면'을 함께 시뮬레이션하세요 — 확정 세액이 아닌 추정치입니다.":
+    "The annual {exemption} basic exemption applies to your total realized gain/loss for the year and doesn't carry over. Enter what you've already realized from sales this year, then select holdings to simulate selling more on top — an estimate, not a final tax amount.",
+  "올해 실현손익 (이미 매도해서 확정된 금액, 세전)": "Realized gain/loss this year (already sold, pre-tax)",
+  이익: "Gain",
+  손실: "Loss",
+  "올해 실현손익": "Realized this year",
+  "선택 종목 추가 매도 시": "If you also sell the selected",
+  "합계 손익": "Combined gain/loss",
   "남은 기본공제": "Exemption remaining",
   "과세 대상 차익": "Taxable gain",
+  "과세 대상 차익 (합계)": "Taxable gain (combined)",
   "예상 세액 ({rate}%)": "Estimated tax ({rate}%)",
+  "예상 세액 ({rate}%, 합계)": "Estimated tax ({rate}%, combined)",
+  "추가로 아무것도 팔지 않아도 올해 실현손익만으로 이미 약 {tax}의 세금이 예상됩니다. 선택한 종목을 추가로 매도하면 세액이 약 {delta} 더 늘어납니다.":
+    "Even without selling anything else, this year's realized gain/loss alone already implies about {tax} in tax. Selling the selected holdings on top adds about {delta} more.",
   "{name} 시뮬레이션에 포함": "Include {name} in the simulation",
   "손실 확정 후보": "Loss-harvest candidate",
   "금융소득종합과세 트래커": "Comprehensive financial income tracker",

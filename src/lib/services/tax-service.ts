@@ -40,39 +40,56 @@ export function getForeignStockLots(assets: Asset[], usdKrw: number): ForeignSto
 }
 
 export interface CapitalGainsSummary {
-  /** Sum of selected lots' unrealized P&L, KRW (can be negative). */
-  netGainKrw: number;
-  /** Portion of the annual exemption already "used" by this year's realized gains (0 here — see note below). */
-  exemptionUsedKrw: number;
-  /** Exemption still available this year. */
-  exemptionRemainingKrw: number;
-  /** Gain left after the exemption, taxed at FOREIGN_CGT_RATE. */
+  /** Gains/losses already realized this calendar year (user input, can be negative). */
+  realizedSoFarKrw: number;
+  /** Hypothetical additional gain from also selling the selected lots today. */
+  additionalGainKrw: number;
+  /** realizedSoFarKrw + additionalGainKrw — the year's total if the selected lots are sold too. */
+  totalGainKrw: number;
+  /** totalGainKrw after the annual exemption, taxed at FOREIGN_CGT_RATE. */
   taxableGainKrw: number;
+  /** Tax on totalGainKrw. */
   estimatedTaxKrw: number;
+  /** Tax already owed from realizedSoFarKrw alone, before selling anything else. */
+  taxOnRealizedOnlyKrw: number;
+  /** estimatedTaxKrw − taxOnRealizedOnlyKrw: the marginal tax caused by selling the selected lots. */
+  additionalTaxKrw: number;
+  /** Exemption still unused given only what's been realized so far (before any new sale). */
+  exemptionRemainingKrw: number;
+}
+
+function taxOnGain(gainKrw: number): number {
+  return Math.max(0, gainKrw - FOREIGN_CGT_EXEMPTION_KRW) * FOREIGN_CGT_RATE;
 }
 
 /**
- * Tax owed if the selected lots were sold today, given `realizedThisYearKrw`
- * of gains already realized this calendar year (0 if the user hasn't sold
- * anything yet — the exemption is annual and doesn't carry over unused).
+ * Tax on the year's total realized gain — what's already been realized this
+ * calendar year (`realizedSoFarKrw`, entered by the user; can be negative)
+ * plus the hypothetical gain from also selling the currently-selected lots
+ * today. The 250만원 exemption applies once, to the combined total, not
+ * separately to each part — a prior loss genuinely offsets a later gain,
+ * and a prior gain already consumes exemption before any new sale.
  */
 export function getCapitalGainsSummary(
-  selectedProfitsKrw: number[],
-  realizedThisYearKrw = 0
+  realizedSoFarKrw: number,
+  additionalProfitsKrw: number[]
 ): CapitalGainsSummary {
-  const netGainKrw = selectedProfitsKrw.reduce((sum, p) => sum + p, 0);
-  const exemptionUsedKrw = Math.min(
-    FOREIGN_CGT_EXEMPTION_KRW,
-    Math.max(0, realizedThisYearKrw)
-  );
-  const exemptionRemainingKrw = Math.max(0, FOREIGN_CGT_EXEMPTION_KRW - exemptionUsedKrw);
-  const taxableGainKrw = Math.max(0, netGainKrw - exemptionRemainingKrw);
+  const additionalGainKrw = additionalProfitsKrw.reduce((sum, p) => sum + p, 0);
+  const totalGainKrw = realizedSoFarKrw + additionalGainKrw;
+  const taxOnRealizedOnlyKrw = taxOnGain(realizedSoFarKrw);
+  const estimatedTaxKrw = taxOnGain(totalGainKrw);
   return {
-    netGainKrw,
-    exemptionUsedKrw,
-    exemptionRemainingKrw,
-    taxableGainKrw,
-    estimatedTaxKrw: taxableGainKrw * FOREIGN_CGT_RATE,
+    realizedSoFarKrw,
+    additionalGainKrw,
+    totalGainKrw,
+    taxableGainKrw: Math.max(0, totalGainKrw - FOREIGN_CGT_EXEMPTION_KRW),
+    estimatedTaxKrw,
+    taxOnRealizedOnlyKrw,
+    additionalTaxKrw: estimatedTaxKrw - taxOnRealizedOnlyKrw,
+    exemptionRemainingKrw: Math.max(
+      0,
+      FOREIGN_CGT_EXEMPTION_KRW - Math.max(0, realizedSoFarKrw)
+    ),
   };
 }
 
