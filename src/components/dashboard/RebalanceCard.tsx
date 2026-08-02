@@ -60,7 +60,8 @@ export default function RebalanceCard({
 
   return (
     <section
-      className={`flex flex-col rounded-2xl bg-white p-6 shadow-sm dark:bg-card-dark ${className}`}
+      id="rebalance"
+      className={`flex flex-col scroll-mt-6 rounded-2xl bg-white p-6 shadow-sm dark:bg-card-dark ${className}`}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>

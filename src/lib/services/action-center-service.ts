@@ -115,7 +115,10 @@ export function getActionItems({
           drift: Math.abs(row.driftPct).toFixed(1),
           amount: Math.abs(row.deltaValuation),
         },
-        href: "/",
+        // Same page as the action center itself — a plain "/" Link is a
+        // no-op when already there, so point at the rebalance card's own
+        // anchor instead (id="rebalance" on RebalanceCard's <section>).
+        href: "/#rebalance",
       });
     }
   }
