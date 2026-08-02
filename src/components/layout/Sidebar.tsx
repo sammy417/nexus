@@ -13,6 +13,7 @@ import {
   Moon,
   Newspaper,
   Plus,
+  Receipt,
   RotateCcw,
   Settings,
   Sun,
@@ -30,6 +31,7 @@ const navItems = [
   { href: "/analytics", label: "분석", icon: BarChart3 },
   { href: "/stocks", label: "주식", icon: LineChart },
   { href: "/dividends", label: "배당", icon: Coins },
+  { href: "/tax", label: "세금", icon: Receipt },
   { href: "/news", label: "뉴스", icon: Newspaper },
   { href: "/settings", label: "설정", icon: Settings },
 ];

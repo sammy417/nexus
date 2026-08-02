@@ -110,6 +110,39 @@ export const EN: Record<string, string> = {
   "전체보기 ({count}개 더)": "Show all ({count} more)",
   "더보기 ({count}개 더)": "Show more ({count} more)",
 
+  // --- Tax ---
+  세금: "Tax",
+  "보유 현황 기준의 세금 시뮬레이션 — 실제 세액이 아닌 추정치입니다":
+    "Tax simulations based on your current holdings — estimates, not actual tax liability",
+  "해외주식 양도소득세 시뮬레이터": "Overseas stock capital gains simulator",
+  "보유한 해외주식이 없어 시뮬레이션할 수 없습니다.": "No foreign stock holdings to simulate.",
+  "선택한 종목을 오늘 전량 매도한다면 — 현재 평가손익 기준의 가상 시나리오이며 확정 세액이 아닙니다. 연 {exemption} 기본공제는 해당 연도 실현손익에 적용되고 이월되지 않습니다.":
+    "If you sold the selected positions in full today — a hypothetical based on current unrealized P&L, not a final tax amount. The annual {exemption} basic exemption applies to gains realized within the calendar year and doesn't carry over.",
+  "순매매차익 (선택)": "Net gain (selected)",
+  "남은 기본공제": "Exemption remaining",
+  "과세 대상 차익": "Taxable gain",
+  "예상 세액 ({rate}%)": "Estimated tax ({rate}%)",
+  "{name} 시뮬레이션에 포함": "Include {name} in the simulation",
+  "손실 확정 후보": "Loss-harvest candidate",
+  "금융소득종합과세 트래커": "Comprehensive financial income tracker",
+  "올해 기록된 배당·이자 합계가 기준금액을 넘으면 초과분이 다른 소득과 합산되어 종합과세됩니다(기준 이하는 {rate}% 원천징수로 종결).":
+    "If this year's recorded dividend/interest income exceeds the threshold, the excess is combined with other income and taxed at your marginal rate (below the threshold, {rate}% withholding is final).",
+  "기준 {threshold}": "Threshold {threshold}",
+  "기준금액을 {excess} 초과했습니다 — 초과분은 다음 해 5월 종합소득세 신고 대상입니다.":
+    "You've exceeded the threshold by {excess} — the excess is subject to comprehensive income tax filing next May.",
+  "기준금액까지 {remaining} 남았습니다.": "{remaining} left before the threshold.",
+  "연금 세액공제 계산기": "Pension tax credit calculator",
+  "연금저축은 연 {savingsLimit}, IRP 합산 시 연 {combinedLimit}까지 세액공제 대상입니다. 올해 납입(예정) 금액을 입력해 예상 공제액을 확인하세요.":
+    "Pension savings (연금저축) alone counts up to {savingsLimit}/year; combined with IRP, up to {combinedLimit}/year. Enter this year's (planned) contributions to estimate your credit.",
+  "연금저축 올해 납입액": "Pension savings (연금저축) contribution this year",
+  "IRP 올해 납입액": "IRP contribution this year",
+  "총급여 5,500만원(종합소득 4,500만원) 이하": "Salary ≤ 55M won (income ≤ 45M won)",
+  초과: "Above that",
+  "예상 세액공제 ({rate}%)": "Estimated tax credit ({rate}%)",
+  "공제 인정 납입액": "Credit-eligible contribution",
+  "한도까지 남은 여력": "Room left under the limit",
+  "보유 연금 계좌: {names}": "Pension accounts on file: {names}",
+
   // --- News ---
   뉴스: "News",
   "최근 24시간 · 반도체·AI 등 비중 큰 섹터와 보유 종목 중심": "Last 24h · focused on heavy sectors (semiconductors, AI) & your holdings",
