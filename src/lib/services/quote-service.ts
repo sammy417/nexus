@@ -109,6 +109,7 @@ interface DividendCacheEntry extends DividendHistory {
 
 const globalForDividends = globalThis as unknown as {
   __nexusDividendHistoryCache?: Map<string, DividendCacheEntry>;
+  __nexusDividendHistoryInflight?: Map<string, Promise<DividendHistory>>;
 };
 
 function getDividendCache(): Map<string, DividendCacheEntry> {
@@ -118,7 +119,21 @@ function getDividendCache(): Map<string, DividendCacheEntry> {
   return globalForDividends.__nexusDividendHistoryCache;
 }
 
-/** Trailing ~13 months of dividend events for a ticker (1h cache). */
+function getDividendInflight(): Map<string, Promise<DividendHistory>> {
+  if (!globalForDividends.__nexusDividendHistoryInflight) {
+    globalForDividends.__nexusDividendHistoryInflight = new Map();
+  }
+  return globalForDividends.__nexusDividendHistoryInflight;
+}
+
+/**
+ * Trailing ~13 months of dividend events for a ticker (1h cache).
+ *
+ * The TTL cache above only helps callers that arrive *after* a lookup has
+ * finished. The forecast now fetches its tickers in parallel, so two lots of
+ * the same security (e.g. one held by each spouse) would both miss the empty
+ * cache and fire the same request; the in-flight map makes them share one.
+ */
 export async function fetchDividendHistory(
   ticker: string,
   market?: string
@@ -129,6 +144,18 @@ export async function fetchDividendHistory(
     return cached;
   }
 
+  const inflight = getDividendInflight();
+  const pending = inflight.get(symbol);
+  if (pending) return pending;
+
+  const request = fetchDividendHistoryUncached(symbol).finally(() => {
+    inflight.delete(symbol);
+  });
+  inflight.set(symbol, request);
+  return request;
+}
+
+async function fetchDividendHistoryUncached(symbol: string): Promise<DividendHistory> {
   const base = process.env.QUOTE_API_BASE ?? "https://query1.finance.yahoo.com";
   const url = `${base}/v8/finance/chart/${encodeURIComponent(symbol)}?range=13mo&interval=1mo&events=div`;
   const response = await fetch(url, {

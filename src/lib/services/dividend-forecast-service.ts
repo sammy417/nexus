@@ -1,9 +1,17 @@
 import "server-only";
-import { AssetOwner } from "@/lib/models/asset";
+import { AssetOwner, StockAsset } from "@/lib/models/asset";
 import { getAssetOwner } from "@/lib/models/asset-owner";
 import { getAssetRepository } from "@/lib/repositories";
+import { mapWithConcurrency } from "./concurrency";
 import { DEFAULT_USD_KRW } from "./portfolio-service";
 import { DividendEvent, fetchDividendHistory, fetchUsdKrwRate } from "./quote-service";
+
+/**
+ * Tickers fetched at once. Six keeps a large portfolio well under a second
+ * of wall time while staying polite enough that the (key-less, unofficial)
+ * upstream doesn't start refusing requests.
+ */
+const DIVIDEND_FETCH_CONCURRENCY = 6;
 
 /**
  * Pre-tax dividend estimates derived from each stock holding's external
@@ -96,6 +104,11 @@ function estimateNextExDate(events: DividendEvent[]): string | null {
   return next.toISOString().slice(0, 10);
 }
 
+/** Per-ticker result, kept so a single failure never sinks the whole batch. */
+type TickerOutcome =
+  | { ok: true; holding: HoldingDividendForecast; suggestions: DividendSuggestion[] }
+  | { ok: false; label: string };
+
 export async function buildDividendForecast(): Promise<DividendForecast> {
   const assets = await getAssetRepository().list();
   let usdKrw = DEFAULT_USD_KRW;
@@ -108,64 +121,81 @@ export async function buildDividendForecast(): Promise<DividendForecast> {
     currency === "USD" ? value * usdKrw : value;
 
   const stocks = assets.filter(
-    (asset) => asset.type === "STOCK" && asset.ticker && asset.ticker.trim() !== ""
+    (asset): asset is StockAsset =>
+      asset.type === "STOCK" && !!asset.ticker && asset.ticker.trim() !== ""
   );
 
+  // One upstream round-trip per ticker, so a 20-stock portfolio used to wait
+  // for 20 of them end to end. They're independent — run a small pool instead.
+  const outcomes = await mapWithConcurrency(
+    stocks,
+    DIVIDEND_FETCH_CONCURRENCY,
+    async (asset): Promise<TickerOutcome> => {
+      const ticker = asset.ticker!.trim();
+      const owner = getAssetOwner(asset);
+      try {
+        const history = await fetchDividendHistory(ticker, asset.market);
+        const trailing = trailingEvents(history.events, 365);
+        const perShareTrailing12m = trailing.reduce((sum, e) => sum + e.amountPerShare, 0);
+        const last = trailing[trailing.length - 1] ?? null;
+        const valuationKrw = toKrw(history.price * asset.quantity, history.currency);
+
+        return {
+          ok: true,
+          holding: {
+            assetId: asset.id,
+            name: asset.name,
+            ticker,
+            owner,
+            quantity: asset.quantity,
+            currency: history.currency,
+            valuationKrw,
+            perShareTrailing12m,
+            perShareLast: last?.amountPerShare ?? 0,
+            yieldPct:
+              history.price > 0 && perShareTrailing12m > 0
+                ? (perShareTrailing12m / history.price) * 100
+                : null,
+            annualEstimateKrw: toKrw(perShareTrailing12m * asset.quantity, history.currency),
+            frequencyPerYear: trailing.length,
+            lastExDate: last?.date ?? null,
+            nextExDateEstimate: estimateNextExDate(trailing),
+            nextAmountKrw: last
+              ? toKrw(last.amountPerShare * asset.quantity, history.currency)
+              : null,
+          },
+          // Recent past payouts (last ~6 months) offered as one-click records.
+          suggestions: trailingEvents(history.events, 185).map((event) => ({
+            assetId: asset.id,
+            name: asset.name,
+            ticker,
+            owner,
+            date: event.date,
+            amount: event.amountPerShare * asset.quantity,
+            currency: history.currency,
+            amountKrw: toKrw(event.amountPerShare * asset.quantity, history.currency),
+          })),
+        };
+      } catch {
+        return { ok: false, label: `${asset.name} (${ticker})` };
+      }
+    }
+  );
+
+  // Collected in input order — completion order must not leak into the output.
   const holdings: HoldingDividendForecast[] = [];
   const suggestions: DividendSuggestion[] = [];
   const failedTickers: string[] = [];
   let quotedValuationKrw = 0;
 
-  for (const asset of stocks) {
-    if (asset.type !== "STOCK") continue;
-    const ticker = asset.ticker!.trim();
-    const owner = getAssetOwner(asset);
-    try {
-      const history = await fetchDividendHistory(ticker, asset.market);
-      const trailing = trailingEvents(history.events, 365);
-      const perShareTrailing12m = trailing.reduce((sum, e) => sum + e.amountPerShare, 0);
-      const last = trailing[trailing.length - 1] ?? null;
-      const valuationKrw = toKrw(history.price * asset.quantity, history.currency);
-
-      quotedValuationKrw += valuationKrw;
-
-      holdings.push({
-        assetId: asset.id,
-        name: asset.name,
-        ticker,
-        owner,
-        quantity: asset.quantity,
-        currency: history.currency,
-        valuationKrw,
-        perShareTrailing12m,
-        perShareLast: last?.amountPerShare ?? 0,
-        yieldPct:
-          history.price > 0 && perShareTrailing12m > 0
-            ? (perShareTrailing12m / history.price) * 100
-            : null,
-        annualEstimateKrw: toKrw(perShareTrailing12m * asset.quantity, history.currency),
-        frequencyPerYear: trailing.length,
-        lastExDate: last?.date ?? null,
-        nextExDateEstimate: estimateNextExDate(trailing),
-        nextAmountKrw: last ? toKrw(last.amountPerShare * asset.quantity, history.currency) : null,
-      });
-
-      // Recent past payouts (last ~6 months) offered as one-click records.
-      for (const event of trailingEvents(history.events, 185)) {
-        suggestions.push({
-          assetId: asset.id,
-          name: asset.name,
-          ticker,
-          owner,
-          date: event.date,
-          amount: event.amountPerShare * asset.quantity,
-          currency: history.currency,
-          amountKrw: toKrw(event.amountPerShare * asset.quantity, history.currency),
-        });
-      }
-    } catch {
-      failedTickers.push(`${asset.name} (${ticker})`);
+  for (const outcome of outcomes) {
+    if (!outcome.ok) {
+      failedTickers.push(outcome.label);
+      continue;
     }
+    holdings.push(outcome.holding);
+    suggestions.push(...outcome.suggestions);
+    quotedValuationKrw += outcome.holding.valuationKrw;
   }
 
   holdings.sort((a, b) => b.annualEstimateKrw - a.annualEstimateKrw);

@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useMemo } from "react";
 import { useAssets } from "@/lib/hooks/use-assets";
 import { useSnapshots } from "@/lib/hooks/use-snapshots";
+import { invalidateDividendForecast } from "@/lib/hooks/use-dividend-forecast";
 import { useDisplayCurrency } from "@/lib/currency-context";
 import { useOwnerFilter } from "@/lib/owner-filter-context";
 import { matchesOwnerFilter } from "@/lib/models/asset-owner";
@@ -56,10 +57,13 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
 
   // Every mutation moves today's snapshot server-side, so refresh the
   // history alongside the asset list to keep the chart's last point live.
+  // Holdings also drive the dividend forecast, which is cached across the
+  // dashboard/배당/세금 pages — drop it so those don't show stale estimates.
   const addAssetAndSync = useCallback(
     async (input: AssetInput) => {
       const asset = await addAsset(input);
       refreshSnapshots();
+      invalidateDividendForecast();
       return asset;
     },
     [addAsset, refreshSnapshots]
@@ -69,6 +73,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     async (id: string, input: AssetInput) => {
       const asset = await updateAsset(id, input);
       refreshSnapshots();
+      invalidateDividendForecast();
       return asset;
     },
     [updateAsset, refreshSnapshots]
@@ -78,6 +83,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     async (id: string) => {
       await deleteAsset(id);
       refreshSnapshots();
+      invalidateDividendForecast();
     },
     [deleteAsset, refreshSnapshots]
   );
@@ -85,10 +91,12 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const resetPortfolio = useCallback(async () => {
     await resetAssets();
     refreshSnapshots();
+    invalidateDividendForecast();
   }, [resetAssets, refreshSnapshots]);
 
   const refreshData = useCallback(async () => {
     await Promise.all([refreshAssets(), refreshSnapshots()]);
+    invalidateDividendForecast();
   }, [refreshAssets, refreshSnapshots]);
 
   const value = useMemo(
