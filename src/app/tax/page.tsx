@@ -99,17 +99,19 @@ export default function TaxPage() {
                 {ownerName(owner)}
               </h2>
             </div>
-            <CapitalGainsCard assets={ownerAssets} />
+            <CapitalGainsCard assets={ownerAssets} owner={owner} />
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <FinancialIncomeCard
                 records={ownerDividends}
+                owner={owner}
                 forecastHoldings={ownerForecastHoldings}
                 isForecastLoading={isForecastLoading}
                 forecastHasError={forecastHasError}
               />
               <PensionCreditCard
                 pensionAssets={ownerAssets.filter((a) => a.type === "PENSION")}
+                owner={owner}
               />
             </div>
           </section>

@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { Asset } from "@/lib/models/asset";
+import { Asset, AssetOwner } from "@/lib/models/asset";
 import {
   PENSION_COMBINED_CREDIT_LIMIT_KRW,
   PENSION_SAVINGS_CREDIT_LIMIT_KRW,
@@ -9,6 +8,7 @@ import {
 import { getPensionCredit } from "@/lib/services/tax-service";
 import MoneyInput from "@/components/common/MoneyInput";
 import { useDisplayCurrency } from "@/lib/currency-context";
+import { useSettings } from "@/lib/settings-context";
 import { useT } from "@/lib/i18n/locale-context";
 
 const inputClass =
@@ -18,15 +18,32 @@ const inputClass =
  * 연금저축·IRP 세액공제 계산기. 현재 데이터 모델은 누적 납입원금만 저장해
  * "올해 납입액"을 자동으로 도출할 수 없어, 사용자가 직접 입력하는 순수
  * 계산기로 둔다(보유 연금 계좌는 참고용으로만 나열).
+ *
+ * 납입액·소득 구간은 소유자·연도별로 설정에 저장한다 — 한도가 개인·연 단위로
+ * 적용되는 값이라 화면을 벗어날 때마다 초기화되면 쓸모가 없다.
  */
-export default function PensionCreditCard({ pensionAssets }: { pensionAssets: Asset[] }) {
+export default function PensionCreditCard({
+  pensionAssets,
+  owner,
+}: {
+  pensionAssets: Asset[];
+  owner: AssetOwner;
+}) {
   const { money } = useDisplayCurrency();
+  const { taxInputs, updateTaxInputs } = useSettings();
   const t = useT();
-  const [pensionSavings, setPensionSavings] = useState("");
-  const [irp, setIrp] = useState("");
-  const [isLowIncome, setIsLowIncome] = useState(true);
 
-  const result = getPensionCredit(Number(pensionSavings) || 0, Number(irp) || 0, isLowIncome);
+  const inputs = taxInputs(owner);
+  const pensionSavings = inputs.pensionSavingsKrw ? String(inputs.pensionSavingsKrw) : "";
+  const irp = inputs.irpKrw ? String(inputs.irpKrw) : "";
+  const isLowIncome = inputs.isLowIncome;
+
+  const setPensionSavings = (value: string) =>
+    updateTaxInputs(owner, { pensionSavingsKrw: Number(value) || 0 });
+  const setIrp = (value: string) => updateTaxInputs(owner, { irpKrw: Number(value) || 0 });
+  const setIsLowIncome = (value: boolean) => updateTaxInputs(owner, { isLowIncome: value });
+
+  const result = getPensionCredit(inputs.pensionSavingsKrw, inputs.irpKrw, isLowIncome);
 
   return (
     <section className="rounded-2xl bg-white p-6 shadow-sm dark:bg-card-dark">

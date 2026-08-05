@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { AssetOwner } from "@/lib/models/asset";
 import { DIVIDEND_TAX_RATE, DividendRecord } from "@/lib/models/dividend";
 import { getFinancialIncomeSummary, getYearEndDividendProjection } from "@/lib/services/tax-service";
 import type { HoldingDividendForecast } from "@/lib/services/dividend-forecast-service";
@@ -8,6 +8,7 @@ import MoneyInput from "@/components/common/MoneyInput";
 import { Skeleton } from "@/components/common/Skeleton";
 import DataErrorNotice from "@/components/common/DataErrorNotice";
 import { useDisplayCurrency } from "@/lib/currency-context";
+import { useSettings } from "@/lib/settings-context";
 import { useT } from "@/lib/i18n/locale-context";
 
 const OVER_COLOR = "#F04452";
@@ -70,19 +71,28 @@ function Gauge({
  */
 export default function FinancialIncomeCard({
   records,
+  owner,
   forecastHoldings,
   isForecastLoading,
   forecastHasError = false,
 }: {
   records: DividendRecord[];
+  owner: AssetOwner;
   forecastHoldings: HoldingDividendForecast[];
   isForecastLoading: boolean;
   /** Forecast lookup failed — the year-end projection is understated. */
   forecastHasError?: boolean;
 }) {
   const { usdKrw, money } = useDisplayCurrency();
+  const { taxInputs, updateTaxInputs } = useSettings();
   const t = useT();
-  const [manualAdjustment, setManualAdjustment] = useState("");
+
+  // Persisted per owner/year: an unrecorded-payout figure that resets on
+  // every reload would silently understate the threshold check.
+  const unrecorded = taxInputs(owner).unrecordedDividendKrw;
+  const manualAdjustment = unrecorded ? String(unrecorded) : "";
+  const setManualAdjustment = (value: string) =>
+    updateTaxInputs(owner, { unrecordedDividendKrw: Number(value) || 0 });
 
   const projectedRemainingKrw = isForecastLoading
     ? 0
@@ -90,7 +100,7 @@ export default function FinancialIncomeCard({
   const summary = getFinancialIncomeSummary(
     records,
     usdKrw,
-    Number(manualAdjustment) || 0,
+    unrecorded,
     projectedRemainingKrw
   );
 

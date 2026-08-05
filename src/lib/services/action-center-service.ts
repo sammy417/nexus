@@ -3,6 +3,7 @@ import { getAssetOwner } from "@/lib/models/asset-owner";
 import { DividendRecord } from "@/lib/models/dividend";
 import { PORTFOLIO_CATEGORY_LABEL } from "@/lib/models/portfolio-category";
 import { TargetAllocationSettings } from "@/lib/models/target-allocation";
+import { TaxYearInputs } from "@/lib/models/tax-inputs";
 import {
   FINANCIAL_INCOME_THRESHOLD_KRW,
   FOREIGN_CGT_EXEMPTION_KRW,
@@ -79,6 +80,12 @@ export interface ActionCenterInput {
   forecastHoldings: HoldingDividendForecast[];
   usdKrw: number;
   targetAllocation: TargetAllocationSettings;
+  /**
+   * This year's manual tax figures per owner. The financial-income check
+   * would otherwise ignore payouts the user told the 세금 page about but
+   * never entered as dividend records, and understate the threshold.
+   */
+  taxInputs?: Partial<Record<AssetOwner, TaxYearInputs>>;
 }
 
 export function getActionItems({
@@ -88,6 +95,7 @@ export function getActionItems({
   forecastHoldings,
   usdKrw,
   targetAllocation,
+  taxInputs,
 }: ActionCenterInput): ActionItem[] {
   const items: ActionItem[] = [];
   const now = new Date();
@@ -134,7 +142,7 @@ export function getActionItems({
     const income = getFinancialIncomeSummary(
       ownerDividends,
       usdKrw,
-      0,
+      taxInputs?.[owner]?.unrecordedDividendKrw ?? 0,
       ownerForecast.reduce((sum, h) => sum + (h.nextAmountKrw ?? 0), 0)
     );
     if (income.currentOverThreshold) {

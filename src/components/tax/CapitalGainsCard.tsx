@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Asset } from "@/lib/models/asset";
+import { useMemo } from "react";
+import { Asset, AssetOwner } from "@/lib/models/asset";
 import { FOREIGN_CGT_EXEMPTION_KRW, FOREIGN_CGT_RATE } from "@/lib/models/tax";
+import { realizedGainsKrw, RealizedSign } from "@/lib/models/tax-inputs";
 import { getCapitalGainsSummary, getForeignStockLots } from "@/lib/services/tax-service";
 import MoneyInput from "@/components/common/MoneyInput";
 import { useDisplayCurrency } from "@/lib/currency-context";
+import { useSettings } from "@/lib/settings-context";
 import { useT } from "@/lib/i18n/locale-context";
 
 const HARVEST_COLOR = "#3182F6";
@@ -13,25 +15,36 @@ const HARVEST_COLOR = "#3182F6";
 const inputClass =
   "rounded-xl bg-gray-50 px-4 py-2.5 text-sm text-gray-900 outline-none placeholder:text-gray-300 focus:ring-2 focus:ring-gray-900/10 dark:bg-white/5 dark:text-gray-100 dark:placeholder:text-gray-600 dark:focus:ring-white/10";
 
-type Sign = "GAIN" | "LOSS";
-
 /**
  * 해외주식 양도세 시뮬레이터. 연 250만원 기본공제는 "올해 실현손익 전체
  * 합계"에 적용되므로, 정확히 계산하려면 이미 매도해서 확정된 올해 손익을
  * 입력받아야 한다 — 보유 중인 종목의 평가손익만으로는(전량 미실현) 실제
  * 세액과 무관할 수 있다. 아래에서 실현손익을 입력받고, 보유 종목 체크박스로
  * "추가로 이만큼 더 판다면"을 얹어 시뮬레이션한다.
+ *
+ * 입력값은 소유자·연도별로 설정에 저장된다 — 세금은 개인 단위이고 모든
+ * 금액이 그 해의 값이라, 새로고침이나 화면 이동으로 사라지면 안 된다.
  */
-export default function CapitalGainsCard({ assets }: { assets: Asset[] }) {
+export default function CapitalGainsCard({ assets, owner }: { assets: Asset[]; owner: AssetOwner }) {
   const { usdKrw, money } = useDisplayCurrency();
+  const { taxInputs, updateTaxInputs } = useSettings();
   const t = useT();
 
   const lots = useMemo(() => getForeignStockLots(assets, usdKrw), [assets, usdKrw]);
-  const [excluded, setExcluded] = useState<Set<string>>(new Set());
-  const [realizedSign, setRealizedSign] = useState<Sign>("GAIN");
-  const [realizedMagnitude, setRealizedMagnitude] = useState("");
+  const inputs = taxInputs(owner);
+  const excluded = useMemo(() => new Set(inputs.excludedLotIds), [inputs.excludedLotIds]);
+  const realizedSign = inputs.realizedSign;
+  const realizedMagnitude = inputs.realizedMagnitudeKrw ? String(inputs.realizedMagnitudeKrw) : "";
 
-  const realizedSoFarKrw = (Number(realizedMagnitude) || 0) * (realizedSign === "LOSS" ? -1 : 1);
+  const realizedSoFarKrw = realizedGainsKrw(inputs);
+
+  function setRealizedSign(value: RealizedSign) {
+    updateTaxInputs(owner, { realizedSign: value });
+  }
+
+  function setRealizedMagnitude(value: string) {
+    updateTaxInputs(owner, { realizedMagnitudeKrw: Number(value) || 0 });
+  }
 
   const header = (
     <>
@@ -54,8 +67,8 @@ export default function CapitalGainsCard({ assets }: { assets: Asset[] }) {
             <div className="flex gap-1 rounded-lg bg-gray-50 p-0.5 dark:bg-white/5">
               {(
                 [
-                  { value: "GAIN" as const, label: "이익" },
-                  { value: "LOSS" as const, label: "손실" },
+                  { value: "GAIN" as RealizedSign, label: "이익" },
+                  { value: "LOSS" as RealizedSign, label: "손실" },
                 ]
               ).map((option) => (
                 <button
@@ -120,12 +133,10 @@ export default function CapitalGainsCard({ assets }: { assets: Asset[] }) {
   const summary = getCapitalGainsSummary(realizedSoFarKrw, additionalProfits);
 
   function toggle(id: string) {
-    setExcluded((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    const next = new Set(excluded);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    updateTaxInputs(owner, { excludedLotIds: [...next] });
   }
 
   return (

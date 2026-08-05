@@ -6,6 +6,7 @@ import { AlertTriangle, Check, ChevronDown, ChevronRight, Coins, PiggyBank, Rece
 import { Asset } from "@/lib/models/asset";
 import { DividendRecord } from "@/lib/models/dividend";
 import { hexWithAlpha } from "@/lib/models/asset-owner";
+import { currentTaxYear } from "@/lib/models/tax-inputs";
 import { Skeleton } from "@/components/common/Skeleton";
 import DataErrorNotice from "@/components/common/DataErrorNotice";
 import { useDisplayCurrency } from "@/lib/currency-context";
@@ -61,7 +62,7 @@ export default function ActionCenterCard({
   className?: string;
 }) {
   const { usdKrw, money } = useDisplayCurrency();
-  const { targetAllocation, ownerName } = useSettings();
+  const { targetAllocation, ownerName, settings } = useSettings();
   const t = useT();
   const [expanded, setExpanded] = useState(false);
 
@@ -74,6 +75,9 @@ export default function ActionCenterCard({
         forecastHoldings,
         usdKrw,
         targetAllocation,
+        // Unrecorded payouts entered on the 세금 page count toward the
+        // 종합과세 threshold here too, or the two screens disagree.
+        taxInputs: settings.taxInputs?.[currentTaxYear()],
       });
 
   const hiddenCount = items.length - DEFAULT_VISIBLE;

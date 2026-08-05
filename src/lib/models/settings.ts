@@ -5,6 +5,7 @@ import {
   normalizeTargetAllocation,
   TargetAllocationSettings,
 } from "./target-allocation";
+import { normalizeTaxInputsByYear, TaxInputsByYear } from "./tax-inputs";
 
 /** Household-level preferences (one shared dataset, so not per-user). */
 export interface AppSettings {
@@ -14,6 +15,8 @@ export interface AppSettings {
   ownerColors: Record<AssetOwner, string>;
   /** Target asset allocation + drift band driving the rebalancing card. */
   targetAllocation: TargetAllocationSettings;
+  /** Manual tax-page figures, keyed by year then owner. */
+  taxInputs: TaxInputsByYear;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -23,6 +26,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     ...DEFAULT_TARGET_ALLOCATION,
     weights: { ...DEFAULT_TARGET_ALLOCATION.weights },
   },
+  taxInputs: {},
 };
 
 const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
@@ -56,10 +60,12 @@ export function normalizeSettings(value: unknown): AppSettings {
       }
     }
   }
+  const isObject = value !== null && typeof value === "object";
   const targetAllocation = normalizeTargetAllocation(
-    value && typeof value === "object"
-      ? (value as { targetAllocation?: unknown }).targetAllocation
-      : undefined
+    isObject ? (value as { targetAllocation?: unknown }).targetAllocation : undefined
   );
-  return { ownerNames, ownerColors, targetAllocation };
+  const taxInputs = normalizeTaxInputsByYear(
+    isObject ? (value as { taxInputs?: unknown }).taxInputs : undefined
+  );
+  return { ownerNames, ownerColors, targetAllocation, taxInputs };
 }
