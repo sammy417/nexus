@@ -1,23 +1,13 @@
 "use client";
 
-import { FormEvent, useState } from "react";
 import { Trash2, X } from "lucide-react";
 import { useAssetModal } from "@/lib/asset-modal-context";
-import { AssetInput, usePortfolio } from "@/lib/portfolio-context";
-import { ASSET_TYPE_LABEL, ASSET_TYPES } from "@/lib/models/asset-types";
-import { STOCK_SECTORS } from "@/lib/models/stock-sector";
-import { ASSET_OWNERS } from "@/lib/models/asset-owner";
-import { useSettings } from "@/lib/settings-context";
+import { Asset } from "@/lib/models/asset";
 import { useT } from "@/lib/i18n/locale-context";
-import { Asset, AssetOwner, AssetType, Currency } from "@/lib/models/asset";
-import { formatKRW } from "@/lib/format";
-import MoneyInput from "@/components/common/MoneyInput";
-
-const inputClass =
-  "rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-300 focus:ring-2 focus:ring-gray-900/10 dark:bg-white/5 dark:text-gray-100 dark:placeholder:text-gray-600 dark:focus:ring-white/10";
-const labelClass = "flex flex-col gap-1.5";
-const labelTextClass = "text-xs font-medium text-gray-500 dark:text-gray-400";
-const hintTextClass = "text-[11px] leading-relaxed text-gray-400 dark:text-gray-500";
+import { useAssetForm } from "./use-asset-form";
+import { CurrencyPicker, NameField, OwnerPicker, TypePicker } from "./fields/CommonFields";
+import StockFields from "./fields/StockFields";
+import { BondFields, CashFields, CustomFields, PensionFields } from "./fields/ValueFields";
 
 export default function AssetFormModal() {
   const { isOpen, editingAsset, closeModal } = useAssetModal();
@@ -32,282 +22,22 @@ export default function AssetFormModal() {
         onClick={closeModal}
         className="absolute inset-0 bg-black/40"
       />
+      {/* Keyed so switching which asset is being edited remounts with fresh state. */}
       <AssetFormSheet key={editingAsset?.id ?? "new"} editingAsset={editingAsset} />
     </div>
   );
 }
 
-/** Positive number from a text field; undefined when empty, null when invalid. */
-function parseOptionalPositive(raw: string): number | undefined | null {
-  const trimmed = raw.trim();
-  if (trimmed === "") return undefined;
-  const value = Number(trimmed);
-  return Number.isFinite(value) && value > 0 ? value : null;
-}
-
-/** Quote in the currency the asset is denominated in. */
-async function fetchQuote(
-  ticker: string,
-  market: string,
-  currency: Currency
-): Promise<{ price: number; sector?: string }> {
-  const params = new URLSearchParams({ ticker });
-  if (market) params.set("market", market);
-  const response = await fetch(`/api/quote?${params.toString()}`);
-  if (!response.ok) {
-    const body = await response.json().catch(() => null);
-    throw new Error(body?.error ?? `Quote request failed: ${response.status}`);
-  }
-  const data = await response.json();
-  if (
-    typeof data.price !== "number" ||
-    data.price <= 0 ||
-    typeof data.priceKrw !== "number" ||
-    typeof data.usdKrw !== "number"
-  ) {
-    throw new Error("Quote returned no usable price");
-  }
-  const price =
-    currency === "KRW"
-      ? data.priceKrw
-      : data.currency === "USD"
-        ? data.price
-        : data.priceKrw / data.usdKrw;
-  const sector = typeof data.sector === "string" ? data.sector : undefined;
-  return { price, sector };
-}
-
+/**
+ * The dialog frame and layout. Everything type-specific lives in the field
+ * groups under `fields/`, and every rule about what actually gets stored is
+ * in `models/asset-form.ts` — this component only arranges them.
+ */
 function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
-  const { closeModal, showToast } = useAssetModal();
-  const { ownerName, ownerColor } = useSettings();
-  const { addAsset, updateAsset, deleteAsset } = usePortfolio();
+  const { closeModal } = useAssetModal();
   const t = useT();
-  const isEditing = editingAsset !== null;
-
-  const [type, setType] = useState<AssetType>(editingAsset?.type ?? "STOCK");
-  const [currency, setCurrency] = useState<Currency>(editingAsset?.currency ?? "KRW");
-  // Editing keeps the stored owner (undefined = 공동); new entries default to 본인.
-  const [owner, setOwner] = useState<AssetOwner>(
-    editingAsset ? (editingAsset.owner ?? "JOINT") : "SELF"
-  );
-  const [name, setName] = useState(editingAsset?.name ?? "");
-  const [category, setCategory] = useState(
-    editingAsset?.type === "CUSTOM" ? editingAsset.category ?? "" : ""
-  );
-  const [isHome, setIsHome] = useState(
-    editingAsset?.type === "CUSTOM" ? editingAsset.isHome ?? false : false
-  );
-  const [accountType, setAccountType] = useState(
-    editingAsset?.type === "PENSION" ? editingAsset.accountType ?? "" : ""
-  );
-  const [market, setMarket] = useState(
-    editingAsset?.type === "STOCK" ? editingAsset.market ?? "" : ""
-  );
-  const [ticker, setTicker] = useState(
-    editingAsset?.type === "STOCK" ? editingAsset.ticker ?? "" : ""
-  );
-  const [sector, setSector] = useState(
-    editingAsset?.type === "STOCK" ? editingAsset.sector ?? "" : ""
-  );
-  const [subSector, setSubSector] = useState(
-    editingAsset?.type === "STOCK" ? editingAsset.subSector ?? "" : ""
-  );
-  const [quantity, setQuantity] = useState(
-    editingAsset?.type === "STOCK" ? String(editingAsset.quantity) : ""
-  );
-  const [avgPrice, setAvgPrice] = useState(
-    editingAsset?.type === "STOCK" ? String(editingAsset.avgPrice) : ""
-  );
-  const [balance, setBalance] = useState(
-    editingAsset?.type === "CASH" ? String(editingAsset.balance) : ""
-  );
-  const [purchasePrice, setPurchasePrice] = useState(
-    editingAsset?.type === "BOND" || editingAsset?.type === "CUSTOM"
-      ? String(editingAsset.purchasePrice)
-      : editingAsset?.type === "PENSION"
-        ? String(editingAsset.principalPaid)
-        : ""
-  );
-  const [currentValue, setCurrentValue] = useState(
-    editingAsset?.type === "BOND" ||
-      editingAsset?.type === "CUSTOM" ||
-      editingAsset?.type === "PENSION"
-      ? String(editingAsset.currentValue)
-      : ""
-  );
-  const [couponRate, setCouponRate] = useState(
-    editingAsset?.type === "BOND" && editingAsset.couponRate !== undefined
-      ? String(editingAsset.couponRate)
-      : ""
-  );
-  const [maturityDate, setMaturityDate] = useState(
-    editingAsset?.type === "BOND" ? editingAsset.maturityDate ?? "" : ""
-  );
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  /**
-   * Resolve the final input, fetching the live price for stocks.
-   * 현재가 is never typed in: ticker lookup → 평단가 → (editing) stored
-   * price, in that order. Returns an error string when unresolvable.
-   */
-  async function resolveInput(): Promise<AssetInput | string> {
-    const trimmedName = name.trim();
-    if (!trimmedName) return t("이름을 입력해 주세요.");
-
-    if (type === "STOCK") {
-      const q = parseOptionalPositive(quantity);
-      if (q === undefined || q === null) return t("보유 수량을 올바르게 입력해 주세요.");
-      const avg = parseOptionalPositive(avgPrice);
-      if (avg === null) return t("평단가를 올바르게 입력해 주세요.");
-
-      const trimmedTicker = ticker.trim();
-      let quoted: number | undefined;
-      let fetchedSector: string | undefined;
-      let quoteFailed = false;
-      if (trimmedTicker) {
-        try {
-          const quote = await fetchQuote(trimmedTicker, market.trim(), currency);
-          quoted = quote.price;
-          fetchedSector = quote.sector;
-        } catch {
-          quoteFailed = true;
-        }
-      }
-
-      const storedPrice =
-        isEditing && editingAsset?.type === "STOCK" && (editingAsset.currency ?? "KRW") === currency
-          ? editingAsset.currentPrice
-          : undefined;
-      const current = quoted ?? avg ?? storedPrice;
-      if (current === undefined) {
-        return trimmedTicker
-          ? t("현재가 조회에 실패했습니다. 티커를 확인하거나 평단가를 입력해 주세요.")
-          : t("티커(현재가 자동 조회) 또는 평단가 중 하나는 입력해 주세요.");
-      }
-      if (quoteFailed && (avg !== undefined || storedPrice !== undefined)) {
-        showToast(t("현재가 조회에 실패해 입력된 값으로 대신 계산했습니다."));
-      }
-
-      // Sector: manual choice wins; else the auto-fetched sector; else keep
-      // whatever was stored (on edit).
-      const resolvedSector =
-        sector.trim() ||
-        fetchedSector ||
-        (isEditing && editingAsset?.type === "STOCK" ? editingAsset.sector : undefined) ||
-        undefined;
-
-      // Sub-sector is a free-text detail on the base sector — only meaningful
-      // when a sector is set, so drop it otherwise.
-      const trimmedSubSector = subSector.trim();
-      const resolvedSubSector = resolvedSector && trimmedSubSector ? trimmedSubSector : undefined;
-
-      return {
-        type: "STOCK",
-        name: trimmedName,
-        currency,
-        market: market.trim() || undefined,
-        ticker: trimmedTicker || undefined,
-        quantity: q,
-        avgPrice: avg ?? current,
-        currentPrice: current,
-        sector: resolvedSector,
-        subSector: resolvedSubSector,
-      };
-    }
-
-    if (type === "BOND") {
-      const pp = parseOptionalPositive(purchasePrice);
-      if (pp === undefined || pp === null) return t("매입 금액을 올바르게 입력해 주세요.");
-      const cv = parseOptionalPositive(currentValue);
-      if (cv === null) return t("현재 평가 금액을 올바르게 입력해 주세요.");
-      const rate = couponRate.trim() === "" ? undefined : Number(couponRate);
-      if (rate !== undefined && (Number.isNaN(rate) || rate < 0))
-        return t("표면금리를 올바르게 입력해 주세요.");
-      return {
-        type: "BOND",
-        name: trimmedName,
-        currency,
-        purchasePrice: pp,
-        currentValue: cv ?? pp,
-        couponRate: rate,
-        maturityDate: maturityDate || undefined,
-      };
-    }
-
-    if (type === "PENSION") {
-      const pp = parseOptionalPositive(purchasePrice);
-      if (pp === undefined || pp === null) return t("납입 원금을 올바르게 입력해 주세요.");
-      const cv = parseOptionalPositive(currentValue);
-      if (cv === null) return t("현재 평가 금액을 올바르게 입력해 주세요.");
-      return {
-        type: "PENSION",
-        name: trimmedName,
-        currency,
-        accountType: accountType.trim() || undefined,
-        principalPaid: pp,
-        currentValue: cv ?? pp,
-      };
-    }
-
-    if (type === "CUSTOM") {
-      const pp = parseOptionalPositive(purchasePrice);
-      if (pp === undefined || pp === null) return t("매입 금액을 올바르게 입력해 주세요.");
-      const cv = parseOptionalPositive(currentValue);
-      if (cv === null) return t("현재 평가 금액을 올바르게 입력해 주세요.");
-      return {
-        type: "CUSTOM",
-        name: trimmedName,
-        currency,
-        category: category.trim() || undefined,
-        purchasePrice: pp,
-        currentValue: cv ?? pp,
-        isHome: isHome || undefined,
-      };
-    }
-
-    const amt = parseOptionalPositive(balance);
-    if (amt === undefined || amt === null) return t("금액을 올바르게 입력해 주세요.");
-    return { type: "CASH", name: trimmedName, currency, balance: amt };
-  }
-
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    setError(null);
-    setIsSubmitting(true);
-
-    try {
-      const resolved = await resolveInput();
-      if (typeof resolved === "string") {
-        setError(resolved);
-        return;
-      }
-
-      const withOwner = { ...resolved, owner };
-      if (isEditing && editingAsset) {
-        await updateAsset(editingAsset.id, withOwner);
-        showToast(t("{name} 정보가 수정되었습니다.", { name: withOwner.name }));
-      } else {
-        await addAsset(withOwner);
-        showToast(t("{name} 자산이 추가되었습니다.", { name: withOwner.name }));
-      }
-      closeModal();
-    } catch (err) {
-      const detail = err instanceof Error && err.message ? ` (${err.message})` : "";
-      setError(t("저장에 실패했습니다. 잠시 후 다시 시도해 주세요.") + detail);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  async function handleDelete() {
-    if (!editingAsset) return;
-    const confirmed = window.confirm(t("{name} 자산을 삭제할까요?", { name: editingAsset.name }));
-    if (!confirmed) return;
-    await deleteAsset(editingAsset.id);
-    showToast(t("{name} 자산이 삭제되었습니다.", { name: editingAsset.name }));
-    closeModal();
-  }
+  const { values, setField, error, isSubmitting, isEditing, handleSubmit, handleDelete } =
+    useAssetForm(editingAsset);
 
   return (
     <div className="relative w-full max-w-lg rounded-2xl bg-white px-6 pb-6 pt-5 shadow-xl dark:bg-card-dark">
@@ -325,320 +55,29 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-5 flex max-h-[70vh] flex-col gap-4 overflow-y-auto">
-        <div className="grid grid-cols-5 gap-2">
-          {ASSET_TYPES.map((at) => (
-            <button
-              key={at}
-              type="button"
-              disabled={isEditing}
-              onClick={() => setType(at)}
-              className={`rounded-xl py-2.5 text-sm font-semibold transition-colors ${
-                type === at
-                  ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
-                  : "bg-gray-50 text-gray-400 dark:bg-white/5 dark:text-gray-500"
-              } ${isEditing ? "cursor-not-allowed opacity-50" : ""}`}
-            >
-              {t(ASSET_TYPE_LABEL[at])}
-            </button>
-          ))}
-        </div>
+      <form
+        onSubmit={handleSubmit}
+        className="mt-5 flex max-h-[70vh] flex-col gap-4 overflow-y-auto"
+      >
+        <TypePicker
+          type={values.type}
+          disabled={isEditing}
+          onChange={(type) => setField("type", type)}
+        />
+        <CurrencyPicker
+          currency={values.currency}
+          onChange={(currency) => setField("currency", currency)}
+        />
+        <OwnerPicker values={values} setField={setField} />
+        <NameField values={values} setField={setField} />
 
-        <div className="flex items-center justify-between">
-          <span className={labelTextClass}>{t("표시 금액 통화")}</span>
-          <div className="flex gap-1 rounded-lg bg-gray-50 p-0.5 dark:bg-white/5">
-            {(["KRW", "USD"] as Currency[]).map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setCurrency(c)}
-                className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
-                  currency === c
-                    ? "bg-white text-gray-900 shadow-sm dark:bg-white/15 dark:text-gray-100"
-                    : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-                }`}
-              >
-                {c === "KRW" ? t("₩ 원화") : t("$ 달러")}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <span className={labelTextClass}>{t("소유자")}</span>
-          <div className="flex gap-1 rounded-lg bg-gray-50 p-0.5 dark:bg-white/5">
-            {ASSET_OWNERS.map((o) => (
-              <button
-                key={o}
-                type="button"
-                onClick={() => setOwner(o)}
-                className={`flex items-center gap-1 rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
-                  owner === o
-                    ? "bg-white text-gray-900 shadow-sm dark:bg-white/15 dark:text-gray-100"
-                    : "text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-                }`}
-              >
-                <span
-                  aria-hidden
-                  className="h-1.5 w-1.5 rounded-full"
-                  style={{ backgroundColor: ownerColor(o) }}
-                />
-                {ownerName(o)}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <label className={labelClass}>
-          <span className={labelTextClass}>{type === "STOCK" ? t("종목명") : t("자산명")}</span>
-          <input
-            type="text"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder={
-              type === "STOCK"
-                ? t("예: 삼성전자")
-                : type === "BOND"
-                  ? t("예: 국고채 3년")
-                  : type === "PENSION"
-                    ? t("예: IRP 계좌 (미래에셋)")
-                    : type === "CUSTOM"
-                      ? t("예: 자가 아파트, 금 현물")
-                      : t("예: 입출금 통장")
-            }
-            required
-            className={inputClass}
-          />
-        </label>
-
-        {type === "CUSTOM" && (
-          <>
-            <label className={labelClass}>
-              <span className={labelTextClass}>{t("카테고리 (선택)")}</span>
-              <input
-                type="text"
-                value={category}
-                onChange={(event) => setCategory(event.target.value)}
-                placeholder={t("예: 부동산, 금, 암호화폐")}
-                className={inputClass}
-              />
-            </label>
-            <label className="flex items-center gap-2.5 rounded-xl bg-gray-50 px-4 py-3 dark:bg-white/5">
-              <input
-                type="checkbox"
-                checked={isHome}
-                onChange={(event) => setIsHome(event.target.checked)}
-                className="h-4 w-4 shrink-0 cursor-pointer rounded border-gray-300 text-gray-900 focus:ring-gray-900/20 dark:border-gray-600 dark:text-white"
-              />
-              <span className="text-xs text-gray-600 dark:text-gray-300">
-                {t("실거주 주택(집)이에요")}
-                <span className="ml-1 text-gray-400 dark:text-gray-500">
-                  {t("— 설정에서 목표 배분 계산 시 제외할 수 있어요")}
-                </span>
-              </span>
-            </label>
-          </>
+        {values.type === "STOCK" && (
+          <StockFields values={values} setField={setField} editingAsset={editingAsset} />
         )}
-
-        {type === "PENSION" && (
-          <>
-            <label className={labelClass}>
-              <span className={labelTextClass}>{t("계좌 유형 (선택)")}</span>
-              <input
-                type="text"
-                value={accountType}
-                onChange={(event) => setAccountType(event.target.value)}
-                placeholder={t("예: DC, IRP, 연금저축")}
-                className={inputClass}
-              />
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <label className={labelClass}>
-                <span className={labelTextClass}>{t("납입 원금")}</span>
-                <MoneyInput
-                  value={purchasePrice}
-                  onChange={setPurchasePrice}
-                  currency={currency}
-                  placeholder="0"
-                  required
-                  className={inputClass}
-                />
-              </label>
-              <label className={labelClass}>
-                <span className={labelTextClass}>{t("현재 평가 금액 (선택)")}</span>
-                <MoneyInput
-                  value={currentValue}
-                  onChange={setCurrentValue}
-                  currency={currency}
-                  placeholder={t("미입력 시 납입 원금과 동일")}
-                  className={inputClass}
-                />
-              </label>
-            </div>
-          </>
-        )}
-
-        {type === "STOCK" && (
-          <>
-            <div className="grid grid-cols-2 gap-3">
-              <label className={labelClass}>
-                <span className={labelTextClass}>{t("보유 수량")}</span>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min="0"
-                  value={quantity}
-                  onChange={(event) => setQuantity(event.target.value)}
-                  placeholder="0"
-                  required
-                  className={inputClass}
-                />
-              </label>
-              <label className={labelClass}>
-                <span className={labelTextClass}>{t("티커 (선택)")}</span>
-                <input
-                  type="text"
-                  value={ticker}
-                  onChange={(event) => setTicker(event.target.value)}
-                  placeholder={t("예: 005930, AAPL")}
-                  className={inputClass}
-                />
-              </label>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <label className={labelClass}>
-                <span className={labelTextClass}>{t("시장 (선택)")}</span>
-                <input
-                  type="text"
-                  value={market}
-                  onChange={(event) => setMarket(event.target.value)}
-                  placeholder={t("예: KOSPI, KOSDAQ, NASDAQ")}
-                  className={inputClass}
-                />
-              </label>
-              <label className={labelClass}>
-                <span className={labelTextClass}>{t("평단가 (선택)")}</span>
-                <MoneyInput
-                  value={avgPrice}
-                  onChange={setAvgPrice}
-                  currency={currency}
-                  placeholder="0"
-                  className={inputClass}
-                />
-              </label>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <label className={labelClass}>
-                <span className={labelTextClass}>{t("섹터 (선택)")}</span>
-                <select
-                  value={sector}
-                  onChange={(event) => setSector(event.target.value)}
-                  className={`${inputClass} appearance-none`}
-                >
-                  <option value="">{t("자동 조회 (티커 기준)")}</option>
-                  {STOCK_SECTORS.map((s) => (
-                    <option key={s} value={s}>
-                      {t(s)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className={labelClass}>
-                <span className={labelTextClass}>{t("세부 섹터 (선택)")}</span>
-                <input
-                  type="text"
-                  value={subSector}
-                  onChange={(event) => setSubSector(event.target.value)}
-                  placeholder={t("예: 반도체, AI SW")}
-                  className={inputClass}
-                />
-              </label>
-            </div>
-            <p className={hintTextClass}>
-              {t(
-                "현재가는 입력하지 않습니다 — 저장 시 티커로 자동 조회해 선택한 통화로 저장합니다 (국내 6자리 코드·미국 티커 지원). 티커가 없거나 조회에 실패하면 평단가로 대신 계산합니다."
-              )}
-              {isEditing && editingAsset?.type === "STOCK" && (
-                <>
-                  {" "}
-                  {t("현재 저장된 현재가:")}{" "}
-                  {(editingAsset.currency ?? "KRW") === "USD"
-                    ? `$${editingAsset.currentPrice.toLocaleString("en-US")}`
-                    : formatKRW(editingAsset.currentPrice)}
-                </>
-              )}
-            </p>
-          </>
-        )}
-
-        {(type === "BOND" || type === "CUSTOM") && (
-          <div className="grid grid-cols-2 gap-3">
-            <label className={labelClass}>
-              <span className={labelTextClass}>{t("매입 금액")}</span>
-              <MoneyInput
-                value={purchasePrice}
-                onChange={setPurchasePrice}
-                currency={currency}
-                placeholder="0"
-                required
-                className={inputClass}
-              />
-            </label>
-            <label className={labelClass}>
-              <span className={labelTextClass}>현재 평가 금액 (선택)</span>
-              <MoneyInput
-                value={currentValue}
-                onChange={setCurrentValue}
-                currency={currency}
-                placeholder={t("미입력 시 매입 금액과 동일")}
-                className={inputClass}
-              />
-            </label>
-          </div>
-        )}
-
-        {type === "BOND" && (
-          <>
-            <div className="grid grid-cols-2 gap-3">
-              <label className={labelClass}>
-                <span className={labelTextClass}>{t("표면금리 % (선택)")}</span>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
-                  step="0.01"
-                  value={couponRate}
-                  onChange={(event) => setCouponRate(event.target.value)}
-                  placeholder={t("예: 3.25")}
-                  className={inputClass}
-                />
-              </label>
-              <label className={labelClass}>
-                <span className={labelTextClass}>{t("만기일 (선택)")}</span>
-                <input
-                  type="date"
-                  value={maturityDate}
-                  onChange={(event) => setMaturityDate(event.target.value)}
-                  className={`${inputClass} [color-scheme:light] dark:[color-scheme:dark]`}
-                />
-              </label>
-            </div>
-          </>
-        )}
-
-        {type === "CASH" && (
-          <label className={labelClass}>
-            <span className={labelTextClass}>{t("금액")}</span>
-            <MoneyInput
-              value={balance}
-              onChange={setBalance}
-              currency={currency}
-              placeholder="0"
-              required
-              className={inputClass}
-            />
-          </label>
-        )}
+        {values.type === "BOND" && <BondFields values={values} setField={setField} />}
+        {values.type === "PENSION" && <PensionFields values={values} setField={setField} />}
+        {values.type === "CUSTOM" && <CustomFields values={values} setField={setField} />}
+        {values.type === "CASH" && <CashFields values={values} setField={setField} />}
 
         {error && <p className="text-xs font-medium text-fall">{error}</p>}
 
@@ -659,7 +98,7 @@ function AssetFormSheet({ editingAsset }: { editingAsset: Asset | null }) {
             className="flex-1 rounded-xl bg-gray-900 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800 disabled:opacity-60 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
           >
             {isSubmitting
-              ? type === "STOCK"
+              ? values.type === "STOCK"
                 ? t("현재가 조회 중...")
                 : t("저장 중...")
               : isEditing

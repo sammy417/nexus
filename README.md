@@ -51,6 +51,7 @@ npm run test:watch # 변경 감지 모드
 | `dividend-service.test.ts` | 최근 12개월 버킷(빈 달 0으로 채움) · 창 밖 기록 제외 · **올해 누계와 최근 12개월은 다른 값** |
 | `concurrency.test.ts` | 동시 실행 풀이 상한을 넘지 않음 · 결과가 **완료 순서가 아닌 입력 순서** · 항목당 정확히 한 번 실행 · 잘못된 상한은 1로 폴백 |
 | `tax-inputs.test.ts` | 저장된 세금 입력값 정규화(음수·비숫자·잘못된 연도/소유자 제거) · 과거 5년만 보관 · 패치가 다른 연도·소유자를 건드리지 않음 · **새 연도는 작년 값을 물려받지 않음** |
+| `asset-form.test.ts` | 자산 폼이 **무엇을 저장하는지** — 현재가 우선순위(시세 → 평단가 → 저장값, 단 통화가 바뀌면 저장값 무효) · 섹터 우선순위(수동 → 자동 조회 → 기존) · 기본 섹터 없는 세부 섹터는 버림 · 현재 평가액 미입력은 원금과 동일 · 타입 전환 시 다른 타입 필드가 딸려오지 않음 |
 | `action-center-service.test.ts` | 리밸런싱 항목 최대 3개 상한 · 심각도 → 카테고리(세금·연금 우선) 정렬 · 세금은 소유자별 개별 판정(JOINT 제외) · 연말 전용 항목과 14일 배당 알림의 날짜 경계 |
 
 날짜에 의존하는 로직(연말 세무 점검, 배당 D-day, 월별 버킷)은 `vi.setSystemTime`으로 시계를 고정해 실행 시점과 무관하게 같은 결과가 나오도록 했습니다.
@@ -80,7 +81,11 @@ src/
     layout/                   # Sidebar (내비게이션 + 자산 추가 + 테마/초기화)
     dashboard/                # 대시보드 위젯 (요약/자산배분/미리보기)
     portfolio/                # AssetTable (자산 목록 테이블)
-    asset/                    # AssetFormModal (자산 추가/수정 다이얼로그)
+    asset/                    # 자산 추가/수정 다이얼로그
+      AssetFormModal.tsx        # 다이얼로그 프레임 + 레이아웃만
+      use-asset-form.ts         # 폼 상태 한 덩어리 · 시세 조회 · 저장/삭제
+      field-styles.ts           # 필드 공통 클래스
+      fields/                   # 타입별 필드 그룹 (Common/Stock/Value)
     common/                   # Toast 등 공통 UI
   lib/
     models/                   # 도메인 모델 (자산 타입 정의) — 확장의 시작점
@@ -127,7 +132,7 @@ src/
 **컴파일러가 못 잡는 단계** (안전하게 실패하지만 조용히 빠짐 — 직접 챙길 것):
 
 6. `validate-asset-input.ts`에 런타임 검증 branch 추가 — 없으면 새 타입 생성 요청이 400으로 거부됨
-7. `AssetFormModal.tsx`에 입력 폼 필드 추가 — 없으면 UI에서 새 타입을 선택할 수 없음
+7. 입력 폼에 필드 추가 — 없으면 UI에서 새 타입을 선택할 수 없음. 두 군데를 손봅니다: **저장 규칙**은 `models/asset-form.ts`의 `buildAssetInput`에 case를 추가하고(초기값이 필요하면 `initialFormValues`도), **화면**은 `components/asset/fields/`에 필드 그룹 컴포넌트를 만들어 `AssetFormModal.tsx`에서 타입별로 렌더링합니다. 금액 한 쌍(원금 + 현재 평가액)만 필요하다면 기존 `AmountPairFields`를 재사용하면 됩니다
 8. (선택) `seed-data.ts`에 데모 데이터 추가
 
 **리포지토리·API 코드는 자산 타입이 늘어나도 구조를 바꿀 필요가 없습니다.** SQLite/목업 리포지토리 둘 다 타입별 필드를 `payload` JSON으로 저장하므로 새 컬럼이나 마이그레이션이 필요 없습니다 (BOND 추가 시에도 마이그레이션 0건이었음). 히스토리 스냅샷의 타입별 구성(`byType`)도 자동으로 새 타입을 포함합니다.
