@@ -16,6 +16,7 @@ import {
   Receipt,
   Settings,
   Sun,
+  Target,
   WalletCards,
 } from "lucide-react";
 import { useAssetModal } from "@/lib/asset-modal-context";
@@ -30,6 +31,7 @@ const navItems = [
   { href: "/stocks", label: "주식", icon: LineChart },
   { href: "/dividends", label: "배당", icon: Coins },
   { href: "/tax", label: "세금", icon: Receipt },
+  { href: "/retirement", label: "은퇴", icon: Target },
   { href: "/news", label: "뉴스", icon: Newspaper },
   { href: "/settings", label: "설정", icon: Settings },
 ];

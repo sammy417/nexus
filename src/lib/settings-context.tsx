@@ -18,6 +18,12 @@ import {
   TaxYearInputs,
   withTaxInputs,
 } from "@/lib/models/tax-inputs";
+import { OwnerFilter } from "@/lib/models/asset-owner";
+import {
+  getRetirementInputs,
+  RetirementInputs,
+  withRetirementInputs,
+} from "@/lib/models/retirement";
 
 interface SettingsContextValue {
   settings: AppSettings;
@@ -31,15 +37,19 @@ interface SettingsContextValue {
   taxInputs: (owner: AssetOwner) => TaxYearInputs;
   /** Patch one owner's tax figures — applied locally at once, saved shortly after. */
   updateTaxInputs: (owner: AssetOwner, patch: Partial<TaxYearInputs>) => void;
+  /** This scope's retirement-plan inputs (falls back to the defaults). */
+  retirementInputs: (scope: OwnerFilter) => RetirementInputs;
+  /** Patch one scope's retirement inputs — applied locally at once, saved shortly after. */
+  updateRetirementInputs: (scope: OwnerFilter, patch: Partial<RetirementInputs>) => void;
   /** Persist new settings to the server and update local state. */
   save: (settings: AppSettings) => Promise<void>;
 }
 
 /**
- * Tax figures are typed a digit at a time, so writes are coalesced instead
- * of firing a PUT per keystroke.
+ * The tax and retirement fields are typed a digit at a time, so writes are
+ * coalesced instead of firing a PUT per keystroke.
  */
-const TAX_INPUT_SAVE_DELAY_MS = 700;
+const INPUT_SAVE_DELAY_MS = 700;
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
 
@@ -94,7 +104,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     [settings]
   );
 
-  const flushTaxInputs = useCallback(() => {
+  const flushPending = useCallback(() => {
     const next = pendingRef.current;
     pendingRef.current = null;
     if (!next) return;
@@ -110,6 +120,16 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  /** Queue a debounced save of the locally-updated settings. */
+  const scheduleSave = useCallback(
+    (next: AppSettings) => {
+      pendingRef.current = next;
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(flushPending, INPUT_SAVE_DELAY_MS);
+    },
+    [flushPending]
+  );
+
   const updateTaxInputs = useCallback(
     (owner: AssetOwner, patch: Partial<TaxYearInputs>) => {
       setSettings((prev) => {
@@ -117,27 +137,44 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
           ...prev,
           taxInputs: withTaxInputs(prev.taxInputs, currentTaxYear(), owner, patch),
         };
-        pendingRef.current = next;
+        scheduleSave(next);
         return next;
       });
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(flushTaxInputs, TAX_INPUT_SAVE_DELAY_MS);
     },
-    [flushTaxInputs]
+    [scheduleSave]
+  );
+
+  const updateRetirementInputs = useCallback(
+    (scope: OwnerFilter, patch: Partial<RetirementInputs>) => {
+      setSettings((prev) => {
+        const next: AppSettings = {
+          ...prev,
+          retirementInputs: withRetirementInputs(prev.retirementInputs, scope, patch),
+        };
+        scheduleSave(next);
+        return next;
+      });
+    },
+    [scheduleSave]
   );
 
   // Don't lose the last keystrokes when the page goes away mid-debounce.
   useEffect(() => {
     const flushNow = () => {
       if (timerRef.current) clearTimeout(timerRef.current);
-      flushTaxInputs();
+      flushPending();
     };
     window.addEventListener("pagehide", flushNow);
     return () => {
       window.removeEventListener("pagehide", flushNow);
       flushNow();
     };
-  }, [flushTaxInputs]);
+  }, [flushPending]);
+
+  const retirementInputs = useCallback(
+    (scope: OwnerFilter) => getRetirementInputs(settings.retirementInputs, scope),
+    [settings]
+  );
 
   const value = useMemo(
     () => ({
@@ -147,9 +184,21 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       targetAllocation,
       taxInputs,
       updateTaxInputs,
+      retirementInputs,
+      updateRetirementInputs,
       save,
     }),
-    [settings, ownerName, ownerColor, targetAllocation, taxInputs, updateTaxInputs, save]
+    [
+      settings,
+      ownerName,
+      ownerColor,
+      targetAllocation,
+      taxInputs,
+      updateTaxInputs,
+      retirementInputs,
+      updateRetirementInputs,
+      save,
+    ]
   );
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

@@ -6,6 +6,7 @@ import {
   TargetAllocationSettings,
 } from "./target-allocation";
 import { normalizeTaxInputsByYear, TaxInputsByYear } from "./tax-inputs";
+import { normalizeRetirementByScope, RetirementInputsByScope } from "./retirement";
 
 /** Household-level preferences (one shared dataset, so not per-user). */
 export interface AppSettings {
@@ -17,6 +18,8 @@ export interface AppSettings {
   targetAllocation: TargetAllocationSettings;
   /** Manual tax-page figures, keyed by year then owner. */
   taxInputs: TaxInputsByYear;
+  /** Retirement-plan inputs, keyed by owner filter. */
+  retirementInputs: RetirementInputsByScope;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -27,6 +30,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     weights: { ...DEFAULT_TARGET_ALLOCATION.weights },
   },
   taxInputs: {},
+  retirementInputs: {},
 };
 
 const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
@@ -67,5 +71,8 @@ export function normalizeSettings(value: unknown): AppSettings {
   const taxInputs = normalizeTaxInputsByYear(
     isObject ? (value as { taxInputs?: unknown }).taxInputs : undefined
   );
-  return { ownerNames, ownerColors, targetAllocation, taxInputs };
+  const retirementInputs = normalizeRetirementByScope(
+    isObject ? (value as { retirementInputs?: unknown }).retirementInputs : undefined
+  );
+  return { ownerNames, ownerColors, targetAllocation, taxInputs, retirementInputs };
 }
