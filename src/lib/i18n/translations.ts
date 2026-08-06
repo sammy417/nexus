@@ -631,4 +631,26 @@ export const EN: Record<string, string> = {
   "보수~낙관": "Conservative–optimistic",
   "{age}세": "{age}",
   "은퇴 시점 필요 자산(명목): {value}": "Needed at retirement (nominal): {value}",
+
+  // --- Pension withdrawal simulator (tax page) ---
+  "연금 수령 시뮬레이터": "Pension withdrawal simulator",
+  "보유한 사적연금(연금저축·IRP) 잔액을 수령 기간에 걸쳐 나눠 받을 때의 월 수령액과 연금소득세를 추정합니다. 국민연금은 포함하지 않으며, 확정 세액이 아닌 추정치입니다.":
+    "Estimates the monthly payout and pension income tax from drawing your private pension (연금저축·IRP) down over a chosen period. Excludes the national pension; an estimate, not a filing.",
+  "연금 잔액": "Pension balance",
+  "수령 시작 나이": "Start age",
+  "수령 중 기대 수익률 (연)": "Return while drawing (annual)",
+  "수령 기간": "Withdrawal period",
+  "{n}년": "{n} yrs",
+  년: "yrs",
+  "월 수령액 (세전)": "Monthly payout (pre-tax)",
+  "월 실수령액": "Monthly after-tax",
+  "연금소득세 (연, {rate}%)": "Pension income tax (yr, {rate}%)",
+  "연 수령액이 {threshold}을 넘어 종합과세 또는 16.5% 분리과세 대상입니다. 수령 기간을 {years}년 이상으로 늘리면 연 수령액이 한도 아래로 내려가 연령별 저율 분리과세(5.5~3.3%)로 종결됩니다.":
+    "The annual payout exceeds {threshold}, so it falls under global taxation or elective 16.5% separate taxation. Stretching the period to {years}+ years brings it back under the line, where the low age-based rate (5.5–3.3%) settles it.",
+  "연 수령액이 {threshold}을 넘어 종합과세 또는 16.5% 분리과세 대상입니다. 잔액이 커서 수령 기간을 늘려도 한도 아래로 내리기 어렵습니다.":
+    "The annual payout exceeds {threshold} (global taxation or elective 16.5% separate taxation). The balance is large enough that even a longer period can't bring it under the line.",
+  "연 수령액이 {threshold} 이하라 연령별 저율 분리과세로 종결됩니다(수령 시작 시점 {rate}%, 나이가 들수록 낮아집니다).":
+    "The annual payout is at or under {threshold}, so the low age-based separate rate settles it ({rate}% at the start age, falling with age).",
+  "과세 대상은 세액공제를 받은 납입액과 운용수익입니다. 여기서는 잔액 전체를 과세 대상으로 단순 가정하므로, 세액공제를 받지 않은 납입원금이 있으면 실제 세금은 더 적을 수 있습니다.":
+    "Only deductible contributions and investment gains are taxable. This assumes the whole balance is taxable, so if you have non-deductible contributions the actual tax may be lower.",
 };

@@ -8,12 +8,17 @@ import {
   PENSION_CREDIT_RATE_HIGH_INCOME,
   PENSION_CREDIT_RATE_LOW_INCOME,
   PENSION_SAVINGS_CREDIT_LIMIT_KRW,
+  PENSION_WITHDRAWAL_RATE_70S,
+  PENSION_WITHDRAWAL_RATE_80_PLUS,
+  PENSION_WITHDRAWAL_RATE_UNDER_70,
+  pensionWithdrawalRate,
 } from "@/lib/models/tax";
 import {
   getCapitalGainsSummary,
   getFinancialIncomeSummary,
   getForeignStockLots,
   getPensionCredit,
+  getPensionWithdrawal,
   getYearEndDividendProjection,
 } from "./tax-service";
 
@@ -234,5 +239,68 @@ describe("getYearEndDividendProjection", () => {
       holding({ nextExDateEstimate: `${thisYear}-12-01`, nextAmountKrw: 1_000, frequencyPerYear: 0 }),
     ]);
     expect(total).toBe(0);
+  });
+});
+
+describe("pensionWithdrawalRate", () => {
+  it("falls with age, stepping at 70 and 80", () => {
+    expect(pensionWithdrawalRate(60)).toBe(PENSION_WITHDRAWAL_RATE_UNDER_70);
+    expect(pensionWithdrawalRate(69)).toBe(PENSION_WITHDRAWAL_RATE_UNDER_70);
+    expect(pensionWithdrawalRate(70)).toBe(PENSION_WITHDRAWAL_RATE_70S);
+    expect(pensionWithdrawalRate(79)).toBe(PENSION_WITHDRAWAL_RATE_70S);
+    expect(pensionWithdrawalRate(80)).toBe(PENSION_WITHDRAWAL_RATE_80_PLUS);
+  });
+});
+
+describe("getPensionWithdrawal", () => {
+  it("splits the balance into a level payout over the period (0% return)", () => {
+    const w = getPensionWithdrawal(300_000_000, 60, 20, 0);
+    expect(w.annualGrossKrw).toBeCloseTo(15_000_000, 2);
+    expect(w.monthlyGrossKrw).toBeCloseTo(1_250_000, 2);
+  });
+
+  it("stays under the threshold at exactly the limit and applies the age-blended low rate", () => {
+    // 20 years from age 60: ten years at 5.5%, ten at 4.4% → 4.95% average.
+    const w = getPensionWithdrawal(300_000_000, 60, 20, 0);
+    expect(w.overThreshold).toBe(false);
+    expect(w.effectiveTaxRate).toBeCloseTo(0.0495, 6);
+    expect(w.annualTaxKrw).toBeCloseTo(742_500, 2);
+    expect(w.monthlyNetKrw).toBeCloseTo((15_000_000 - 742_500) / 12, 2);
+    expect(w.suggestedYearsUnderThreshold).toBeNull();
+  });
+
+  it("switches to elective separate taxation once the payout clears the threshold", () => {
+    // Same balance over 10 years → 30,000,000/yr, above the 15,000,000 line.
+    const w = getPensionWithdrawal(300_000_000, 60, 10, 0);
+    expect(w.overThreshold).toBe(true);
+    expect(w.effectiveTaxRate).toBeCloseTo(0.165, 6);
+    expect(w.annualTaxKrw).toBeCloseTo(30_000_000 * 0.165, 2);
+  });
+
+  it("suggests the shortest period that drops back under the threshold", () => {
+    // 300,000,000 needs ≥ 20 years to keep the annual payout at/under 15,000,000.
+    const w = getPensionWithdrawal(300_000_000, 60, 10, 0);
+    expect(w.suggestedYearsUnderThreshold).toBe(20);
+  });
+
+  it("accounts for growth during withdrawal, raising the sustainable payout", () => {
+    const flat = getPensionWithdrawal(200_000_000, 65, 20, 0);
+    const growing = getPensionWithdrawal(200_000_000, 65, 20, 4);
+    // Earning 4% while drawing down supports a larger annual payout.
+    expect(growing.annualGrossKrw).toBeGreaterThan(flat.annualGrossKrw);
+  });
+
+  it("pays and taxes nothing on an empty account", () => {
+    const w = getPensionWithdrawal(0, 60, 20, 3);
+    expect(w.annualGrossKrw).toBe(0);
+    expect(w.annualTaxKrw).toBe(0);
+    expect(w.effectiveTaxRate).toBe(0);
+    expect(w.overThreshold).toBe(false);
+  });
+
+  it("gives a longer period a smaller monthly payout", () => {
+    const short = getPensionWithdrawal(300_000_000, 60, 10, 3);
+    const long = getPensionWithdrawal(300_000_000, 60, 30, 3);
+    expect(long.monthlyGrossKrw).toBeLessThan(short.monthlyGrossKrw);
   });
 });

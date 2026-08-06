@@ -3,6 +3,7 @@
 import CapitalGainsCard from "@/components/tax/CapitalGainsCard";
 import FinancialIncomeCard from "@/components/tax/FinancialIncomeCard";
 import PensionCreditCard from "@/components/tax/PensionCreditCard";
+import PensionWithdrawalCard from "@/components/tax/PensionWithdrawalCard";
 import CurrencyToggle from "@/components/common/CurrencyToggle";
 import EmptyState from "@/components/common/EmptyState";
 import TaxSkeleton from "@/components/skeletons/TaxSkeleton";
@@ -114,6 +115,13 @@ export default function TaxPage() {
                 owner={owner}
               />
             </div>
+
+            {/* Withdrawal side — only when there's actually a pension to draw. */}
+            {ownerAssets.some((a) => a.type === "PENSION") && (
+              <PensionWithdrawalCard
+                pensionAssets={ownerAssets.filter((a) => a.type === "PENSION")}
+              />
+            )}
           </section>
         ))
       )}

@@ -7,7 +7,10 @@ import {
   PENSION_COMBINED_CREDIT_LIMIT_KRW,
   PENSION_CREDIT_RATE_HIGH_INCOME,
   PENSION_CREDIT_RATE_LOW_INCOME,
+  PENSION_ELECTIVE_SEPARATE_RATE,
   PENSION_SAVINGS_CREDIT_LIMIT_KRW,
+  PENSION_SEPARATE_TAX_THRESHOLD_KRW,
+  pensionWithdrawalRate,
 } from "@/lib/models/tax";
 import { getStockHoldings, isStock } from "./stock-analysis-service";
 import { dividendToKrw } from "./dividend-service";
@@ -214,5 +217,109 @@ export function getPensionCredit(
     creditRate,
     estimatedCreditKrw: eligibleCombinedKrw * creditRate,
     remainingRoomKrw: Math.max(0, PENSION_COMBINED_CREDIT_LIMIT_KRW - eligibleCombinedKrw),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// 4) 연금 수령 시뮬레이터 — 세액공제 계산기의 반대편(받을 때). 보유한 사적
+//    연금(연금저축·IRP) 잔액을 수령 기간에 걸쳐 나눠 받을 때의 월 수령액과
+//    연금소득세를 추정하고, 연 1,500만원 한도를 넘기지 않는 수령 기간을
+//    안내한다. 국민연금은 데이터가 없어 여기서 다루지 않는다.
+// ---------------------------------------------------------------------------
+
+/** Present value of an annuity paying 1 per period for `periods` at rate `r`. */
+function annuityFactor(periods: number, r: number): number {
+  if (periods <= 0) return 0;
+  return Math.abs(r) < 1e-9 ? periods : (1 - Math.pow(1 + r, -periods)) / r;
+}
+
+/** Smallest whole number of years that keeps the annual payout at or under `limit`. */
+function yearsToStayUnder(balanceKrw: number, annualReturnPct: number, limit: number): number | null {
+  const r = annualReturnPct / 100;
+  for (let years = 1; years <= 60; years++) {
+    if (balanceKrw / annuityFactor(years, r) <= limit) return years;
+  }
+  return null;
+}
+
+export interface PensionWithdrawalResult {
+  balanceKrw: number;
+  startAge: number;
+  years: number;
+  /** Level gross annual payout that exhausts the balance over the period. */
+  annualGrossKrw: number;
+  monthlyGrossKrw: number;
+  /** Annual payout exceeds the low-rate separate-taxation threshold. */
+  overThreshold: boolean;
+  thresholdKrw: number;
+  /** Age-based rate at the starting age (the low-rate regime). */
+  startAgeRate: number;
+  /** Estimated tax withheld per year under the applicable regime. */
+  annualTaxKrw: number;
+  effectiveTaxRate: number;
+  monthlyNetKrw: number;
+  /**
+   * When over the threshold, the shortest period that would bring the annual
+   * payout back under it (so the low age-based rate applies). null when even
+   * a very long period can't (a very large balance).
+   */
+  suggestedYearsUnderThreshold: number | null;
+}
+
+/**
+ * Simulate drawing a private-pension balance down as a level annuity.
+ *
+ * The tax has two regimes and the boundary is what matters: while the annual
+ * payout stays at or under {@link PENSION_SEPARATE_TAX_THRESHOLD_KRW} it is
+ * taxed at the low, age-decreasing separate rate; above it, the whole
+ * pension income becomes 종합과세 or 16.5% 분리과세 (elective) — so a longer
+ * withdrawal period that keeps the payout under the line is a real tax lever.
+ *
+ * The taxable base is treated as the whole balance (typical for accounts
+ * funded by deductible contributions and their gains) — a labeled estimate,
+ * not a filing.
+ */
+export function getPensionWithdrawal(
+  balanceKrw: number,
+  startAge: number,
+  years: number,
+  annualReturnPct: number
+): PensionWithdrawalResult {
+  const balance = Math.max(0, balanceKrw);
+  const r = annualReturnPct / 100;
+  const factor = annuityFactor(years, r);
+  const annualGrossKrw = factor > 0 ? balance / factor : 0;
+
+  const overThreshold = annualGrossKrw > PENSION_SEPARATE_TAX_THRESHOLD_KRW;
+  const startAgeRate = pensionWithdrawalRate(startAge);
+
+  let annualTaxKrw: number;
+  if (overThreshold) {
+    // Elective separate taxation on the whole pension income.
+    annualTaxKrw = annualGrossKrw * PENSION_ELECTIVE_SEPARATE_RATE;
+  } else {
+    // Low separate rate, which falls as the recipient ages — average it over
+    // the withdrawal years rather than pinning the (highest) starting rate.
+    let total = 0;
+    for (let y = 0; y < years; y++) total += annualGrossKrw * pensionWithdrawalRate(startAge + y);
+    annualTaxKrw = years > 0 ? total / years : 0;
+  }
+  const effectiveTaxRate = annualGrossKrw > 0 ? annualTaxKrw / annualGrossKrw : 0;
+
+  return {
+    balanceKrw: balance,
+    startAge,
+    years,
+    annualGrossKrw,
+    monthlyGrossKrw: annualGrossKrw / 12,
+    overThreshold,
+    thresholdKrw: PENSION_SEPARATE_TAX_THRESHOLD_KRW,
+    startAgeRate,
+    annualTaxKrw,
+    effectiveTaxRate,
+    monthlyNetKrw: (annualGrossKrw - annualTaxKrw) / 12,
+    suggestedYearsUnderThreshold: overThreshold
+      ? yearsToStayUnder(balance, annualReturnPct, PENSION_SEPARATE_TAX_THRESHOLD_KRW)
+      : null,
   };
 }
