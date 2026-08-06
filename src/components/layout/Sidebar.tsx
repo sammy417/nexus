@@ -7,6 +7,7 @@ import {
   Coins,
   Eye,
   EyeOff,
+  Flag,
   LayoutGrid,
   Languages,
   LineChart,
@@ -32,6 +33,7 @@ const navItems = [
   { href: "/dividends", label: "배당", icon: Coins },
   { href: "/tax", label: "세금", icon: Receipt },
   { href: "/retirement", label: "은퇴", icon: Target },
+  { href: "/goals", label: "목표", icon: Flag },
   { href: "/news", label: "뉴스", icon: Newspaper },
   { href: "/settings", label: "설정", icon: Settings },
 ];

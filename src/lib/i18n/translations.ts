@@ -653,4 +653,46 @@ export const EN: Record<string, string> = {
     "The annual payout is at or under {threshold}, so the low age-based separate rate settles it ({rate}% at the start age, falling with age).",
   "과세 대상은 세액공제를 받은 납입액과 운용수익입니다. 여기서는 잔액 전체를 과세 대상으로 단순 가정하므로, 세액공제를 받지 않은 납입원금이 있으면 실제 세금은 더 적을 수 있습니다.":
     "Only deductible contributions and investment gains are taxable. This assumes the whole balance is taxable, so if you have non-deductible contributions the actual tax may be lower.",
+
+  // --- Goals ---
+  목표: "Goals",
+  "주택·교육 등 시점이 있는 목표에 자산을 배정하고 진행률을 추적합니다.":
+    "Earmark assets toward dated goals (a home, tuition, …) and track progress.",
+  "목표 추가": "Add goal",
+  "목표 수정": "Edit goal",
+  "첫 목표를 추가해 보세요": "Add your first goal",
+  "목표 금액과 시점을 정하고 보유 자산을 배정하면, 진행률과 필요한 월 저축액을 계산해 드려요.":
+    "Set a target amount and date, assign your assets, and we'll compute the progress and the monthly saving needed.",
+  "목표 이름": "Goal name",
+  "예: 전세 보증금, 자녀 학자금": "e.g. rental deposit, children's tuition",
+  "목표 금액": "Target amount",
+  "목표 시점": "Target date",
+  "목표 이름을 입력해 주세요.": "Enter a goal name.",
+  "목표 시점을 선택해 주세요.": "Choose a target date.",
+  "목표 금액을 입력해 주세요.": "Enter a target amount.",
+  달성: "Reached",
+  "D-{days}": "D-{days}",
+  "약 {months}개월 남음": "~{months} mo left",
+  "기한 지남": "Past due",
+  "목표 {value}": "Target {value}",
+  "배정 {value}": "Assigned {value}",
+  "남은 금액": "Remaining",
+  "필요 월 저축": "Monthly saving needed",
+  "기한 경과": "Overdue",
+  "지금 필요": "Needed now",
+  "{months}개월 뒤 쓸 돈인데 배정 자산의 {ratio}%가 주식이에요 — 하락장에 대비해 안전자산 비중을 늘리는 걸 검토하세요.":
+    "This money is needed in {months} months, but {ratio}% of the assigned assets are in stocks — consider shifting toward safer assets in case of a downturn.",
+  "목표 시점이 지났지만 아직 {value} 부족합니다.": "The target date has passed and you're still {value} short.",
+  "삭제된 자산 {count}개가 배정 목록에 남아 있어요 — 다시 배정하면 정리됩니다.":
+    "{count} deleted asset(s) still linger in the assignment — re-assigning clears them.",
+  "자산 배정 ({count}개)": "Assigned assets ({count})",
+  "배정할 자산이 없어요.": "No assets to assign.",
+  "현재 '{name}'에 배정됨": "assigned to '{name}'",
+  "미배정 자산": "Unassigned assets",
+  "모든 자산이 목표에 배정되었습니다.": "Every asset is assigned to a goal.",
+  "어느 목표에도 배정되지 않은 자산입니다. 각 목표 카드의 '자산 배정'에서 연결하세요.":
+    "Assets not earmarked for any goal — link them from a goal's 'Assigned assets'.",
+  "목표가 추가되었습니다.": "Goal added.",
+  "목표가 수정되었습니다.": "Goal updated.",
+  "목표가 삭제되었습니다.": "Goal deleted.",
 };
